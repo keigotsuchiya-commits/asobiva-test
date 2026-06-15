@@ -437,7 +437,7 @@ footer {
   <div class="panel-handle"></div>
   <div class="panel-title">カードを追加</div>
   <div class="drop-zone" id="dropZone">
-    <input type="file" id="fileInput" accept=".html,text/html,image/*" multiple onchange="onFileSelect(this.files)">
+    <input type="file" id="fileInput" accept="image/*,text/html,.html" multiple onchange="onFileSelect(this.files)">
     <div class="dz-icon">📄🖼️</div>
     <span class="dz-label">画像 または HTMLファイルを選択 / ドロップ</span>
     <span class="dz-hint">JPG · PNG · GIF · WEBP · HTML　複数選択可</span>
@@ -641,7 +641,7 @@ function render() {
       img.alt = '';
       img.loading = 'lazy';
       wrap.appendChild(img);
-      replaceAccept = '.html,text/html,image/*';
+      replaceAccept = 'image/*,text/html,.html';
     } else {
       wrap = document.createElement('div');
       wrap.className = 'html-card';
@@ -660,7 +660,7 @@ function render() {
 
       wrap.appendChild(label);
       wrap.appendChild(iframe);
-      replaceAccept = '.html,text/html,image/*';
+      replaceAccept = 'image/*,text/html,.html';
     }
 
     const replaceBtn = document.createElement('button');
