@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>おみくじ</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+    background: #f3efe8;
+    color: #2b2b2b;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 12px;
+  }
+  .frame {
+    display: none;
+    background: #c0392b;
+    border-radius: 14px;
+    padding: 6px;
+    width: 100%;
+    max-width: 340px;
+  }
+  .frame.show { display: block; }
+  .card {
+    background: #ffffff;
+    border: 2px solid #c0392b;
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid #c0392b;
+    padding-bottom: 6px;
+  }
+  .header .title {
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: 4px;
+  }
+  .result {
+    text-align: center;
+    font-size: 46px;
+    font-weight: 900;
+    letter-spacing: 14px;
+    padding: 12px 0;
+    color: #1a1a1a;
+  }
+  .zigzag {
+    width: 100%;
+    height: 8px;
+    display: block;
+  }
+  .waka {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: space-evenly;
+    align-items: flex-start;
+    height: 190px;
+    padding: 10px 4px;
+  }
+  .waka-col {
+    writing-mode: vertical-rl;
+    font-size: 13px;
+    line-height: 1.6;
+    letter-spacing: 2px;
+    font-weight: 700;
+  }
+  .waka-col.big {
+    font-size: 15px;
+  }
+  table.items {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  table.items td {
+    padding: 4px 6px;
+    border-bottom: 1px dashed #c0392b;
+  }
+  table.items td.label {
+    width: 56px;
+    text-align: center;
+    font-weight: 900;
+    letter-spacing: 3px;
+    border-right: 1px solid #c0392b;
+  }
+  .footer {
+    text-align: center;
+    font-size: 11px;
+    line-height: 1.6;
+    padding-top: 6px;
+  }
+  .sakura-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .num-line {
+    text-align: center;
+    font-size: 12px;
+    color: #999;
+    margin-top: 4px;
+  }
+  .controls {
+    margin-top: 14px;
+    text-align: center;
+  }
+  button {
+    background: #c0392b;
+    color: #fff;
+    border: none;
+    border-radius: 30px;
+    padding: 10px 30px;
+    font-size: 14px;
+    font-family: inherit;
+    letter-spacing: 4px;
+    cursor: pointer;
+  }
+  button:hover { background: #a8311f; }
+  button:disabled { background: #ccc; cursor: default; }
+</style>
+</head>
+<body>
+
+  <div class="controls">
+    <button id="drawBtn" onclick="draw(false)">おみくじを引く</button>
+  </div>
+
+  <div class="frame" id="frame">
+    <div class="card" id="card">
+      <div class="header">
+        <span class="sakura">SAKURA</span>
+        <span class="title" id="numTitle">第　一　番</span>
+        <span class="sakura">SAKURA</span>
+      </div>
+      <div class="result" id="resultName">大　吉</div>
+
+      <svg class="zigzag" viewBox="0 0 100 10" preserveAspectRatio="none">
+        <polyline points="0,10 5,0 10,10 15,0 20,10 25,0 30,10 35,0 40,10 45,0 50,10 55,0 60,10 65,0 70,10 75,0 80,10 85,0 90,10 95,0 100,10" fill="none" stroke="#c0392b" stroke-width="1"/>
+      </svg>
+
+      <div class="waka" id="waka"></div>
+
+      <svg class="zigzag" viewBox="0 0 100 10" preserveAspectRatio="none">
+        <polyline points="0,10 5,0 10,10 15,0 20,10 25,0 30,10 35,0 40,10 45,0 50,10 55,0 60,10 65,0 70,10 75,0 80,10 85,0 90,10 95,0 100,10" fill="none" stroke="#c0392b" stroke-width="1"/>
+      </svg>
+
+      <table class="items" id="items"></table>
+
+      <div class="footer">
+        <div class="sakura-row">SAKURA 神仏のご加護を受けられます SAKURA</div>
+        <div>感謝の心を忘れずに日々を過ごしましょう</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="num-line" id="numLine"></div>
+
+<script>
+  // 桜のSVGアイコン
+  const sakuraSVG = `
+    <svg width="28" height="28" viewBox="0 0 32 32" style="vertical-align:middle">
+      <g>
+        ${[0,72,144,216,288].map(a =>
+          `<ellipse cx="16" cy="7" rx="5" ry="8" fill="#c0392b" transform="rotate(${a} 16 16)"/>`
+        ).join('')}
+        <circle cx="16" cy="16" r="3" fill="#ffffff"/>
+      </g>
+    </svg>`;
+
+  document.querySelectorAll('.sakura').forEach(el => {
+    el.outerHTML = el.outerHTML.replace(el.outerHTML, sakuraSVG);
+  });
+  // sakura-rowのテキストにも差し替え
+  document.querySelectorAll('.sakura-row').forEach(el => {
+    el.innerHTML = sakuraSVG + '<span>神仏のご加護を受けられます</span>' + sakuraSVG;
+  });
+
+  // 等級ごとの色と項目
+  const GRADES = {
+    "大吉": { color: "#c0392b", items: {
+      願望:"思い通りになり叶う", 待人:"来る　便りあり", 恋愛:"良縁に恵まれる",
+      縁談:"すべて良い　早く決まる", 仕事:"順調に進み　成功する", 学業:"努力すれば　成果が出る",
+      旅行:"良い　吉方に行くがよし", 金運:"金運良し　使いすぎに注意", 健康:"心身ともに健やか", 方位:"東の方角が吉"
+    }},
+    "中吉": { color: "#e67e22", items: {
+      願望:"叶うが時を待つべし", 待人:"遅れて来る", 恋愛:"穏やかに進展する",
+      縁談:"良い話が来る", 仕事:"努力が認められる", 学業:"集中すれば結果が出る",
+      旅行:"概ね良し　準備を整えて", 金運:"安定している", 健康:"概ね良好", 方位:"南の方角が吉"
+    }},
+    "小吉": { color: "#c79a1e", items: {
+      願望:"焦らず進めば叶う", 待人:"音信あり　もう少し待て", 恋愛:"自然な出会いを大切に",
+      縁談:"急がず縁を待て", 仕事:"地道な努力が大切", 学業:"基礎を固めるとよい",
+      旅行:"近場なら良し", 金運:"無駄遣いに注意", 健康:"小さな不調に注意", 方位:"西の方角が吉"
+    }},
+    "吉": { color: "#27ae60", items: {
+      願望:"叶うが努力が必要", 待人:"近いうちに来る", 恋愛:"良い関係が築ける",
+      縁談:"順調に進む", 仕事:"安定して進む", 学業:"今の努力が花開く",
+      旅行:"楽しい旅になる", 金運:"まずまず良い", 健康:"健やか　無理せず", 方位:"北の方角が吉"
+    }},
+    "末吉": { color: "#2980b9", items: {
+      願望:"後に叶う望みあり", 待人:"遅れるが来る", 恋愛:"ゆっくりと進展する",
+      縁談:"時間をかけて整う", 仕事:"後半に運が向く", 学業:"今は地味でも後に伸びる",
+      旅行:"控えめが良し", 金運:"少しずつ良くなる", 健康:"養生を心がけよ", 方位:"北東の方角が吉"
+    }},
+    "凶": { color: "#7f8c8d", items: {
+      願望:"叶い難し　控えるべし", 待人:"来ること遅し", 恋愛:"波風立ちやすい",
+      縁談:"進めるのは見合わせよ", 仕事:"無理をせず慎重に", 学業:"油断すれば失敗する",
+      旅行:"見合わせた方が良い", 金運:"出費に注意せよ", 健康:"体調管理を怠るな", 方位:"動かぬが吉"
+    }}
+  };
+
+  // 1〜12番のデータ（番号・等級・和歌）
+  const NUMBERS = [
+    { num:1,  grade:"大吉", waka:["心穏やかに過ごせば","幸運自ずと訪れる","春の如く道開け","励み続けよ"] },
+    { num:2,  grade:"中吉", waka:["時を待てば叶うあり","焦らず歩むが吉","誠実なる心が","運を引き寄せる"] },
+    { num:3,  grade:"小吉", waka:["小さき幸い重なりて","やがて大きな実りに","地道な努力こそが","明日への礎なり"] },
+    { num:4,  grade:"吉",   waka:["穏やかな風吹きて","物事円滑に進む","人との縁を大切に","今を大切に生きよ"] },
+    { num:5,  grade:"末吉", waka:["今は静かなる時なれど","後に光輝く道あり","耐え忍ぶ心を持ちて","未来を信じて進め"] },
+    { num:6,  grade:"凶",   waka:["嵐の如き試練あれど","耐えれば道は開ける","今は控えて待つべし","油断大敵なり"] },
+    { num:7,  grade:"大吉", waka:["天の恵み満ち満ちて","行く先々に幸あり","笑顔で進めば","さらに福来る"] },
+    { num:8,  grade:"中吉", waka:["流れに乗りて進めば","おのずと道は開ける","信じる心忘れずに","一歩一歩進め"] },
+    { num:9,  grade:"小吉", waka:["地に足つけて歩めば","やがて花咲く時来る","周りに感謝しつつ","励み続けよ"] },
+    { num:10, grade:"吉",   waka:["心軽やかに過ごせば","良き縁巡りくる","誠を尽くせば","必ず報われる"] },
+    { num:11, grade:"末吉", waka:["今は雌伏の時なれど","必ず春は巡り来る","信念を持ちて","ひたすら進め"] },
+    { num:12, grade:"大吉", waka:["春風の吹くが如く","運気上昇し","万事に幸福多し","心して進むべし"] }
+  ];
+
+  const KANJI_NUM = ["","一","二","三","四","五","六","七","八","九","十","十一","十二"];
+
+  function draw(force) {
+    const today = new Date().toLocaleDateString("ja-JP");
+    const saved = localStorage.getItem("omikuji_today");
+
+    let entry;
+    if (!force && saved) {
+      const data = JSON.parse(saved);
+      if (data.date === today) {
+        entry = NUMBERS[data.numIndex];
+        showResult(entry);
+        document.getElementById("frame").classList.add("show");
+        document.getElementById("drawBtn").textContent = "本日のおみくじ済み";
+        document.getElementById("drawBtn").disabled = true;
+        return;
+      }
+    }
+
+    const numIndex = Math.floor(Math.random() * NUMBERS.length);
+    entry = NUMBERS[numIndex];
+    localStorage.setItem("omikuji_today", JSON.stringify({ date: today, numIndex: numIndex }));
+    showResult(entry);
+    document.getElementById("frame").classList.add("show");
+    document.getElementById("drawBtn").textContent = "本日のおみくじ済み";
+    document.getElementById("drawBtn").disabled = true;
+  }
+
+  function showResult(entry) {
+    const grade = GRADES[entry.grade];
+
+    // 番号
+    document.getElementById("numTitle").textContent =
+      "第　" + KANJI_NUM[entry.num].split("").join("　") + "　番";
+
+    // 結果
+    const resultEl = document.getElementById("resultName");
+    resultEl.textContent = entry.grade.split("").join("　");
+
+    // 和歌
+    const wakaEl = document.getElementById("waka");
+    wakaEl.innerHTML = entry.waka.map((line, i) =>
+      `<div class="waka-col${i === 0 ? ' big' : ''}">${line}</div>`
+    ).join("");
+
+    // 項目表
+    const itemsEl = document.getElementById("items");
+    itemsEl.innerHTML = Object.entries(grade.items).map(([label, text]) =>
+      `<tr><td class="label">${label.split("").join(" ")}</td><td>${text}</td></tr>`
+    ).join("");
+
+    document.getElementById("numLine").textContent =
+      "第" + entry.num + "番　" + entry.grade;
+  }
+
+  // ページ読み込み時：今日すでに引いていれば結果を表示
+  (function init() {
+    const today = new Date().toLocaleDateString("ja-JP");
+    const saved = localStorage.getItem("omikuji_today");
+    if (saved) {
+      const data = JSON.parse(saved);
+      if (data.date === today) {
+        draw(false);
+      }
+    }
+  })();
+</script>
+</body>
+</html>

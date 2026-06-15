@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASOBIVA</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f3f3f3;
+  --white: #ffffff;
+  --ink: #1a1a1a;
+  --ink-soft: #888;
+  --border: #e0e0e0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+.wrap {
+  max-width: 480px;
+  margin: 0 auto;
+  background: var(--bg);
+  min-height: 100vh;
+}
+
+/* ── ADMIN BUTTON ── */
+.admin-btn {
+  position: fixed;
+  top: 14px; right: 14px;
+  z-index: 100;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  background: rgba(255,255,255,0.92);
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  color: var(--ink-soft);
+  backdrop-filter: blur(4px);
+  transition: all 0.15s;
+}
+.admin-btn:hover { border-color: var(--ink); color: var(--ink); }
+.admin-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+
+/* ── DOWNLOAD BUTTON ── */
+.download-btn {
+  position: fixed;
+  top: 14px; right: 78px;
+  z-index: 100;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  background: rgba(255,255,255,0.92);
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  color: var(--ink-soft);
+  backdrop-filter: blur(4px);
+  transition: all 0.15s;
+  display: none;
+}
+body.admin-mode .download-btn { display: inline-block; }
+.download-btn:hover { border-color: var(--ink); color: var(--ink); }
+
+/* ── HEADER PAIR ── */
+.header-pair {
+  display: flex;
+  flex-direction: column;
+  background: var(--white);
+}
+
+.banner-slot {
+  width: 100%;
+  position: relative;
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80px;
+}
+.banner-slot img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.slot-label {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: #ccc;
+  user-select: none;
+}
+
+.banner-edit {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.25);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
+}
+.banner-edit span {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: #fff;
+  background: rgba(0,0,0,0.45);
+  padding: 8px 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.4);
+  pointer-events: none;
+}
+body.admin-mode .banner-slot .banner-edit { display: flex; }
+.banner-file { display: none; }
+
+/* ── CARDS ── */
+.card-section {
+  background: var(--bg);
+  padding-top: 10px;
+}
+.card {
+  width: 100%;
+  position: relative;
+  display: block;
+  text-decoration: none;
+  background: var(--white);
+  overflow: hidden;
+}
+.card img {
+  width: 100%;
+  height: auto;
+  display: block;
+  transition: transform 0.35s ease;
+}
+.card:hover img { transform: scale(1.015); }
+body.admin-mode .card:hover img { transform: none; }
+
+.card-del {
+  display: none;
+  position: absolute;
+  top: 10px; right: 10px;
+  width: 30px; height: 30px;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  font-size: 13px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  transition: background 0.15s;
+}
+.card-del:hover { background: #c0392b; }
+body.admin-mode .card-del { display: flex; }
+
+.card-replace {
+  display: none;
+  position: absolute;
+  top: 10px; right: 50px;
+  width: 30px; height: 30px;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  font-size: 14px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  transition: background 0.15s;
+}
+.card-replace:hover { background: #1a6e3c; }
+body.admin-mode .card-replace { display: flex; }
+
+.card-replace-input { display: none; }
+
+/* ── ADD BUTTON ── */
+.add-section {
+  background: var(--bg);
+  padding-top: 10px;
+}
+.add-card-btn {
+  display: flex;
+  width: 100%;
+  padding: 22px 16px;
+  background: var(--white);
+  border: none;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--ink-soft);
+  transition: background 0.15s, color 0.15s;
+}
+.add-card-btn:hover { background: #f5f5f5; color: var(--ink); }
+
+/* ── EMPTY STATE ── */
+.empty-section {
+  background: var(--bg);
+  padding-top: 10px;
+}
+.empty-state {
+  padding: 60px 24px;
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 2;
+  background: var(--white);
+}
+.empty-state strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+/* ── FOOTER ── */
+.footer-section {
+  background: var(--bg);
+  padding-top: 10px;
+}
+footer {
+  padding: 28px 16px;
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--ink-soft);
+  background: var(--white);
+}
+
+/* ── PANEL ── */
+.overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.28);
+  z-index: 200;
+  backdrop-filter: blur(2px);
+}
+.overlay.open { display: block; }
+
+.panel {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--white);
+  border-radius: 16px 16px 0 0;
+  padding: 28px 20px 48px;
+  z-index: 201;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.34,1.2,0.64,1);
+  max-width: 480px;
+  margin: 0 auto;
+}
+.panel.open { transform: translateY(0); }
+
+.panel-handle {
+  width: 36px; height: 4px;
+  background: var(--border); border-radius: 2px;
+  margin: 0 auto 22px;
+}
+.panel-title {
+  font-size: 14px; font-weight: 600;
+  letter-spacing: 0.06em; margin-bottom: 18px; color: var(--ink);
+}
+
+.drop-zone {
+  border: 2px dashed var(--border); border-radius: 10px;
+  padding: 26px 16px; text-align: center; cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  margin-bottom: 12px; background: #fafafa; position: relative;
+}
+.drop-zone:hover, .drop-zone.drag-over { border-color: var(--ink); background: #f0f0f0; }
+.drop-zone input[type=file] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+.dz-icon { font-size: 24px; margin-bottom: 6px; }
+.dz-label { font-size: 12px; font-weight: 500; color: var(--ink); display: block; margin-bottom: 4px; }
+.dz-hint { font-size: 11px; color: var(--ink-soft); }
+
+.preview-grid {
+  display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; margin-bottom: 14px;
+}
+.p-thumb { aspect-ratio: 1; border-radius: 6px; overflow: hidden; position: relative; background: var(--border); }
+.p-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.p-del {
+  position: absolute; top: 3px; right: 3px;
+  width: 18px; height: 18px; background: rgba(0,0,0,0.5); color: #fff;
+  border: none; border-radius: 50%; font-size: 9px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+
+.field-label {
+  font-size: 11px; font-weight: 400; color: var(--ink-soft);
+  letter-spacing: 0.06em; margin-bottom: 6px; display: block;
+}
+.field-input {
+  width: 100%; font-size: 14px; padding: 12px 14px;
+  border: 1px solid var(--border); border-radius: 8px;
+  background: #fafafa; color: var(--ink); outline: none;
+  transition: border-color 0.15s; margin-bottom: 16px;
+}
+.field-input:focus { border-color: var(--ink); }
+.field-input::placeholder { color: var(--ink-soft); font-size: 13px; }
+
+.btn-add {
+  width: 100%; padding: 15px;
+  background: var(--ink); color: var(--white);
+  border: none; border-radius: 10px;
+  font-size: 14px; font-weight: 600; letter-spacing: 0.06em;
+  cursor: pointer; transition: opacity 0.15s;
+}
+.btn-add:hover { opacity: 0.8; }
+.btn-add:disabled { opacity: 0.28; cursor: default; }
+
+/* ── LOADING ── */
+#loading {
+  position: fixed; inset: 0; background: var(--bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 999; gap: 12px;
+}
+.loading-text {
+  font-size: 11px; letter-spacing: 0.1em; color: #aaa;
+}
+.loading-bar-wrap {
+  width: 120px; height: 3px;
+  background: #e0e0e0; border-radius: 2px; overflow: hidden;
+}
+.loading-bar {
+  height: 100%; width: 0%;
+  background: var(--ink); border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card img, .panel { transition: none; }
+}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="loading-text">読み込み中…</div>
+  <div class="loading-bar-wrap"><div class="loading-bar" id="loadingBar"></div></div>
+</div>
+
+<button class="admin-btn" id="adminBtn" onclick="toggleAdmin()">管理</button>
+<button class="download-btn" id="downloadBtn" onclick="downloadHTML()">保存</button>
+
+<div class="wrap">
+  <div class="header-pair">
+    <div class="banner-slot" id="banner1">
+      <span class="slot-label">HEADER 1</span>
+      <div class="banner-edit" onclick="triggerBanner(1)"><span>画像を設定</span></div>
+      <input type="file" class="banner-file" id="bannerFile1" accept="image/*" onchange="onBannerFile(1,this)">
+    </div>
+    <div class="banner-slot" id="banner2">
+      <span class="slot-label">HEADER 2</span>
+      <div class="banner-edit" onclick="triggerBanner(2)"><span>画像を設定</span></div>
+      <input type="file" class="banner-file" id="bannerFile2" accept="image/*" onchange="onBannerFile(2,this)">
+    </div>
+  </div>
+
+  <div id="cardContainer"></div>
+
+  <div class="footer-section">
+    <footer>ASOBIVA — i.roiro</footer>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closePanel()"></div>
+<div class="panel" id="panel">
+  <div class="panel-handle"></div>
+  <div class="panel-title">カードを追加</div>
+  <div class="drop-zone" id="dropZone">
+    <input type="file" id="fileInput" accept="image/*" multiple onchange="onFileSelect(this.files)">
+    <div class="dz-icon">🖼️</div>
+    <span class="dz-label">画像を選択 または ドロップ</span>
+    <span class="dz-hint">JPG · PNG · GIF · WEBP　複数選択可</span>
+  </div>
+  <div class="preview-grid" id="previewGrid"></div>
+  <label class="field-label" for="linkUrl">リンク先URL（任意）</label>
+  <input class="field-input" id="linkUrl" type="url" placeholder="https://note.com/...">
+  <button class="btn-add" id="addBtn" onclick="addCards()" disabled>追加する</button>
+</div>
+
+<script>
+// ── IndexedDB (Base64ストレージ) ──────────────
+const DB_NAME = 'asobiva_b64';
+let db;
+
+function openDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains('cards'))
+        d.createObjectStore('cards', { keyPath: 'id', autoIncrement: true });
+      if (!d.objectStoreNames.contains('banners'))
+        d.createObjectStore('banners', { keyPath: 'slot' });
+    };
+    req.onsuccess = e => { db = e.target.result; res(); };
+    req.onerror = e => rej(e);
+  });
+}
+
+function dbOp(store, mode, fn) {
+  return new Promise((res, rej) => {
+    const req = fn(db.transaction(store, mode).objectStore(store));
+    req.onsuccess = e => res(e.target.result);
+    req.onerror = e => rej(e);
+  });
+}
+
+// ── ファイル → Base64 変換 ────────────────────
+function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const reader = new FileReader();
+    reader.onload = e => res(e.target.result); // "data:image/jpeg;base64,..."
+    reader.onerror = rej;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ── State ─────────────────────────────────────
+let cards = [];       // [{ id, base64, link }]
+let banners = { 1: null, 2: null }; // base64 strings
+let pendingFiles = [];
+let adminMode = false;
+
+// ── Init ──────────────────────────────────────
+async function init() {
+  setLoadingBar(10);
+  await openDB();
+  setLoadingBar(30);
+
+  // banners
+  for (const slot of [1, 2]) {
+    try {
+      const row = await dbOp('banners', 'readonly', s => s.get(slot));
+      if (row?.base64) { banners[slot] = row.base64; applyBanner(slot, row.base64); }
+    } catch {}
+  }
+  setLoadingBar(60);
+
+  // cards
+  const rows = await dbOp('cards', 'readonly', s => s.getAll());
+  cards = rows.map(r => ({ id: r.id, base64: r.base64, link: r.link || '' }));
+  setLoadingBar(100);
+
+  setTimeout(() => {
+    document.getElementById('loading').style.display = 'none';
+    render();
+  }, 200);
+}
+
+function setLoadingBar(pct) {
+  document.getElementById('loadingBar').style.width = pct + '%';
+}
+
+// ── Banners ───────────────────────────────────
+function triggerBanner(slot) {
+  document.getElementById('bannerFile' + slot).click();
+}
+
+async function onBannerFile(slot, input) {
+  const f = input.files[0];
+  if (!f) return;
+  const base64 = await fileToBase64(f);
+  await dbOp('banners', 'readwrite', s => s.put({ slot, base64 }));
+  banners[slot] = base64;
+  applyBanner(slot, base64);
+}
+
+function applyBanner(slot, base64) {
+  const el = document.getElementById('banner' + slot);
+  el.querySelector('.slot-label')?.remove();
+  el.querySelector('img')?.remove();
+  const img = document.createElement('img');
+  img.src = base64;
+  img.alt = '';
+  el.insertBefore(img, el.querySelector('.banner-edit'));
+}
+
+// ── Render ────────────────────────────────────
+function render() {
+  const container = document.getElementById('cardContainer');
+  container.innerHTML = '';
+
+  if (cards.length === 0 && !adminMode) {
+    const sec = document.createElement('div');
+    sec.className = 'empty-section';
+    sec.innerHTML = '<div class="empty-state"><strong>まだカードがありません</strong>右上の「管理」から追加できます</div>';
+    container.appendChild(sec);
+  }
+
+  cards.forEach(c => {
+    const sec = document.createElement('div');
+    sec.className = 'card-section';
+
+    const a = document.createElement('a');
+    a.className = 'card';
+    a.href = adminMode ? '#' : (c.link || '#');
+    if (!adminMode && c.link) a.target = '_blank';
+    a.rel = 'noopener';
+
+    const img = document.createElement('img');
+    img.src = c.base64;
+    img.alt = '';
+    img.loading = 'lazy';
+
+    const replaceBtn = document.createElement('button');
+    replaceBtn.className = 'card-replace';
+    replaceBtn.title = '差し替え';
+    replaceBtn.textContent = '⇄';
+
+    const replaceInput = document.createElement('input');
+    replaceInput.type = 'file';
+    replaceInput.accept = 'image/*';
+    replaceInput.className = 'card-replace-input';
+    replaceInput.addEventListener('change', e => {
+      e.preventDefault(); e.stopPropagation();
+      const f = e.target.files[0];
+      if (f) replaceCard(c.id, f);
+    });
+
+    replaceBtn.addEventListener('click', e => {
+      e.preventDefault(); e.stopPropagation();
+      replaceInput.click();
+    });
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'card-del';
+    delBtn.title = '削除';
+    delBtn.textContent = '✕';
+    delBtn.addEventListener('click', e => {
+      e.preventDefault(); e.stopPropagation();
+      deleteCard(c.id);
+    });
+
+    a.appendChild(img);
+    a.appendChild(replaceBtn);
+    a.appendChild(replaceInput);
+    a.appendChild(delBtn);
+    sec.appendChild(a);
+    container.appendChild(sec);
+  });
+
+  if (adminMode) {
+    const addSec = document.createElement('div');
+    addSec.className = 'add-section';
+    const btn = document.createElement('button');
+    btn.className = 'add-card-btn';
+    btn.onclick = openPanel;
+    btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> カードを追加`;
+    addSec.appendChild(btn);
+    container.appendChild(addSec);
+  }
+}
+
+// ── Admin ─────────────────────────────────────
+function toggleAdmin() {
+  adminMode = !adminMode;
+  document.body.classList.toggle('admin-mode', adminMode);
+  document.getElementById('adminBtn').classList.toggle('active', adminMode);
+  if (!adminMode) closePanel();
+  render();
+}
+
+// ── Panel ─────────────────────────────────────
+function openPanel() {
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('panel').classList.add('open');
+}
+
+function closePanel() {
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('panel').classList.remove('open');
+  resetForm();
+}
+
+function resetForm() {
+  pendingFiles = [];
+  document.getElementById('fileInput').value = '';
+  document.getElementById('linkUrl').value = '';
+  document.getElementById('previewGrid').innerHTML = '';
+  document.getElementById('addBtn').disabled = true;
+}
+
+// ── File select ───────────────────────────────
+function onFileSelect(files) {
+  for (const f of files) {
+    if (f.type.startsWith('image/')) pendingFiles.push(f);
+  }
+  renderPreviews();
+}
+
+function renderPreviews() {
+  const grid = document.getElementById('previewGrid');
+  grid.innerHTML = '';
+  pendingFiles.forEach((f, i) => {
+    const url = URL.createObjectURL(f);
+    const div = document.createElement('div');
+    div.className = 'p-thumb';
+    const img = document.createElement('img');
+    img.src = url; img.alt = '';
+    const del = document.createElement('button');
+    del.className = 'p-del'; del.textContent = '✕';
+    del.onclick = () => { pendingFiles.splice(i, 1); renderPreviews(); };
+    div.appendChild(img); div.appendChild(del);
+    grid.appendChild(div);
+  });
+  document.getElementById('addBtn').disabled = pendingFiles.length === 0;
+}
+
+// drag & drop
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag-over'); onFileSelect(e.dataTransfer.files); });
+
+// ── Add cards ─────────────────────────────────
+async function addCards() {
+  const link = document.getElementById('linkUrl').value.trim();
+  const btn = document.getElementById('addBtn');
+  btn.disabled = true;
+  btn.textContent = '保存中…';
+
+  for (const f of pendingFiles) {
+    const base64 = await fileToBase64(f);
+    const id = await dbOp('cards', 'readwrite', s => s.add({ base64, link }));
+    cards.push({ id, base64, link });
+  }
+
+  btn.textContent = '追加する';
+  closePanel();
+  render();
+}
+
+// ── Replace ───────────────────────────────────
+async function replaceCard(id, file) {
+  const base64 = await fileToBase64(file);
+  const link = cards.find(c => c.id === id)?.link || '';
+  await dbOp('cards', 'readwrite', s => s.put({ id, base64, link }));
+  const i = cards.findIndex(c => c.id === id);
+  if (i !== -1) cards[i].base64 = base64;
+  render();
+}
+
+// ── Delete ────────────────────────────────────
+async function deleteCard(id) {
+  await dbOp('cards', 'readwrite', s => s.delete(id));
+  const i = cards.findIndex(c => c.id === id);
+  if (i !== -1) cards.splice(i, 1);
+  render();
+}
+
+// ── HTMLとして保存（静的スナップショット） ─────────
+function downloadHTML() {
+  // banner blocks
+  let headerHTML = '';
+  [1, 2].forEach(slot => {
+    if (banners[slot]) {
+      headerHTML += `    <div class="banner-slot"><img src="${banners[slot]}" alt=""></div>\n`;
+    } else {
+      headerHTML += `    <div class="banner-slot"><span class="slot-label">HEADER ${slot}</span></div>\n`;
+    }
+  });
+
+  // card blocks
+  let cardsHTML = '';
+  if (cards.length === 0) {
+    cardsHTML = `  <div class="empty-section"><div class="empty-state"><strong>まだカードがありません</strong></div></div>\n`;
+  } else {
+    cards.forEach(c => {
+      const tag = c.link
+        ? `<a class="card" href="${c.link}" target="_blank" rel="noopener"><img src="${c.base64}" alt=""></a>`
+        : `<div class="card"><img src="${c.base64}" alt=""></div>`;
+      cardsHTML += `  <div class="card-section">${tag}</div>\n`;
+    });
+  }
+
+  const staticCSS = `
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root { --bg:#f3f3f3; --white:#ffffff; --ink:#1a1a1a; --ink-soft:#888; --border:#e0e0e0; }
+body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; }
+.wrap { max-width: 480px; margin: 0 auto; background: var(--bg); min-height: 100vh; }
+.header-pair { display:flex; flex-direction:column; background:var(--white); }
+.banner-slot { width:100%; min-height:80px; background:var(--white); display:flex; align-items:center; justify-content:center; }
+.banner-slot img { width:100%; height:auto; display:block; }
+.slot-label { font-size:10px; letter-spacing:0.12em; color:#ccc; }
+.card-section { background: var(--bg); padding-top:10px; }
+.card { width:100%; display:block; text-decoration:none; background:var(--white); overflow:hidden; }
+.card img { width:100%; height:auto; display:block; }
+.empty-section { background: var(--bg); padding-top:10px; }
+.empty-state { padding:60px 24px; text-align:center; color:var(--ink-soft); font-size:13px; line-height:2; background:var(--white); }
+.empty-state strong { display:block; font-size:14px; font-weight:600; color:var(--ink); margin-bottom:6px; }
+.footer-section { background: var(--bg); padding-top:10px; }
+footer { padding:28px 16px; text-align:center; font-size:10px; letter-spacing:0.1em; color:var(--ink-soft); background:var(--white); }
+`;
+
+  const html = `<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASOBIVA</title>
+<style>${staticCSS}</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header-pair">
+${headerHTML}  </div>
+${cardsHTML}  <div class="footer-section">
+    <footer>ASOBIVA — i.roiro</footer>
+  </div>
+</div>
+</body>
+</html>
+`;
+
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+  a.download = `asobiva_${ts}.html`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+init();
+</script>
+</body>
+</html>

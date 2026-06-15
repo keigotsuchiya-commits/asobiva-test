@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>ほらばな新聞ジェネレーター</title>
+<style>
+*{box-sizing:border-box;}
+body{margin:0;background:#e8e8e4;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Mincho ProN",serif;font-size:15px;color:#111;}
+h1{font-size:20px;margin:0 0 4px;}
+.app{max-width:500px;margin:0 auto;padding:16px;}
+.header{background:#222;color:#fff;padding:12px 16px;border-radius:8px 8px 0 0;}
+.header p{margin:4px 0 0;font-size:12px;color:#aaa;}
+.form-wrap{background:#fff;padding:16px;border-radius:0 0 8px 8px;margin-bottom:16px;}
+.section{border:1px solid #ddd;border-radius:6px;padding:12px;margin-bottom:12px;}
+.section-title{font-size:13px;font-weight:bold;color:#555;margin:0 0 8px;letter-spacing:.05em;}
+label{font-size:13px;color:#444;display:block;margin-bottom:3px;}
+input[type=text],textarea{width:100%;border:1px solid #ccc;border-radius:4px;padding:7px 8px;font-size:14px;font-family:inherit;margin-bottom:8px;}
+textarea{resize:vertical;min-height:80px;}
+input[type=file]{font-size:13px;margin-bottom:8px;display:block;width:100%;}
+.btn-generate{width:100%;background:#222;color:#fff;border:none;border-radius:6px;padding:14px;font-size:16px;font-family:inherit;cursor:pointer;}
+.btn-generate:active{background:#444;}
+.output-wrap{display:none;}
+.btn-download{width:100%;background:#1a6e3c;color:#fff;border:none;border-radius:6px;padding:14px;font-size:16px;font-family:inherit;cursor:pointer;margin-bottom:12px;}
+.btn-download:active{background:#145230;}
+.preview-label{font-size:12px;color:#666;margin-bottom:6px;}
+#preview-frame{width:100%;height:600px;border:1px solid #ccc;border-radius:6px;background:#fff;}
+#drop-zone{border:2px dashed #bbb;border-radius:8px;padding:20px;text-align:center;cursor:pointer;background:#fafafa;}
+#drop-zone.dragover{background:#f0f4ff;border-color:#557;}
+#drop-icon{font-size:32px;margin-bottom:4px;}
+#drop-msg{font-size:15px;font-weight:bold;color:#333;}
+#drop-sub{font-size:12px;color:#888;margin-top:4px;}
+#drop-status{font-size:13px;margin-top:8px;color:#1a6e3c;min-height:18px;}
+#paste-status{font-size:13px;color:#1a6e3c;min-height:18px;margin-bottom:4px;}
+.btn-paste{width:100%;background:#444;color:#fff;border:none;border-radius:4px;padding:9px;font-size:14px;font-family:inherit;cursor:pointer;margin-bottom:6px;}
+.btn-paste:active{background:#666;}
+.btn-tmpl{background:none;border:1px solid #bbb;border-radius:4px;padding:6px 12px;font-size:12px;color:#555;cursor:pointer;font-family:inherit;margin-top:6px;}
+.btn-tmpl:active{background:#eee;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>ほらばな新聞</h1>
+    <p>新聞ジェネレーター</p>
+  </div>
+  <div class="form-wrap">
+
+    <!-- 一括入力 -->
+    <div class="section">
+      <div class="section-title">テキストで一括入力</div>
+      <div id="drop-zone">
+        <div id="drop-icon">📄</div>
+        <div id="drop-msg">txtファイルをここにドロップ</div>
+        <div id="drop-sub">またはタップしてファイルを選択</div>
+        <input type="file" id="txt-file-input" accept=".txt,text/plain" style="display:none;"/>
+      </div>
+      <div id="drop-status"></div>
+      <div style="margin:10px 0 6px;font-size:13px;color:#555;font-weight:bold;">または原稿をここに貼り付け</div>
+      <textarea id="paste-area" placeholder="【号数】第318号&#10;【発行日】令和7年6月10日&#10;【一面見出し】見出しを入力&#10;..." style="min-height:120px;background:#fafafa;"></textarea>
+      <button class="btn-paste" onclick="loadFromPaste()">貼り付けた内容を読み込む</button>
+      <div id="paste-status"></div>
+      <button class="btn-tmpl" onclick="downloadTemplate()">テンプレートをダウンロード</button>
+    </div>
+
+    <!-- 紙面情報 -->
+    <div class="section">
+      <div class="section-title">紙面情報</div>
+      <label>新聞名ロゴ画像</label>
+      <input type="file" id="paper-logo" accept="image/*"/>
+      <label style="color:#888;font-size:12px;">※ロゴなし時の代替テキスト</label>
+      <input type="text" id="paper-name" value="ほらばな新聞"/>
+      <div style="display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:8px;">
+        <div><label>号数</label><input type="text" id="issue-num" placeholder="第318号"/></div>
+        <div><label>発行日</label><input type="text" id="issue-date" placeholder="令和7年6月10日"/></div>
+        <div><label>定価</label><input type="text" id="issue-price" placeholder="150円"/></div>
+      </div>
+      <label>発行元</label>
+      <input type="text" id="publisher" placeholder="ほらばな新聞社"/>
+    </div>
+
+    <!-- 一面記事 -->
+    <div class="section">
+      <div class="section-title">一面記事</div>
+      <label>見出し（黒帯）</label><input type="text" id="main-headline" placeholder="大見出し"/>
+      <label>発信（時間・場所など）</label><input type="text" id="main-dispatch" placeholder="例: 東京・午後3時"/>
+      <label>本文</label><textarea id="main-body" placeholder="記事本文（改行で段落分け）"></textarea>
+      <label>記者名</label><input type="text" id="main-byline" placeholder="政治部・山田太郎"/>
+      <label>写真（任意）</label><input type="file" id="main-photo" accept="image/*"/>
+    </div>
+
+    <!-- 小記事1 -->
+    <div class="section">
+      <div class="section-title">小記事①</div>
+      <label>見出し</label><input type="text" id="s1-headline"/>
+      <label>発信（時間・場所など）</label><input type="text" id="s1-dispatch" placeholder="例: 大阪・午前10時"/>
+      <label>本文</label><textarea id="s1-body" style="min-height:60px;"></textarea>
+      <label>記者名</label><input type="text" id="s1-byline"/>
+      <label>写真（任意）</label><input type="file" id="s1-photo" accept="image/*"/>
+    </div>
+
+    <!-- 小記事2 -->
+    <div class="section">
+      <div class="section-title">小記事②</div>
+      <label>見出し</label><input type="text" id="s2-headline"/>
+      <label>発信（時間・場所など）</label><input type="text" id="s2-dispatch" placeholder="例: 名古屋・正午"/>
+      <label>本文</label><textarea id="s2-body" style="min-height:60px;"></textarea>
+      <label>記者名</label><input type="text" id="s2-byline"/>
+      <label>写真（任意）</label><input type="file" id="s2-photo" accept="image/*"/>
+    </div>
+
+    <!-- 小記事3 -->
+    <div class="section">
+      <div class="section-title">小記事③</div>
+      <label>見出し</label><input type="text" id="s3-headline"/>
+      <label>発信（時間・場所など）</label><input type="text" id="s3-dispatch" placeholder="例: 福岡・夕刻"/>
+      <label>本文</label><textarea id="s3-body" style="min-height:60px;"></textarea>
+      <label>記者名</label><input type="text" id="s3-byline"/>
+      <label>写真（任意）</label><input type="file" id="s3-photo" accept="image/*"/>
+    </div>
+
+    <!-- 広告 -->
+    <div class="section">
+      <div class="section-title">広告</div>
+      <label>広告タイトル</label><input type="text" id="ad-title" placeholder="新製品「○○」好評発売中"/>
+      <label>広告コピー</label><textarea id="ad-copy" style="min-height:60px;"></textarea>
+      <label>企業名</label><input type="text" id="ad-company" placeholder="株式会社○○"/>
+      <label>写真（任意）</label><input type="file" id="ad-photo" accept="image/*"/>
+    </div>
+
+    <button class="btn-generate" onclick="generate()">HTMLを生成する</button>
+  </div>
+
+  <div class="output-wrap" id="output-wrap">
+    <button class="btn-download" onclick="dlFile()">HTMLをダウンロード</button>
+    <div class="preview-label">プレビュー</div>
+    <iframe id="preview-frame"></iframe>
+  </div>
+</div>
+
+<script>
+// ドラッグ&ドロップ
+var dz = document.getElementById('drop-zone');
+var ti = document.getElementById('txt-file-input');
+dz.addEventListener('click', function(){ ti.click(); });
+ti.addEventListener('change', function(e){ if(e.target.files[0]) loadTxt(e.target.files[0]); });
+dz.addEventListener('dragover', function(e){ e.preventDefault(); dz.classList.add('dragover'); });
+dz.addEventListener('dragleave', function(){ dz.classList.remove('dragover'); });
+dz.addEventListener('drop', function(e){
+  e.preventDefault(); dz.classList.remove('dragover');
+  if(e.dataTransfer.files[0]) loadTxt(e.dataTransfer.files[0]);
+});
+
+function loadTxt(file){
+  var r = new FileReader();
+  r.onload = function(e){
+    parseTxt(e.target.result);
+    document.getElementById('drop-status').textContent = '✅ ' + file.name + ' を読み込みました';
+  };
+  r.readAsText(file, 'UTF-8');
+}
+
+function loadFromPaste(){
+  var text = document.getElementById('paste-area').value;
+  var st = document.getElementById('paste-status');
+  if(!text.trim()){ st.textContent = '⚠️ テキストが入力されていません'; return; }
+  parseTxt(text);
+  st.textContent = '✅ 読み込みました';
+}
+
+function parseTxt(text){
+  function get(key){
+    var pat = '【' + key + '】';
+    var idx = text.indexOf(pat);
+    if(idx === -1) return '';
+    var after = text.slice(idx + pat.length);
+    var end = after.search(/【/);
+    var chunk = end === -1 ? after : after.slice(0, end);
+    return chunk.trim();
+  }
+  function set(id, val){ var el=document.getElementById(id); if(el) el.value=val; }
+  set('issue-num',      get('号数'));
+  set('issue-date',     get('発行日'));
+  set('issue-price',    get('定価'));
+  set('publisher',      get('発行元'));
+  set('main-headline',  get('一面見出し'));
+  set('main-dispatch',  get('一面発信'));
+  set('main-body',      get('一面本文'));
+  set('main-byline',    get('一面記者'));
+  set('s1-headline',    get('小記事1見出し'));
+  set('s1-dispatch',    get('小記事1発信'));
+  set('s1-body',        get('小記事1本文'));
+  set('s1-byline',      get('小記事1記者'));
+  set('s2-headline',    get('小記事2見出し'));
+  set('s2-dispatch',    get('小記事2発信'));
+  set('s2-body',        get('小記事2本文'));
+  set('s2-byline',      get('小記事2記者'));
+  set('s3-headline',    get('小記事3見出し'));
+  set('s3-dispatch',    get('小記事3発信'));
+  set('s3-body',        get('小記事3本文'));
+  set('s3-byline',      get('小記事3記者'));
+  set('ad-title',       get('広告タイトル'));
+  set('ad-copy',        get('広告コピー'));
+  set('ad-company',     get('広告企業'));
+}
+
+function downloadTemplate(){
+  var tmpl = "【号数】第318号\n【発行日】令和7年6月10日\n【定価】150円\n【発行元】ほらばな新聞社\n\n【一面見出し】ここに大見出しを入力\n【一面発信】東京・午後3時\n【一面本文】\nここに本文を入力します。\n改行すると段落が分かれます。\n【一面記者】政治部・山田太郎\n\n【小記事1見出し】小記事①の見出し\n【小記事1発信】大阪・午前10時\n【小記事1本文】\n小記事①の本文をここに入力。\n【小記事1記者】社会部・鈴木花子\n\n【小記事2見出し】小記事②の見出し\n【小記事2発信】名古屋・正午\n【小記事2本文】\n小記事②の本文をここに入力。\n【小記事2記者】経済部・田中一郎\n\n【小記事3見出し】小記事③の見出し\n【小記事3発信】福岡・夕刻\n【小記事3本文】\n小記事③の本文をここに入力。\n【小記事3記者】文化部・佐藤美咲\n\n【広告タイトル】新製品「○○」好評発売中\n【広告コピー】キャッチコピーをここに入力\n【広告企業】株式会社○○\n";
+  var blob = new Blob([tmpl], {type:'text/plain;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'horabana_template.txt';
+  a.click();
+}
+
+function readImg(inputId){
+  return new Promise(function(resolve){
+    var el = document.getElementById(inputId);
+    if(!el || !el.files || !el.files[0]){ resolve(null); return; }
+    var r = new FileReader();
+    r.onload = function(e){ resolve(e.target.result); };
+    r.readAsDataURL(el.files[0]);
+  });
+}
+
+function esc(s){
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function bodyToP(text){
+  return (text||'').split('\n').filter(function(l){ return l.trim(); }).map(function(l){ return '<p>'+esc(l)+'</p>'; }).join('\n');
+}
+
+async function generate(){
+  var paperLogo = await readImg('paper-logo');
+  var paperName = document.getElementById('paper-name').value;
+  var issueNum  = document.getElementById('issue-num').value;
+  var issueDate = document.getElementById('issue-date').value;
+  var issuePrice= document.getElementById('issue-price').value;
+  var publisher = document.getElementById('publisher').value;
+  var mainH  = document.getElementById('main-headline').value;
+  var mainDp = document.getElementById('main-dispatch').value;
+  var mainB  = document.getElementById('main-body').value;
+  var mainBy = document.getElementById('main-byline').value;
+  var mainP  = await readImg('main-photo');
+  var s1h = document.getElementById('s1-headline').value;
+  var s1dp= document.getElementById('s1-dispatch').value;
+  var s1b = document.getElementById('s1-body').value;
+  var s1by= document.getElementById('s1-byline').value;
+  var s1p = await readImg('s1-photo');
+  var s2h = document.getElementById('s2-headline').value;
+  var s2dp= document.getElementById('s2-dispatch').value;
+  var s2b = document.getElementById('s2-body').value;
+  var s2by= document.getElementById('s2-byline').value;
+  var s2p = await readImg('s2-photo');
+  var s3h = document.getElementById('s3-headline').value;
+  var s3dp= document.getElementById('s3-dispatch').value;
+  var s3b = document.getElementById('s3-body').value;
+  var s3by= document.getElementById('s3-byline').value;
+  var s3p = await readImg('s3-photo');
+  var adTitle = document.getElementById('ad-title').value;
+  var adCopy  = document.getElementById('ad-copy').value;
+  var adCo    = document.getElementById('ad-company').value;
+  var adP     = await readImg('ad-photo');
+
+  var metaParts = [esc(issueNum), esc(issueDate), esc(issuePrice)].filter(Boolean).join('　');
+  var logoHtml = paperLogo
+    ? '<div class="logo-wrap"><img class="paper-logo" src="'+paperLogo+'" alt="'+esc(paperName)+'"/></div>'
+    : '<div class="title">'+esc(paperName)+'</div>';
+
+  function dispatch(dp){ return dp ? '<div class="dispatch">【'+esc(dp)+'】</div>' : ''; }
+
+  var html = '<!DOCTYPE html>\n<html lang="ja">\n<head>\n<meta charset="utf-8"/>\n<meta name="viewport" content="width=device-width,initial-scale=1"/>\n<title>'+esc(paperName)+' '+esc(issueNum)+'</title>\n<style>\nbody{margin:0;background:#f2f2ee;color:#111;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Mincho ProN",serif;line-height:1.9;}\n.paper{max-width:430px;margin:0 auto;background:#fff;padding:20px;box-sizing:border-box;}\n.masthead{border-top:4px solid #000;border-bottom:4px solid #000;padding:12px 0;margin-bottom:20px;}\n.title{font-size:42px;font-weight:700;}\n.meta{font-size:13px;text-align:right;padding-right:4px;}\nh1{font-size:clamp(28px,8vw,34px);margin:0 0 12px;line-height:1.3;}\nh2{font-size:24px;margin:32px 0 8px;}\n.hero{display:flex;align-items:center;justify-content:center;margin-bottom:4px;background:#f7f7f7;}\n.thumb{display:flex;align-items:center;justify-content:center;margin:8px 0 12px;background:#f7f7f7;}\n.hero img,.thumb img{width:100%;height:100%;object-fit:cover;display:block;}\n.byline{text-align:right;font-size:14px;margin-top:10px;}\n.dispatch{font-size:0.85em;color:#111;margin:0 0 0.5em;line-height:1.5;}\n.headline-band{background:#111;color:#fff;padding:10px 12px;margin:0 0 16px;}\n.headline-band h1{color:#fff;margin:0;}\n.ad{border:1px solid #666;padding:12px;margin-top:24px;text-align:center;}\n.ad-inner{width:96%;margin:0 auto;}\n.ad-title{font-size:16px;font-weight:700;text-align:left;margin:0 0 6px;}\n.ad-copy{font-size:20px;font-weight:700;line-height:1.5;text-align:left;margin:4px 0 2px;}\n.company{text-align:right;font-size:11px;color:#666;margin-top:2px;}\n.ad-photo{width:96%!important;max-width:none!important;height:auto!important;display:block;margin:0 auto 10px auto;}\n.logo-wrap{margin-bottom:4px;}\n.paper-logo{max-width:100%;height:auto;display:block;}\n</style>\n</head>\n<body>\n<div class="paper">\n  <div class="masthead">\n    '+logoHtml+'\n    <div class="meta">'+metaParts+'</div>\n  </div>\n  <div class="headline-band"><h1>'+esc(mainH)+'</h1></div>\n  '+(mainP?'<div class="hero"><img src="'+mainP+'" alt=""/></div>':'')+'\n  '+dispatch(mainDp)+'\n  '+bodyToP(mainB)+'\n  '+(mainBy?'<div class="byline">（'+esc(mainBy)+'）</div>':'')+'\n  <h2>'+esc(s1h)+'</h2>\n  '+(s1p?'<div class="thumb"><img src="'+s1p+'" alt=""/></div>':'')+'\n  '+dispatch(s1dp)+'\n  '+bodyToP(s1b)+'\n  '+(s1by?'<div class="byline">（'+esc(s1by)+'）</div>':'')+'\n  <h2>'+esc(s2h)+'</h2>\n  '+(s2p?'<div class="thumb"><img src="'+s2p+'" alt=""/></div>':'')+'\n  '+dispatch(s2dp)+'\n  '+bodyToP(s2b)+'\n  '+(s2by?'<div class="byline">（'+esc(s2by)+'）</div>':'')+'\n  <h2>'+esc(s3h)+'</h2>\n  '+(s3p?'<div class="thumb"><img src="'+s3p+'" alt=""/></div>':'')+'\n  '+dispatch(s3dp)+'\n  '+bodyToP(s3b)+'\n  '+(s3by?'<div class="byline">（'+esc(s3by)+'）</div>':'')+'\n  <div class="ad"><div class="ad-inner">\n    '+(adTitle?'<div class="ad-title">'+esc(adTitle)+'</div>':'')+'\n    '+(adP?'<img class="ad-photo" src="'+adP+'" alt=""/>':'')+'\n    '+(adCopy?'<div class="ad-copy">'+esc(adCopy).replace(/\n/g,'<br/>')+'</div>':'')+'\n    '+(adCo?'<div class="company">'+esc(adCo)+'</div>':'')+'\n  </div></div>\n  '+(publisher?'<div style="text-align:right;font-size:12px;margin-top:16px;color:#888;">発行：'+esc(publisher)+'</div>':'')+'\n</div>\n</body>\n</html>';
+
+  var frame = document.getElementById('preview-frame');
+  var doc = frame.contentDocument || frame.contentWindow.document;
+  doc.open(); doc.write(html); doc.close();
+
+  window._html = html;
+  window._fname = (issueNum||'horabana').replace(/\s+/g,'_') + '.html';
+  document.getElementById('output-wrap').style.display = 'block';
+  document.getElementById('output-wrap').scrollIntoView({behavior:'smooth'});
+}
+
+function dlFile(){
+  var blob = new Blob([window._html], {type:'text/html;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = window._fname || 'horabana.html';
+  a.click();
+}
+</script>
+</body>
+</html>
