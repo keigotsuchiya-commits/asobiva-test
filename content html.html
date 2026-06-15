@@ -653,7 +653,7 @@ function render() {
       const iframe = document.createElement('iframe');
       iframe.srcdoc = injectAutoResize(c.html);
       iframe.loading = 'lazy';
-      iframe.sandbox = 'allow-scripts allow-popups allow-forms';
+      iframe.sandbox = 'allow-scripts allow-popups allow-forms allow-same-origin';
       iframe.addEventListener('load', () => {
         iframe.contentWindow.postMessage({ type: 'asobiva-init' }, '*');
       });
@@ -861,7 +861,7 @@ function downloadHTML() {
         cardsHTML += `  <div class="card-section">${tag}</div>\n`;
       } else {
         const escaped = injectAutoResize(c.html).replace(/"/g, '&quot;');
-        cardsHTML += `  <div class="card-section"><div class="html-card"><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms" style="height:100px" onload="this.contentWindow.postMessage({type:'asobiva-init'},'*')"></iframe></div></div>\n`;
+        cardsHTML += `  <div class="card-section"><div class="html-card"><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:100px" onload="this.contentWindow.postMessage({type:'asobiva-init'},'*')"></iframe></div></div>\n`;
       }
     });
   }
