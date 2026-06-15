@@ -2,4 +2,4 @@ name = "asobiva-test-html"
 compatibility_date = "2024-01-01"
 
 [assets]
-directory = "./public"
+directory = "./"
