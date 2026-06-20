@@ -174,17 +174,17 @@
 
   #demoBadge {
     position: absolute;
-    top: 10px;
+    bottom: 130px;
     left: 50%;
     transform: translateX(-50%);
     color: #ffd23f;
-    font-size: 12px;
+    font-size: 13px;
     letter-spacing: 3px;
     text-shadow: 0 0 8px #ffd23f;
     border: 1px solid #ffd23f;
-    padding: 3px 10px;
+    padding: 5px 14px;
     border-radius: 4px;
-    background: rgba(10,10,18,0.7);
+    background: rgba(10,10,18,0.75);
     z-index: 5;
     animation: blink 1.4s infinite;
   }
@@ -238,6 +238,7 @@
 <div id="tapHint">TAP CONTROLS TO PLAY</div>
 
 <script>
+window.ASOBIVA_GAME = true;
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
@@ -587,6 +588,13 @@ function exitDemoIfActive() {
     gameRunning = true;
   }
 }
+
+// allows the parent page (games hub) to exit demo mode from its own
+// "TAP TO START" overlay, since that overlay sits above this iframe
+// and intercepts the tap before it reaches the in-game controls
+window.addEventListener('message', e => {
+  if (e.data && e.data.type === 'asobiva-start-play') exitDemoIfActive();
+});
 
 bindHold(leftBtn, () => { exitDemoIfActive(); player.movingLeft = true; }, () => player.movingLeft = false);
 bindHold(rightBtn, () => { exitDemoIfActive(); player.movingRight = true; }, () => player.movingRight = false);

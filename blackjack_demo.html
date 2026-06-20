@@ -300,17 +300,17 @@
 
   #demoBadge {
     position: absolute;
-    top: 8px;
+    bottom: 90px;
     left: 50%;
     transform: translateX(-50%);
     color: #ffd23f;
-    font-size: 12px;
+    font-size: 13px;
     letter-spacing: 3px;
     text-shadow: 0 0 8px #ffd23f;
     border: 1px solid #ffd23f;
-    padding: 3px 10px;
+    padding: 5px 14px;
     border-radius: 4px;
-    background: rgba(10,10,18,0.7);
+    background: rgba(10,10,18,0.75);
     z-index: 6;
     animation: blink 1.4s infinite;
   }
@@ -369,6 +369,7 @@
 </div>
 
 <script>
+window.ASOBIVA_GAME = true;
 const SUITS = [
   { sym: '♠', color: 'black' },
   { sym: '♥', color: 'red' },
@@ -649,6 +650,10 @@ function exitDemoIfActive() {
   }
 }
 
+window.addEventListener('message', e => {
+  if (e.data && e.data.type === 'asobiva-start-play') exitDemoIfActive();
+});
+
 document.querySelectorAll('.chipBtn').forEach(btn => {
   btn.addEventListener('click', () => {
     exitDemoIfActive();
@@ -682,10 +687,8 @@ chips = 1000;
 bet = 0;
 updateHUD();
 document.getElementById('demoBadge').classList.remove('hidden');
-setTimeout(() => {
-  document.getElementById('overlay').classList.add('hidden');
-  resetRound();
-}, 1800);
+document.getElementById('overlay').classList.add('hidden');
+setTimeout(() => { resetRound(); }, 500);
 </script>
 </body>
 </html>
