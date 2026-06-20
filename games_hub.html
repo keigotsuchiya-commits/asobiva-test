@@ -535,6 +535,49 @@ footer {
   background: #0a0a12;
 }
 
+/* ── TAP TO START prompt shown over the fullscreen demo until the player taps ──
+   positioned below the topbar (not inset:0 on the whole overlay), so the
+   close (✕) button stays clickable even while this prompt is showing */
+.tap-to-start {
+  position: absolute;
+  top: 56px; /* below the fullscreen-topbar so the close (✕) button stays clickable */
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10,10,18,0.35);
+  cursor: pointer;
+}
+.tap-to-start.show { display: flex; }
+
+.tap-to-start-circle {
+  width: 132px;
+  height: 132px;
+  border-radius: 50%;
+  border: 2px solid #39ff7a;
+  background: rgba(10,10,18,0.85);
+  color: #39ff7a;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.5;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-shadow: 0 0 8px #39ff7a;
+  box-shadow: 0 0 22px rgba(57,255,122,0.35);
+  animation: pulseRing 1.6s ease-in-out infinite;
+}
+
+@keyframes pulseRing {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .card img, .panel { transition: none; }
 }
@@ -594,6 +637,9 @@ footer {
     <button class="close-btn" id="closeFullscreenBtn">✕</button>
   </div>
   <div class="fullscreen-frame-wrap" id="fullscreenFrameWrap"></div>
+  <div class="tap-to-start" id="tapToStart">
+    <div class="tap-to-start-circle">TAP TO<br>START</div>
+  </div>
 </div>
 
 <script>
@@ -791,8 +837,9 @@ function render() {
 
       const frameWrap = document.createElement('div');
       frameWrap.className = 'game-card-frame-wrap';
-      // use the fallback ratio until the iframe reports its real height
-      frameWrap.style.aspectRatio = `${GAME_BASE_W} / ${GAME_BASE_H}`;
+      // height set to 0 initially; scaleFrameToFit (called after this card
+      // is attached to the live DOM, see below) computes and sets the real
+      // px height once frameWrap.clientWidth is available
 
       const iframe = document.createElement('iframe');
       iframe.srcdoc = c.html;
@@ -810,8 +857,8 @@ function render() {
       frameWrap.appendChild(tapCatcher);
 
       // once the game's own DOM has rendered, measure its real height
-      // (e.g. invader/breaker need ~554px for HUD+canvas+controls; this
-      // also automatically adapts if a game's layout changes later)
+      // (e.g. invader/breaker need ~587px for HUD+canvas+controls+demo strip;
+      // this also automatically adapts if a game's layout changes later)
       iframe.addEventListener('load', () => {
         try {
           const doc = iframe.contentWindow.document;
@@ -820,7 +867,6 @@ function render() {
           if (realH && realH > 0) {
             iframe.dataset.realHeight = realH;
             iframe.style.height = realH + 'px';
-            frameWrap.style.aspectRatio = `${GAME_BASE_W} / ${realH}`;
             scaleFrameToFit(frameWrap, iframe, realH);
           }
         } catch (err) {
@@ -965,6 +1011,10 @@ function render() {
 // ── ゲームカード用: スケール処理 ────────────────
 // カード幅がゲームの基準幅(320px)より大きい場合でも、ゲームを拡大はしない
 // （拡大すると操作ボタンが枠の外にはみ出してしまうため、上限を1倍に固定）
+//
+// frameWrap の高さは CSS の aspect-ratio に頼らず、ここで毎回 px で直接計算する。
+// 理由: iOS Safari は JS から aspect-ratio を後から書き換えても再レイアウトが
+// 走らないことがあり、結果としてカードの上下が見切れる不具合が起きていたため。
 function scaleFrameToFit(frameWrap, iframe, contentHeight) {
   const h = contentHeight || GAME_BASE_H;
   const apply = () => {
@@ -975,6 +1025,9 @@ function scaleFrameToFit(frameWrap, iframe, contentHeight) {
     const offsetX = (wrapW - GAME_BASE_W * scale) / 2;
     iframe.style.left = Math.max(0, offsetX) + 'px';
     iframe.style.top = '0px';
+    // frameWrap's height must be set explicitly — the iframe is
+    // position:absolute so it can't contribute to layout height itself
+    frameWrap.style.height = Math.round(h * scale) + 'px';
   };
   apply();
   window.addEventListener('resize', apply);
@@ -1001,12 +1054,43 @@ function openFullscreenGame(html) {
   frameWrap.appendChild(iframe);
 
   overlay.classList.add('open');
+
+  // show "TAP TO START" over the demo until the player taps it; this
+  // makes it clear the fullscreen view is playable, not just a bigger demo
+  const tapToStart = document.getElementById('tapToStart');
+  tapToStart.classList.add('show');
 }
+
+function dismissTapToStart() {
+  const tapToStart = document.getElementById('tapToStart');
+  tapToStart.classList.remove('show');
+  const iframe = document.querySelector('#fullscreenFrameWrap iframe');
+  if (!iframe || !iframe.contentWindow) return;
+
+  // Primary path: call the game's own exitDemoIfActive() directly via
+  // contentWindow. This is more reliable than postMessage for srcdoc
+  // iframes, where some browsers (notably iOS Safari) can be inconsistent
+  // about delivering cross-frame messages.
+  try {
+    if (typeof iframe.contentWindow.exitDemoIfActive === 'function') {
+      iframe.contentWindow.exitDemoIfActive();
+    } else {
+      throw new Error('exitDemoIfActive not found on contentWindow');
+    }
+  } catch (err) {
+    // Fallback: postMessage, in case direct access is blocked for any reason
+    console.warn('direct call failed, falling back to postMessage', err);
+    iframe.contentWindow.postMessage({ type: 'asobiva-start-play' }, '*');
+  }
+}
+document.getElementById('tapToStart').addEventListener('click', dismissTapToStart);
+
 function closeFullscreenGame() {
   const overlay = document.getElementById('fullscreenOverlay');
   const frameWrap = document.getElementById('fullscreenFrameWrap');
   overlay.classList.remove('open');
   frameWrap.innerHTML = '';
+  document.getElementById('tapToStart').classList.remove('show');
 }
 document.getElementById('closeFullscreenBtn').addEventListener('click', closeFullscreenGame);
 
@@ -1214,7 +1298,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .html-card { width:100%; position:relative; background:var(--white); overflow:hidden; }
 .html-card iframe { display:block; width:100%; height:480px; border:none; background:var(--white); }
 .game-card { width:100%; position:relative; background:#0a0a12; overflow:hidden; }
-.game-card-frame-wrap { width:100%; aspect-ratio:320/400; background:#0a0a12; position:relative; overflow:hidden; }
+.game-card-frame-wrap { width:100%; background:#0a0a12; position:relative; overflow:hidden; }
 .game-card-frame-wrap iframe { position:absolute; top:0; left:0; width:320px; height:400px; border:none; pointer-events:none; transform-origin: top left; }
 .game-card-tap { position:absolute; inset:0; z-index:3; cursor:pointer; }
 .carousel-card { width:100%; position:relative; background:var(--white); overflow:hidden; cursor:pointer; }
@@ -1234,6 +1318,10 @@ footer { padding:28px 16px; text-align:center; font-size:10px; letter-spacing:0.
 .close-btn { width:36px; height:36px; border-radius:50%; border:1px solid rgba(255,255,255,0.25); background:rgba(255,255,255,0.06); color:#fff; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 .fullscreen-frame-wrap { flex:1; min-height:0; display:flex; align-items:center; justify-content:center; }
 .fullscreen-frame-wrap iframe { width:100%; height:100%; max-width:480px; border:none; background:#0a0a12; }
+.tap-to-start { position:absolute; top:56px; left:0; right:0; bottom:0; z-index:10; display:none; align-items:center; justify-content:center; background:rgba(10,10,18,0.35); cursor:pointer; }
+.tap-to-start.show { display:flex; }
+.tap-to-start-circle { width:132px; height:132px; border-radius:50%; border:2px solid #39ff7a; background:rgba(10,10,18,0.85); color:#39ff7a; font-size:15px; font-weight:700; letter-spacing:0.08em; line-height:1.5; text-align:center; display:flex; align-items:center; justify-content:center; text-shadow:0 0 8px #39ff7a; box-shadow:0 0 22px rgba(57,255,122,0.35); animation:pulseRing 1.6s ease-in-out infinite; }
+@keyframes pulseRing { 0%,100% { transform:scale(1); } 50% { transform:scale(1.06); } }
 `;
 
   const html = `<!DOCTYPE html>
@@ -1257,6 +1345,7 @@ ${cardsHTML}  <div class="footer-section">
 <div class="fullscreen-overlay" id="fullscreenOverlay">
   <div class="fullscreen-topbar"><button class="close-btn" id="closeFullscreenBtn">✕</button></div>
   <div class="fullscreen-frame-wrap" id="fullscreenFrameWrap"></div>
+  <div class="tap-to-start" id="tapToStart"><div class="tap-to-start-circle">TAP TO<br>START</div></div>
 </div>
 
 <scr` + `ipt>
@@ -1278,16 +1367,48 @@ function cyclerCarousel(el){
   if (count) count.textContent = (idx + 1) + ' / ' + images.length;
 }
 (function(){
+  var GAME_BASE_W = 320;
+  var GAME_BASE_H = 554;
+
+  function applyScale(wrap, iframe, contentH){
+    var w = wrap.clientWidth;
+    if (!w) return;
+    var scale = Math.min(1, w / GAME_BASE_W);
+    iframe.style.transform = 'scale(' + scale + ')';
+    var offsetX = (w - GAME_BASE_W * scale) / 2;
+    iframe.style.left = Math.max(0, offsetX) + 'px';
+    iframe.style.top = '0px';
+    wrap.style.height = Math.round((contentH || GAME_BASE_H) * scale) + 'px';
+  }
+
   function fitGameFrames(){
     document.querySelectorAll('.game-card-frame-wrap').forEach(function(wrap){
       var iframe = wrap.querySelector('iframe');
       if (!iframe) return;
-      var w = wrap.clientWidth;
-      if (!w) return;
-      var scale = w / 320;
-      iframe.style.transform = 'scale(' + scale + ')';
+      var realH = iframe.dataset.realHeight ? parseInt(iframe.dataset.realHeight, 10) : null;
+      applyScale(wrap, iframe, realH);
     });
   }
+
+  // measure each game's true content height once its iframe loads, same
+  // approach as the live admin page — keeps top/bottom from being cropped
+  document.querySelectorAll('.game-card-frame-wrap iframe').forEach(function(iframe){
+    iframe.addEventListener('load', function(){
+      try {
+        var doc = iframe.contentWindow.document;
+        var wrapEl = doc.getElementById('wrap');
+        var realH = wrapEl ? wrapEl.scrollHeight : doc.body.scrollHeight;
+        if (realH && realH > 0) {
+          iframe.dataset.realHeight = realH;
+          iframe.style.height = realH + 'px';
+          applyScale(iframe.closest('.game-card-frame-wrap'), iframe, realH);
+        }
+      } catch (err) {
+        console.warn('could not measure game iframe height, using default', err);
+      }
+    });
+  });
+
   fitGameFrames();
   document.addEventListener('DOMContentLoaded', fitGameFrames);
   window.addEventListener('load', fitGameFrames);
@@ -1306,10 +1427,26 @@ function openFullscreenGameStatic(tapEl){
   iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
   frameWrap.appendChild(iframe);
   overlay.classList.add('open');
+  document.getElementById('tapToStart').classList.add('show');
 }
+document.getElementById('tapToStart').addEventListener('click', function(){
+  document.getElementById('tapToStart').classList.remove('show');
+  var iframe = document.querySelector('#fullscreenFrameWrap iframe');
+  if (!iframe || !iframe.contentWindow) return;
+  try {
+    if (typeof iframe.contentWindow.exitDemoIfActive === 'function') {
+      iframe.contentWindow.exitDemoIfActive();
+    } else {
+      throw new Error('exitDemoIfActive not found on contentWindow');
+    }
+  } catch (err) {
+    iframe.contentWindow.postMessage({ type: 'asobiva-start-play' }, '*');
+  }
+});
 document.getElementById('closeFullscreenBtn').addEventListener('click', function(){
   document.getElementById('fullscreenOverlay').classList.remove('open');
   document.getElementById('fullscreenFrameWrap').innerHTML = '';
+  document.getElementById('tapToStart').classList.remove('show');
 });
 </scr` + `ipt>
 </body>
