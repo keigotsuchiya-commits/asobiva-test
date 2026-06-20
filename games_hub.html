@@ -1011,6 +1011,12 @@ function sizeGameIframeToCard(frameWrap, iframe) {
     iframe.style.height = h + 'px';
   };
   apply();
+  // iOS Safari can take an extra frame (or a brief moment) to settle its
+  // internal layout after an iframe's width/height attributes change,
+  // especially right after the card is first attached to the DOM. Re-apply
+  // on the next frame and once more shortly after as a safety net.
+  requestAnimationFrame(apply);
+  setTimeout(apply, 150);
   if (window.ResizeObserver) {
     const ro = new ResizeObserver(() => {
       if (frameWrap.clientWidth > 0) apply();
