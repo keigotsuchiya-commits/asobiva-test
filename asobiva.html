@@ -184,6 +184,53 @@ body.admin-mode .card-replace { display: flex; }
 
 .card-replace-input { display: none; }
 
+/* ── LINK EDIT BUTTON ── */
+.card-link-btn {
+  display: none;
+  position: absolute;
+  top: 10px; right: 90px;
+  width: 30px; height: 30px;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  font-size: 13px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  transition: background 0.15s;
+}
+.card-link-btn:hover { background: #2266cc; }
+.card-link-btn.has-link { background: rgba(34,102,204,0.85); }
+body.admin-mode .card-link-btn { display: flex; }
+
+/* ── MOVE BUTTONS (bottom-left) ── */
+.card-move {
+  display: none;
+  position: absolute;
+  bottom: 10px; left: 10px;
+  flex-direction: row;
+  gap: 6px;
+  z-index: 5;
+}
+.card-move button {
+  width: 30px; height: 30px;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.card-move button:hover { background: #444; }
+.card-move button:disabled { opacity: 0.3; cursor: default; }
+body.admin-mode .card-move { display: flex; }
+
 /* ── ADD BUTTON ── */
 .add-section {
   background: var(--bg);
@@ -397,6 +444,16 @@ footer {
   <button class="btn-add" id="addBtn" onclick="addCards()" disabled>追加する</button>
 </div>
 
+<!-- リンク編集パネル -->
+<div class="overlay" id="linkEditOverlay" onclick="closeLinkEditor()"></div>
+<div class="panel" id="linkEditPanel">
+  <div class="panel-handle"></div>
+  <div class="panel-title">リンク先を設定</div>
+  <label class="field-label" for="linkEditInput">リンク先URL</label>
+  <input class="field-input" id="linkEditInput" type="url" placeholder="https://note.com/...">
+  <button class="btn-add" onclick="saveLinkEdit()">保存する</button>
+</div>
+
 <script>
 // ── IndexedDB (Base64ストレージ) ──────────────
 const DB_NAME = 'asobiva_b64';
@@ -458,7 +515,8 @@ async function init() {
 
   // cards
   const rows = await dbOp('cards', 'readonly', s => s.getAll());
-  cards = rows.map(r => ({ id: r.id, base64: r.base64, link: r.link || '' }));
+  cards = rows.map(r => ({ id: r.id, base64: r.base64, link: r.link || '', order: (r.order ?? r.id) }));
+  cards.sort((a, b) => a.order - b.order);
   setLoadingBar(100);
 
   setTimeout(() => {
@@ -507,7 +565,7 @@ function render() {
     container.appendChild(sec);
   }
 
-  cards.forEach(c => {
+  cards.forEach((c, idx) => {
     const sec = document.createElement('div');
     sec.className = 'card-section';
 
@@ -542,6 +600,15 @@ function render() {
       replaceInput.click();
     });
 
+    const linkBtn = document.createElement('button');
+    linkBtn.className = 'card-link-btn' + (c.link ? ' has-link' : '');
+    linkBtn.title = 'リンクを設定';
+    linkBtn.textContent = '🔗';
+    linkBtn.addEventListener('click', e => {
+      e.preventDefault(); e.stopPropagation();
+      openLinkEditor(c.id, c.link);
+    });
+
     const delBtn = document.createElement('button');
     delBtn.className = 'card-del';
     delBtn.title = '削除';
@@ -551,10 +618,36 @@ function render() {
       deleteCard(c.id);
     });
 
+    const moveWrap = document.createElement('div');
+    moveWrap.className = 'card-move';
+
+    const upBtn = document.createElement('button');
+    upBtn.textContent = '↑';
+    upBtn.title = '上へ移動';
+    upBtn.disabled = idx === 0;
+    upBtn.addEventListener('click', e => {
+      e.preventDefault(); e.stopPropagation();
+      moveCard(idx, idx - 1);
+    });
+
+    const downBtn = document.createElement('button');
+    downBtn.textContent = '↓';
+    downBtn.title = '下へ移動';
+    downBtn.disabled = idx === cards.length - 1;
+    downBtn.addEventListener('click', e => {
+      e.preventDefault(); e.stopPropagation();
+      moveCard(idx, idx + 1);
+    });
+
+    moveWrap.appendChild(upBtn);
+    moveWrap.appendChild(downBtn);
+
     a.appendChild(img);
     a.appendChild(replaceBtn);
     a.appendChild(replaceInput);
+    a.appendChild(linkBtn);
     a.appendChild(delBtn);
+    a.appendChild(moveWrap);
     sec.appendChild(a);
     container.appendChild(sec);
   });
@@ -639,10 +732,13 @@ async function addCards() {
   btn.disabled = true;
   btn.textContent = '保存中…';
 
+  let nextOrder = cards.length ? Math.max(...cards.map(c => c.order)) + 1 : 1;
+
   for (const f of pendingFiles) {
     const base64 = await fileToBase64(f);
-    const id = await dbOp('cards', 'readwrite', s => s.add({ base64, link }));
-    cards.push({ id, base64, link });
+    const order = nextOrder++;
+    const id = await dbOp('cards', 'readwrite', s => s.add({ base64, link, order }));
+    cards.push({ id, base64, link, order });
   }
 
   btn.textContent = '追加する';
@@ -653,8 +749,10 @@ async function addCards() {
 // ── Replace ───────────────────────────────────
 async function replaceCard(id, file) {
   const base64 = await fileToBase64(file);
-  const link = cards.find(c => c.id === id)?.link || '';
-  await dbOp('cards', 'readwrite', s => s.put({ id, base64, link }));
+  const existing = cards.find(c => c.id === id);
+  const link = existing?.link || '';
+  const order = existing?.order ?? id;
+  await dbOp('cards', 'readwrite', s => s.put({ id, base64, link, order }));
   const i = cards.findIndex(c => c.id === id);
   if (i !== -1) cards[i].base64 = base64;
   render();
@@ -665,6 +763,51 @@ async function deleteCard(id) {
   await dbOp('cards', 'readwrite', s => s.delete(id));
   const i = cards.findIndex(c => c.id === id);
   if (i !== -1) cards.splice(i, 1);
+  render();
+}
+
+// ── Move (reorder) ──────────────────────────────
+async function moveCard(fromIdx, toIdx) {
+  if (toIdx < 0 || toIdx >= cards.length) return;
+  // swap in array
+  const tmp = cards[fromIdx];
+  cards[fromIdx] = cards[toIdx];
+  cards[toIdx] = tmp;
+
+  // reassign order values sequentially based on new array order
+  cards.forEach((c, i) => { c.order = i + 1; });
+
+  // persist all order changes
+  for (const c of cards) {
+    await dbOp('cards', 'readwrite', s => s.put({ id: c.id, base64: c.base64, link: c.link, order: c.order }));
+  }
+  render();
+}
+
+// ── Link editor ─────────────────────────────────
+let linkEditTargetId = null;
+
+function openLinkEditor(id, currentLink) {
+  linkEditTargetId = id;
+  document.getElementById('linkEditInput').value = currentLink || '';
+  document.getElementById('linkEditOverlay').classList.add('open');
+  document.getElementById('linkEditPanel').classList.add('open');
+}
+
+function closeLinkEditor() {
+  document.getElementById('linkEditOverlay').classList.remove('open');
+  document.getElementById('linkEditPanel').classList.remove('open');
+  linkEditTargetId = null;
+}
+
+async function saveLinkEdit() {
+  if (linkEditTargetId === null) return;
+  const link = document.getElementById('linkEditInput').value.trim();
+  const c = cards.find(c => c.id === linkEditTargetId);
+  if (!c) return;
+  c.link = link;
+  await dbOp('cards', 'readwrite', s => s.put({ id: c.id, base64: c.base64, link: c.link, order: c.order }));
+  closeLinkEditor();
   render();
 }
 
