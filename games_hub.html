@@ -239,7 +239,8 @@ body.admin-mode .html-card-label { display: block; }
 }
 .game-card-frame-wrap {
   width: 100%;
-  aspect-ratio: 320 / 400;
+  /* aspect-ratio is set dynamically per game via JS, since each game's
+     real content height differs (e.g. blackjack's table is flexible) */
   background: #0a0a12;
   position: relative;
   overflow: hidden;
@@ -248,11 +249,10 @@ body.admin-mode .html-card-label { display: block; }
   position: absolute;
   top: 0;
   left: 0;
-  width: 320px;
-  height: 400px;
   border: none;
   pointer-events: none;
   transform-origin: top left;
+  /* width/height are set inline via JS to match each game's real content size */
 }
 .game-card-tap {
   position: absolute;
@@ -598,7 +598,9 @@ footer {
 
 <script>
 const GAME_BASE_W = 320;
-const GAME_BASE_H = 400;
+const GAME_BASE_H = 554; // HUD(40) + canvas(404) + controls(110) — the real total layout height,
+                          // not just the 320x400 canvas. Using 400 here was the bug: it cropped
+                          // off the bottom controls once the card was scaled.
 
 // ── IndexedDB (Base64ストレージ) ──────────────
 const DB_NAME = 'asobiva_games_b64';
@@ -789,12 +791,14 @@ function render() {
 
       const frameWrap = document.createElement('div');
       frameWrap.className = 'game-card-frame-wrap';
+      // use the fallback ratio until the iframe reports its real height
+      frameWrap.style.aspectRatio = `${GAME_BASE_W} / ${GAME_BASE_H}`;
 
       const iframe = document.createElement('iframe');
       iframe.srcdoc = c.html;
       iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
-      iframe.width = GAME_BASE_W;
-      iframe.height = GAME_BASE_H;
+      iframe.style.width = GAME_BASE_W + 'px';
+      iframe.style.height = GAME_BASE_H + 'px';
       frameWrap.appendChild(iframe);
 
       const tapCatcher = document.createElement('div');
@@ -804,6 +808,26 @@ function render() {
         openFullscreenGame(c.html);
       });
       frameWrap.appendChild(tapCatcher);
+
+      // once the game's own DOM has rendered, measure its real height
+      // (e.g. invader/breaker need ~554px for HUD+canvas+controls; this
+      // also automatically adapts if a game's layout changes later)
+      iframe.addEventListener('load', () => {
+        try {
+          const doc = iframe.contentWindow.document;
+          const wrapEl = doc.getElementById('wrap');
+          const realH = wrapEl ? wrapEl.scrollHeight : doc.body.scrollHeight;
+          if (realH && realH > 0) {
+            iframe.dataset.realHeight = realH;
+            iframe.style.height = realH + 'px';
+            frameWrap.style.aspectRatio = `${GAME_BASE_W} / ${realH}`;
+            scaleFrameToFit(frameWrap, iframe, realH);
+          }
+        } catch (err) {
+          // cross-origin or sandbox restriction — fall back to default ratio
+          console.warn('could not measure game iframe height, using default', err);
+        }
+      });
 
       wrap.appendChild(frameWrap);
       gameFramesToScale.push({ frameWrap, iframe });
@@ -939,18 +963,21 @@ function render() {
 }
 
 // ── ゲームカード用: スケール処理 ────────────────
-function scaleFrameToFit(frameWrap, iframe) {
+// カード幅がゲームの基準幅(320px)より大きい場合でも、ゲームを拡大はしない
+// （拡大すると操作ボタンが枠の外にはみ出してしまうため、上限を1倍に固定）
+function scaleFrameToFit(frameWrap, iframe, contentHeight) {
+  const h = contentHeight || GAME_BASE_H;
   const apply = () => {
     const wrapW = frameWrap.clientWidth;
     if (!wrapW) return;
-    const scale = wrapW / GAME_BASE_W;
+    const scale = Math.min(1, wrapW / GAME_BASE_W);
     iframe.style.transform = `scale(${scale})`;
+    const offsetX = (wrapW - GAME_BASE_W * scale) / 2;
+    iframe.style.left = Math.max(0, offsetX) + 'px';
+    iframe.style.top = '0px';
   };
   apply();
   window.addEventListener('resize', apply);
-  // safety net: if clientWidth was 0 on first call (layout not settled yet,
-  // e.g. right after admin-mode toggle or fast re-render), keep watching
-  // until it gets a real size, then stop.
   if (window.ResizeObserver) {
     const ro = new ResizeObserver(() => {
       if (frameWrap.clientWidth > 0) {
