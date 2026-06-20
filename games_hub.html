@@ -248,10 +248,10 @@ body.admin-mode .html-card-label { display: block; }
   display: block;
   border: none;
   pointer-events: none !important;
-  /* width/height are set inline via JS (px) to match each game's real
-     content size; zoom (also set via JS) shrinks the actual rendered box,
-     so frameWrap's height is simply determined by normal document flow —
-     no separate height calculation/sync needed on this element. */
+  /* width/height are set inline via JS (px), sized directly to the card's
+     real display size. The games use 100vw/100vh internally, so they
+     naturally fit this box with no transform/zoom involved — frameWrap's
+     height is simply the iframe's own box height via normal flow. */
 }
 .game-card-tap {
   position: absolute;
@@ -643,10 +643,12 @@ footer {
 </div>
 
 <script>
-const GAME_BASE_W = 320;
-const GAME_BASE_H = 554; // HUD(40) + canvas(404) + controls(110) — the real total layout height,
-                          // not just the 320x400 canvas. Using 400 here was the bug: it cropped
-                          // off the bottom controls once the card was scaled.
+// Used for: (1) the fixed preview-card aspect ratio in the card list, and
+// (2) the initial iframe size for the static download snapshot's markup
+// (a real value is needed there since it has no live JS measurement pass
+// before first paint). Not used for fullscreen play — that's always 100%.
+const CARD_ASPECT_W = 320;
+const CARD_ASPECT_H = 460;
 
 // ── IndexedDB (Base64ストレージ) ──────────────
 const DB_NAME = 'asobiva_games_b64';
@@ -841,8 +843,13 @@ function render() {
       const iframe = document.createElement('iframe');
       iframe.srcdoc = c.html;
       iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
-      iframe.style.width = GAME_BASE_W + 'px';
-      iframe.style.height = GAME_BASE_H + 'px';
+      // Sized directly to the card's real display width/height — no CSS
+      // transform:scale or zoom involved. The games use 100vw/100vh
+      // internally, so setting the iframe's actual box to the target size
+      // makes the game render at exactly that size on its own. This avoids
+      // an entire class of bugs where a transform/zoom-based shrink and a
+      // separately-calculated wrapper height could fall out of sync
+      // (confirmed to happen on iOS Safari even when correct on desktop).
       frameWrap.appendChild(iframe);
 
       const tapCatcher = document.createElement('div');
@@ -852,25 +859,6 @@ function render() {
         openFullscreenGame(c.html);
       });
       frameWrap.appendChild(tapCatcher);
-
-      // once the game's own DOM has rendered, measure its real height
-      // (e.g. invader/breaker need ~587px for HUD+canvas+controls+demo strip;
-      // this also automatically adapts if a game's layout changes later)
-      iframe.addEventListener('load', () => {
-        try {
-          const doc = iframe.contentWindow.document;
-          const wrapEl = doc.getElementById('wrap');
-          const realH = wrapEl ? wrapEl.scrollHeight : doc.body.scrollHeight;
-          if (realH && realH > 0) {
-            iframe.dataset.realHeight = realH;
-            iframe.style.height = realH + 'px';
-            zoomFrameToFit(frameWrap, iframe, realH);
-          }
-        } catch (err) {
-          // cross-origin or sandbox restriction — fall back to default ratio
-          console.warn('could not measure game iframe height, using default', err);
-        }
-      });
 
       wrap.appendChild(frameWrap);
       gameFramesToScale.push({ frameWrap, iframe });
@@ -1002,36 +990,30 @@ function render() {
 
   // now that every card is attached to the live DOM, frameWrap has a real
   // clientWidth — safe to compute and apply the scale transform here
-  gameFramesToScale.forEach(({ frameWrap, iframe }) => zoomFrameToFit(frameWrap, iframe));
+  gameFramesToScale.forEach(({ frameWrap, iframe }) => sizeGameIframeToCard(frameWrap, iframe));
 }
 
-// ── ゲームカード用: 縮小表示処理 ────────────────
-// transform:scale ではなく CSS の zoom を使う。理由:
-// transform:scale は見た目だけを縮小し、要素自体のレイアウトサイズ(高さ)は
-// 元のまま変わらないため、周囲の枠(frameWrap)の高さを JS 側で別途計算して
-// 同期させる必要があった。このタイミングのズレ・実機(iOS Safari)での
-// 再計算漏れが、「枠の上下が見切れる」「縮小前の見た目がタップを拾ってしまう」
-// 不具合の原因だった。
-// zoom は要素の実際のレイアウトサイズそのものを縮小するため、frameWrap 側は
-// 通常のレイアウトフローに任せるだけでよく、高さの同期計算が一切不要になる。
-function zoomFrameToFit(frameWrap, iframe, contentHeight) {
-  const h = contentHeight || GAME_BASE_H;
+// ── ゲームカード用: 直接サイズ指定 ────────────────
+// 3つのゲームはいずれも内部で `width:100vw; height:100vh;` を使っているため、
+// iframe の実際の width/height 属性をカードの表示サイズに直接合わせるだけで、
+// ゲーム自身がそのサイズにフィットして描画される。
+// transform:scale や zoom のような「後から縮小する」処理を使うと、縮小後の
+// 見た目とラッパーの高さを JS で別々に計算・同期する必要が生じ、その同期が
+// 実機(iOS Safari)でズレることが確認されたため、この方式に統一した。
+// CARD_ASPECT_W/H は上部で定義済み（プレビューカードの固定縦横比）。
+
+function sizeGameIframeToCard(frameWrap, iframe) {
   const apply = () => {
-    const wrapW = frameWrap.clientWidth;
-    if (!wrapW) return;
-    const scale = Math.min(1, wrapW / GAME_BASE_W);
-    iframe.style.zoom = scale;
-    // center horizontally if the card is wider than the zoomed game (scale capped at 1)
-    iframe.style.marginLeft = Math.max(0, (wrapW - GAME_BASE_W * scale) / 2) + 'px';
+    const w = frameWrap.clientWidth;
+    if (!w) return;
+    const h = Math.round(w * (CARD_ASPECT_H / CARD_ASPECT_W));
+    iframe.style.width = w + 'px';
+    iframe.style.height = h + 'px';
   };
   apply();
-  window.addEventListener('resize', apply);
   if (window.ResizeObserver) {
     const ro = new ResizeObserver(() => {
-      if (frameWrap.clientWidth > 0) {
-        apply();
-        ro.disconnect();
-      }
+      if (frameWrap.clientWidth > 0) apply();
     });
     ro.observe(frameWrap);
   }
@@ -1259,7 +1241,7 @@ function downloadHTML() {
     cards.forEach((c) => {
       if (c.type === 'game') {
         const escaped = c.html.replace(/"/g, '&quot;');
-        cardsHTML += `  <div class="card-section"><div class="game-card"><div class="game-card-frame-wrap"><iframe srcdoc="${escaped}" sandbox="allow-scripts allow-same-origin" width="${GAME_BASE_W}" height="${GAME_BASE_H}"></iframe><div class="game-card-tap" onclick="openFullscreenGameStatic(this)" data-html="${escaped}"></div></div></div></div>\n`;
+        cardsHTML += `  <div class="card-section"><div class="game-card"><div class="game-card-frame-wrap"><iframe srcdoc="${escaped}" sandbox="allow-scripts allow-same-origin" width="${CARD_ASPECT_W}" height="${CARD_ASPECT_H}"></iframe><div class="game-card-tap" onclick="openFullscreenGameStatic(this)" data-html="${escaped}"></div></div></div></div>\n`;
       } else if (c.type === 'image') {
         const tag = c.link
           ? `<a class="card" href="${c.link}" target="_blank" rel="noopener"><img src="${c.base64}" alt=""></a>`
@@ -1294,7 +1276,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .html-card iframe { display:block; width:100%; height:480px; border:none; background:var(--white); }
 .game-card { width:100%; position:relative; background:#0a0a12; overflow:hidden; }
 .game-card-frame-wrap { width:100%; background:#0a0a12; position:relative; overflow:hidden; line-height:0; }
-.game-card-frame-wrap iframe { display:block; width:320px; height:400px; border:none; pointer-events:none; }
+.game-card-frame-wrap iframe { display:block; border:none; pointer-events:none; }
 .game-card-tap { position:absolute; inset:0; z-index:3; cursor:pointer; }
 .carousel-card { width:100%; position:relative; background:var(--white); overflow:hidden; cursor:pointer; }
 .carousel-card img { width:100%; height:auto; display:block; }
@@ -1362,41 +1344,24 @@ function cyclerCarousel(el){
   if (count) count.textContent = (idx + 1) + ' / ' + images.length;
 }
 (function(){
-  var GAME_BASE_W = 320;
+  var CARD_ASPECT_W = 320;
+  var CARD_ASPECT_H = 460;
 
-  function applyZoom(wrap, iframe){
+  function sizeFrame(wrap, iframe){
     var w = wrap.clientWidth;
     if (!w) return;
-    var scale = Math.min(1, w / GAME_BASE_W);
-    iframe.style.zoom = scale;
-    iframe.style.marginLeft = Math.max(0, (w - GAME_BASE_W * scale) / 2) + 'px';
+    var h = Math.round(w * (CARD_ASPECT_H / CARD_ASPECT_W));
+    iframe.style.width = w + 'px';
+    iframe.style.height = h + 'px';
   }
 
   function fitGameFrames(){
     document.querySelectorAll('.game-card-frame-wrap').forEach(function(wrap){
       var iframe = wrap.querySelector('iframe');
       if (!iframe) return;
-      applyZoom(wrap, iframe);
+      sizeFrame(wrap, iframe);
     });
   }
-
-  // measure each game's true content height once its iframe loads, same
-  // approach as the live admin page — keeps top/bottom from being cropped
-  document.querySelectorAll('.game-card-frame-wrap iframe').forEach(function(iframe){
-    iframe.addEventListener('load', function(){
-      try {
-        var doc = iframe.contentWindow.document;
-        var wrapEl = doc.getElementById('wrap');
-        var realH = wrapEl ? wrapEl.scrollHeight : doc.body.scrollHeight;
-        if (realH && realH > 0) {
-          iframe.style.height = realH + 'px';
-          applyZoom(iframe.closest('.game-card-frame-wrap'), iframe);
-        }
-      } catch (err) {
-        console.warn('could not measure game iframe height, using default', err);
-      }
-    });
-  });
 
   fitGameFrames();
   document.addEventListener('DOMContentLoaded', fitGameFrames);
