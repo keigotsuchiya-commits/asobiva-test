@@ -775,6 +775,8 @@ function render() {
     container.appendChild(sec);
   }
 
+  const gameFramesToScale = []; // [{frameWrap, iframe}] — scaled after full DOM attachment below
+
   cards.forEach(c => {
     const sec = document.createElement('div');
     sec.className = 'card-section';
@@ -790,7 +792,6 @@ function render() {
 
       const iframe = document.createElement('iframe');
       iframe.srcdoc = c.html;
-      iframe.loading = 'lazy';
       iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
       iframe.width = GAME_BASE_W;
       iframe.height = GAME_BASE_H;
@@ -805,9 +806,7 @@ function render() {
       frameWrap.appendChild(tapCatcher);
 
       wrap.appendChild(frameWrap);
-
-      // scale to fit card width once attached to DOM
-      requestAnimationFrame(() => scaleFrameToFit(frameWrap, iframe));
+      gameFramesToScale.push({ frameWrap, iframe });
 
       replaceAccept = '.html,text/html';
     } else if (c.type === 'image') {
@@ -933,6 +932,10 @@ function render() {
     addSec.appendChild(btn);
     container.appendChild(addSec);
   }
+
+  // now that every card is attached to the live DOM, frameWrap has a real
+  // clientWidth — safe to compute and apply the scale transform here
+  gameFramesToScale.forEach(({ frameWrap, iframe }) => scaleFrameToFit(frameWrap, iframe));
 }
 
 // ── ゲームカード用: スケール処理 ────────────────
@@ -945,6 +948,18 @@ function scaleFrameToFit(frameWrap, iframe) {
   };
   apply();
   window.addEventListener('resize', apply);
+  // safety net: if clientWidth was 0 on first call (layout not settled yet,
+  // e.g. right after admin-mode toggle or fast re-render), keep watching
+  // until it gets a real size, then stop.
+  if (window.ResizeObserver) {
+    const ro = new ResizeObserver(() => {
+      if (frameWrap.clientWidth > 0) {
+        apply();
+        ro.disconnect();
+      }
+    });
+    ro.observe(frameWrap);
+  }
 }
 
 // ── フルスクリーン再生 ──────────────────────────
@@ -1138,7 +1153,7 @@ function downloadHTML() {
     cards.forEach((c) => {
       if (c.type === 'game') {
         const escaped = c.html.replace(/"/g, '&quot;');
-        cardsHTML += `  <div class="card-section"><div class="game-card"><div class="game-card-frame-wrap"><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-same-origin" width="${GAME_BASE_W}" height="${GAME_BASE_H}"></iframe><div class="game-card-tap" onclick="openFullscreenGameStatic(this)" data-html="${escaped}"></div></div></div></div>\n`;
+        cardsHTML += `  <div class="card-section"><div class="game-card"><div class="game-card-frame-wrap"><iframe srcdoc="${escaped}" sandbox="allow-scripts allow-same-origin" width="${GAME_BASE_W}" height="${GAME_BASE_H}"></iframe><div class="game-card-tap" onclick="openFullscreenGameStatic(this)" data-html="${escaped}"></div></div></div></div>\n`;
       } else if (c.type === 'image') {
         const tag = c.link
           ? `<a class="card" href="${c.link}" target="_blank" rel="noopener"><img src="${c.base64}" alt=""></a>`
@@ -1174,7 +1189,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .game-card { width:100%; position:relative; background:#0a0a12; overflow:hidden; }
 .game-card-frame-wrap { width:100%; aspect-ratio:320/400; background:#0a0a12; position:relative; overflow:hidden; }
 .game-card-frame-wrap iframe { position:absolute; top:0; left:0; width:320px; height:400px; border:none; pointer-events:none; transform-origin: top left; }
-.game-card-tap { position:absolute; inset:0; cursor:pointer; }
+.game-card-tap { position:absolute; inset:0; z-index:3; cursor:pointer; }
 .carousel-card { width:100%; position:relative; background:var(--white); overflow:hidden; cursor:pointer; }
 .carousel-card img { width:100%; height:auto; display:block; }
 .carousel-dots { position:absolute; bottom:10px; left:0; right:0; display:flex; justify-content:center; gap:6px; pointer-events:none; }
@@ -1240,12 +1255,19 @@ function cyclerCarousel(el){
     document.querySelectorAll('.game-card-frame-wrap').forEach(function(wrap){
       var iframe = wrap.querySelector('iframe');
       if (!iframe) return;
-      var scale = wrap.clientWidth / 320;
+      var w = wrap.clientWidth;
+      if (!w) return;
+      var scale = w / 320;
       iframe.style.transform = 'scale(' + scale + ')';
     });
   }
+  fitGameFrames();
+  document.addEventListener('DOMContentLoaded', fitGameFrames);
   window.addEventListener('load', fitGameFrames);
   window.addEventListener('resize', fitGameFrames);
+  // retry briefly in case layout wasn't ready on first pass
+  setTimeout(fitGameFrames, 100);
+  setTimeout(fitGameFrames, 400);
 })();
 function openFullscreenGameStatic(tapEl){
   var html = tapEl.getAttribute('data-html');
