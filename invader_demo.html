@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>DOT INVADER</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  html, body {
+    height: 100%;
+    background: #0a0a12;
+    overflow: hidden;
+    font-family: 'Courier New', monospace;
+  }
+
+  #wrap {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    align-items: center;
+    justify-content: center;
+    background: #0a0a12;
+  }
+
+  #hud {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 14px;
+    color: #39ff7a;
+    font-size: 18px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 8px #39ff7a;
+    flex-shrink: 0;
+  }
+
+  #hud .lives {
+    color: #ff3366;
+    text-shadow: 0 0 8px #ff3366;
+  }
+
+  canvas {
+    background: #0a0a12;
+    display: block;
+    image-rendering: pixelated;
+    border-top: 2px solid #1f2a3a;
+    border-bottom: 2px solid #1f2a3a;
+    max-width: 100%;
+  }
+
+  #controls {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    flex-shrink: 0;
+  }
+
+  .btn {
+    width: 78px;
+    height: 78px;
+    border-radius: 14px;
+    border: 2px solid #39ff7a;
+    background: rgba(57,255,122,0.08);
+    color: #39ff7a;
+    font-size: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.05s, transform 0.05s;
+  }
+
+  .btn:active, .btn.active {
+    background: #39ff7a;
+    color: #0a0a12;
+    transform: scale(0.95);
+  }
+
+  #fireBtn {
+    width: 78px;
+    height: 78px;
+    border-radius: 50%;
+    border: 2px solid #ff3366;
+    background: rgba(255,51,102,0.08);
+    color: #ff3366;
+    font-size: 16px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #fireBtn:active, #fireBtn.active {
+    background: #ff3366;
+    color: #0a0a12;
+    transform: scale(0.95);
+  }
+
+  .moveBtns {
+    display: flex;
+    gap: 14px;
+  }
+
+  #overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(10,10,18,0.92);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #39ff7a;
+    text-align: center;
+    z-index: 10;
+    padding: 20px;
+  }
+
+  #overlay h1 {
+    font-size: 42px;
+    letter-spacing: 6px;
+    text-shadow: 0 0 16px #39ff7a;
+    margin-bottom: 8px;
+  }
+
+  #overlay .sub {
+    color: #6fa8ff;
+    font-size: 14px;
+    letter-spacing: 3px;
+    margin-bottom: 28px;
+  }
+
+  #overlay .msg {
+    font-size: 24px;
+    margin-bottom: 8px;
+    letter-spacing: 3px;
+  }
+
+  #overlay .score {
+    color: #ffd23f;
+    font-size: 18px;
+    margin-bottom: 28px;
+    letter-spacing: 2px;
+  }
+
+  #startBtn {
+    border: 2px solid #39ff7a;
+    color: #39ff7a;
+    background: transparent;
+    padding: 14px 40px;
+    font-size: 18px;
+    letter-spacing: 4px;
+    font-family: inherit;
+    border-radius: 6px;
+  }
+
+  #startBtn:active {
+    background: #39ff7a;
+    color: #0a0a12;
+  }
+
+  .hidden { display: none !important; }
+
+  #demoBadge {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #ffd23f;
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-shadow: 0 0 8px #ffd23f;
+    border: 1px solid #ffd23f;
+    padding: 3px 10px;
+    border-radius: 4px;
+    background: rgba(10,10,18,0.7);
+    z-index: 5;
+    animation: blink 1.4s infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  #tapHint {
+    position: absolute;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #6fa8ff;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 6px #6fa8ff;
+    z-index: 5;
+    animation: blink 1.4s infinite;
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="hud">
+    <span>SCORE <span id="scoreVal">0000</span></span>
+    <span class="lives">LIFE <span id="livesVal">●●●</span></span>
+  </div>
+
+  <canvas id="game" width="320" height="400"></canvas>
+  <div id="demoBadge" class="hidden">DEMO PLAY</div>
+
+  <div id="controls">
+    <div class="moveBtns">
+      <div class="btn" id="leftBtn">◀</div>
+      <div class="btn" id="rightBtn">▶</div>
+    </div>
+    <div id="fireBtn">FIRE</div>
+  </div>
+</div>
+
+<div id="overlay" class="hidden">
+  <h1>DOT INVADER</h1>
+  <div class="sub">PROTOTYPE v0.1</div>
+  <div class="msg" id="overlayMsg">TAP TO PLAY</div>
+  <div class="score hidden" id="finalScore"></div>
+  <button id="startBtn">START</button>
+</div>
+
+<div id="tapHint">TAP CONTROLS TO PLAY</div>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+const W = canvas.width;
+const H = canvas.height;
+
+// --- Game state ---
+let score = 0;
+let lives = 3;
+let gameRunning = false;
+let gameOverFlag = false;
+let demoMode = true; // true = AI auto-play, false = human controlled
+
+// Player
+const player = {
+  w: 20,
+  h: 12,
+  x: W/2 - 10,
+  y: H - 30,
+  speed: 4,
+  movingLeft: false,
+  movingRight: false
+};
+
+// Bullets
+let playerBullets = [];
+let enemyBullets = [];
+
+// Enemies
+let enemies = [];
+const ENEMY_ROWS = 4;
+const ENEMY_COLS = 7;
+const ENEMY_W = 18;
+const ENEMY_H = 14;
+const ENEMY_GAP_X = 8;
+const ENEMY_GAP_Y = 14;
+const ENEMY_START_X = 20;
+const ENEMY_START_Y = 30;
+
+let enemyDir = 1;
+let enemyMoveTimer = 0;
+let enemyMoveInterval = 40; // frames per step, decreases as enemies die
+let enemyDropFlag = false;
+
+let frame = 0;
+
+function initEnemies() {
+  enemies = [];
+  for (let r = 0; r < ENEMY_ROWS; r++) {
+    for (let c = 0; c < ENEMY_COLS; c++) {
+      enemies.push({
+        x: ENEMY_START_X + c * (ENEMY_W + ENEMY_GAP_X),
+        y: ENEMY_START_Y + r * (ENEMY_H + ENEMY_GAP_Y),
+        w: ENEMY_W,
+        h: ENEMY_H,
+        alive: true,
+        type: r % 3
+      });
+    }
+  }
+}
+
+function resetGame() {
+  score = 0;
+  lives = 3;
+  player.x = W/2 - player.w/2;
+  playerBullets = [];
+  enemyBullets = [];
+  enemyDir = 1;
+  enemyMoveTimer = 0;
+  enemyMoveInterval = 40;
+  gameOverFlag = false;
+  initEnemies();
+  updateHUD();
+}
+
+function updateHUD() {
+  document.getElementById('scoreVal').textContent = String(score).padStart(4, '0');
+  document.getElementById('livesVal').textContent = '●'.repeat(Math.max(lives,0)) + '○'.repeat(Math.max(3-lives,0));
+}
+
+// --- Drawing helpers (pixel-art style blocks) ---
+function drawPlayer() {
+  ctx.fillStyle = '#39ff7a';
+  // body
+  ctx.fillRect(player.x, player.y + 4, player.w, player.h - 4);
+  // cannon
+  ctx.fillRect(player.x + player.w/2 - 2, player.y, 4, 6);
+  ctx.shadowColor = '#39ff7a';
+  ctx.shadowBlur = 6;
+  ctx.fillRect(player.x, player.y + 4, player.w, player.h - 4);
+  ctx.shadowBlur = 0;
+}
+
+function drawEnemy(e) {
+  if (!e.alive) return;
+  const colors = ['#ff3366', '#ffd23f', '#6fa8ff'];
+  ctx.fillStyle = colors[e.type];
+  ctx.shadowColor = colors[e.type];
+  ctx.shadowBlur = 5;
+
+  // simple pixel-invader shape (3x3 block grid scaled)
+  const px = e.w / 6;
+  const py = e.h / 5;
+  const pattern = [
+    [0,0,1,1,0,0],
+    [0,1,1,1,1,0],
+    [1,1,1,1,1,1],
+    [1,0,1,1,0,1],
+    [1,0,0,0,0,1]
+  ];
+  for (let row = 0; row < 5; row++) {
+    for (let col = 0; col < 6; col++) {
+      if (pattern[row][col]) {
+        ctx.fillRect(e.x + col*px, e.y + row*py, px, py);
+      }
+    }
+  }
+  ctx.shadowBlur = 0;
+}
+
+function drawBullet(b, color) {
+  ctx.fillStyle = color;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 4;
+  ctx.fillRect(b.x, b.y, b.w, b.h);
+  ctx.shadowBlur = 0;
+}
+
+function drawStars() {
+  ctx.fillStyle = '#1f2a3a';
+  for (let i = 0; i < 30; i++) {
+    const sx = (i * 53) % W;
+    const sy = (i * 97 + frame/3) % H;
+    ctx.fillRect(sx, sy, 1, 1);
+  }
+}
+
+// --- Demo AI ---
+function aiControl() {
+  // reset manual flags; AI drives movement directly
+  player.movingLeft = false;
+  player.movingRight = false;
+
+  const aliveEnemies = enemies.filter(e => e.alive);
+  if (aliveEnemies.length === 0) return;
+
+  // find nearest enemy roughly above player (within a tolerance), else track closest column
+  const playerCenter = player.x + player.w / 2;
+  let target = aliveEnemies.reduce((closest, e) => {
+    const eCenter = e.x + e.w / 2;
+    const closestCenter = closest.x + closest.w / 2;
+    return Math.abs(eCenter - playerCenter) < Math.abs(closestCenter - playerCenter) ? e : closest;
+  }, aliveEnemies[0]);
+
+  const targetCenter = target.x + target.w / 2;
+  const diff = targetCenter - playerCenter;
+
+  if (Math.abs(diff) > 4) {
+    if (diff < 0) player.movingLeft = true;
+    else player.movingRight = true;
+  }
+
+  // fire when roughly aligned with a target
+  const aligned = aliveEnemies.some(e => Math.abs((e.x + e.w/2) - playerCenter) < 10);
+  if (aligned && frame % 12 === 0) {
+    fireBullet();
+  }
+
+  // dodge incoming bullets if very close and not aligned with firing
+  const incoming = enemyBullets.find(b => Math.abs((b.x + b.w/2) - playerCenter) < 14 && b.y > player.y - 80 && b.y < player.y);
+  if (incoming) {
+    if (incoming.x < playerCenter) player.movingRight = true, player.movingLeft = false;
+    else player.movingLeft = true, player.movingRight = false;
+  }
+}
+
+// --- Game logic ---
+function update() {
+  frame++;
+
+  if (demoMode) aiControl();
+
+  // player movement
+  if (player.movingLeft) player.x -= player.speed;
+  if (player.movingRight) player.x += player.speed;
+  player.x = Math.max(0, Math.min(W - player.w, player.x));
+
+  // player bullets
+  playerBullets.forEach(b => b.y -= 6);
+  playerBullets = playerBullets.filter(b => b.y + b.h > 0);
+
+  // enemy movement (step-wise like classic invaders)
+  enemyMoveTimer++;
+  if (enemyMoveTimer >= enemyMoveInterval) {
+    enemyMoveTimer = 0;
+    let hitEdge = false;
+    enemies.forEach(e => {
+      if (!e.alive) return;
+      e.x += enemyDir * 8;
+      if (e.x <= 0 || e.x + e.w >= W) hitEdge = true;
+    });
+    if (hitEdge) {
+      enemyDir *= -1;
+      enemies.forEach(e => { if (e.alive) e.y += 10; });
+    }
+  }
+
+  // enemy shooting (random)
+  if (frame % 50 === 0) {
+    const aliveEnemies = enemies.filter(e => e.alive);
+    if (aliveEnemies.length > 0) {
+      const shooter = aliveEnemies[Math.floor(Math.random()*aliveEnemies.length)];
+      enemyBullets.push({
+        x: shooter.x + shooter.w/2 - 2,
+        y: shooter.y + shooter.h,
+        w: 4, h: 10
+      });
+    }
+  }
+  enemyBullets.forEach(b => b.y += 4);
+  enemyBullets = enemyBullets.filter(b => b.y < H);
+
+  // collisions: player bullets vs enemies
+  playerBullets.forEach(b => {
+    enemies.forEach(e => {
+      if (!e.alive) return;
+      if (b.x < e.x + e.w && b.x + b.w > e.x && b.y < e.y + e.h && b.y + b.h > e.y) {
+        e.alive = false;
+        b.y = -100; // mark for removal
+        score += 100;
+        // speed up as enemies die
+        const aliveCount = enemies.filter(e2 => e2.alive).length;
+        enemyMoveInterval = Math.max(10, 10 + aliveCount * 1.1);
+        updateHUD();
+      }
+    });
+  });
+  playerBullets = playerBullets.filter(b => b.y > -50);
+
+  // collisions: enemy bullets vs player
+  enemyBullets.forEach(b => {
+    if (b.x < player.x + player.w && b.x + b.w > player.x && b.y < player.y + player.h && b.y + b.h > player.y) {
+      b.y = H + 100;
+      lives--;
+      updateHUD();
+      if (lives <= 0) {
+        endGame(false);
+      }
+    }
+  });
+
+  // enemies reach player line -> game over
+  enemies.forEach(e => {
+    if (e.alive && e.y + e.h >= player.y) {
+      endGame(false);
+    }
+  });
+
+  // win condition
+  if (enemies.every(e => !e.alive)) {
+    endGame(true);
+  }
+}
+
+function render() {
+  ctx.clearRect(0, 0, W, H);
+  drawStars();
+  drawPlayer();
+  enemies.forEach(drawEnemy);
+  playerBullets.forEach(b => drawBullet(b, '#39ff7a'));
+  enemyBullets.forEach(b => drawBullet(b, '#ff3366'));
+}
+
+function loop() {
+  if (gameRunning) {
+    update();
+    render();
+  }
+  requestAnimationFrame(loop);
+}
+
+function endGame(won) {
+  gameRunning = false;
+  gameOverFlag = true;
+
+  if (demoMode) {
+    // silent restart loop for attract mode, no overlay interruption
+    setTimeout(() => {
+      if (demoMode) {
+        resetGame();
+        gameRunning = true;
+      }
+    }, 1200);
+    return;
+  }
+
+  const overlay = document.getElementById('overlay');
+  const msg = document.getElementById('overlayMsg');
+  const finalScore = document.getElementById('finalScore');
+  msg.textContent = won ? 'YOU WIN!' : 'GAME OVER';
+  msg.style.color = won ? '#39ff7a' : '#ff3366';
+  finalScore.textContent = 'SCORE: ' + String(score).padStart(4,'0');
+  finalScore.classList.remove('hidden');
+  document.getElementById('startBtn').textContent = 'RETRY';
+  overlay.classList.remove('hidden');
+}
+
+// --- Input handling ---
+document.getElementById('startBtn').addEventListener('click', () => {
+  demoMode = false;
+  document.getElementById('demoBadge').classList.add('hidden');
+  resetGame();
+  document.getElementById('overlay').classList.add('hidden');
+  gameRunning = true;
+});
+
+function fireBullet() {
+  if (!gameRunning) return;
+  if (playerBullets.length >= 3) return; // limit
+  playerBullets.push({
+    x: player.x + player.w/2 - 2,
+    y: player.y,
+    w: 4, h: 10
+  });
+}
+
+// Touch / click controls
+const leftBtn = document.getElementById('leftBtn');
+const rightBtn = document.getElementById('rightBtn');
+const fireBtn = document.getElementById('fireBtn');
+
+function bindHold(el, onStart, onEnd) {
+  el.addEventListener('touchstart', e => { e.preventDefault(); onStart(); el.classList.add('active'); }, {passive:false});
+  el.addEventListener('touchend', e => { e.preventDefault(); onEnd(); el.classList.remove('active'); }, {passive:false});
+  el.addEventListener('mousedown', () => { onStart(); el.classList.add('active'); });
+  el.addEventListener('mouseup', () => { onEnd(); el.classList.remove('active'); });
+  el.addEventListener('mouseleave', () => { onEnd(); el.classList.remove('active'); });
+}
+
+function exitDemoIfActive() {
+  if (demoMode) {
+    demoMode = false;
+    document.getElementById('demoBadge').classList.add('hidden');
+    document.getElementById('tapHint').classList.add('hidden');
+    resetGame();
+    gameRunning = true;
+  }
+}
+
+bindHold(leftBtn, () => { exitDemoIfActive(); player.movingLeft = true; }, () => player.movingLeft = false);
+bindHold(rightBtn, () => { exitDemoIfActive(); player.movingRight = true; }, () => player.movingRight = false);
+
+fireBtn.addEventListener('touchstart', e => { e.preventDefault(); exitDemoIfActive(); fireBullet(); fireBtn.classList.add('active'); }, {passive:false});
+fireBtn.addEventListener('touchend', e => { e.preventDefault(); fireBtn.classList.remove('active'); }, {passive:false});
+fireBtn.addEventListener('mousedown', () => { exitDemoIfActive(); fireBullet(); fireBtn.classList.add('active'); });
+fireBtn.addEventListener('mouseup', () => fireBtn.classList.remove('active'));
+
+// Keyboard support (for desktop testing)
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft') player.movingLeft = true;
+  if (e.key === 'ArrowRight') player.movingRight = true;
+  if (e.key === ' ') { fireBullet(); e.preventDefault(); }
+});
+document.addEventListener('keyup', e => {
+  if (e.key === 'ArrowLeft') player.movingLeft = false;
+  if (e.key === 'ArrowRight') player.movingRight = false;
+});
+
+// init
+initEnemies();
+updateHUD();
+resetGame();
+gameRunning = true;
+document.getElementById('demoBadge').classList.remove('hidden');
+loop();
+</script>
+</body>
+</html>
