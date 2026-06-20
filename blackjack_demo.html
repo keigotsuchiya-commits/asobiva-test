@@ -298,11 +298,15 @@
 
   .hidden { display: none !important; }
 
+  #demoStrip {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 6px 0 14px;
+    flex-shrink: 0;
+  }
+
   #demoBadge {
-    position: absolute;
-    bottom: 90px;
-    left: 50%;
-    transform: translateX(-50%);
     color: #ffd23f;
     font-size: 13px;
     letter-spacing: 3px;
@@ -311,7 +315,6 @@
     padding: 5px 14px;
     border-radius: 4px;
     background: rgba(10,10,18,0.75);
-    z-index: 6;
     animation: blink 1.4s infinite;
   }
 
@@ -323,7 +326,6 @@
 </head>
 <body>
 <div id="wrap">
-  <div id="demoBadge" class="hidden">DEMO PLAY</div>
   <div id="hud">
     <span>CHIPS <span class="chips" id="chipsVal">1000</span></span>
     <span>BET <span id="currentBetVal" style="color:#ffd23f;text-shadow:0 0 8px #ffd23f;">0</span></span>
@@ -358,6 +360,10 @@
     <button class="actionBtn" id="hitBtn">HIT</button>
     <button class="actionBtn" id="standBtn">STAND</button>
     <button class="actionBtn danger" id="doubleBtn">DOUBLE</button>
+  </div>
+
+  <div id="demoStrip" class="hidden">
+    <div id="demoBadge">DEMO PLAY</div>
   </div>
 </div>
 
@@ -638,7 +644,7 @@ function endRound(result) {
 function exitDemoIfActive() {
   if (demoMode) {
     demoMode = false;
-    document.getElementById('demoBadge').classList.add('hidden');
+    document.getElementById('demoStrip').classList.add('hidden');
     document.getElementById('overlay').classList.add('hidden');
     // stop any in-flight round cleanly and reset to a fresh table for the human player
     roundActive = false;
@@ -672,7 +678,7 @@ document.getElementById('doubleBtn').addEventListener('click', () => { exitDemoI
 
 document.getElementById('startBtn').addEventListener('click', () => {
   demoMode = false;
-  document.getElementById('demoBadge').classList.add('hidden');
+  document.getElementById('demoStrip').classList.add('hidden');
   document.getElementById('overlay').classList.add('hidden');
   deck = buildDeck();
   chips = 1000;
@@ -686,7 +692,7 @@ deck = buildDeck();
 chips = 1000;
 bet = 0;
 updateHUD();
-document.getElementById('demoBadge').classList.remove('hidden');
+document.getElementById('demoStrip').classList.remove('hidden');
 document.getElementById('overlay').classList.add('hidden');
 setTimeout(() => { resetRound(); }, 500);
 </script>
