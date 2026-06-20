@@ -239,26 +239,26 @@ body.admin-mode .html-card-label { display: block; }
 }
 .game-card-frame-wrap {
   width: 100%;
-  /* aspect-ratio is set dynamically per game via JS, since each game's
-     real content height differs (e.g. blackjack's table is flexible) */
   background: #0a0a12;
   position: relative;
   overflow: hidden;
+  line-height: 0; /* avoid extra inline-level whitespace gap below the iframe */
 }
 .game-card-frame-wrap iframe {
-  position: absolute;
-  top: 0;
-  left: 0;
+  display: block;
   border: none;
-  pointer-events: none;
-  transform-origin: top left;
-  /* width/height are set inline via JS to match each game's real content size */
+  pointer-events: none !important;
+  /* width/height are set inline via JS (px) to match each game's real
+     content size; zoom (also set via JS) shrinks the actual rendered box,
+     so frameWrap's height is simply determined by normal document flow —
+     no separate height calculation/sync needed on this element. */
 }
 .game-card-tap {
   position: absolute;
   inset: 0;
   z-index: 3;
   cursor: pointer;
+  pointer-events: auto !important;
 }
 
 /* ── DEL / REPLACE BUTTONS (shared by all card types) ── */
@@ -837,9 +837,6 @@ function render() {
 
       const frameWrap = document.createElement('div');
       frameWrap.className = 'game-card-frame-wrap';
-      // height set to 0 initially; scaleFrameToFit (called after this card
-      // is attached to the live DOM, see below) computes and sets the real
-      // px height once frameWrap.clientWidth is available
 
       const iframe = document.createElement('iframe');
       iframe.srcdoc = c.html;
@@ -867,7 +864,7 @@ function render() {
           if (realH && realH > 0) {
             iframe.dataset.realHeight = realH;
             iframe.style.height = realH + 'px';
-            scaleFrameToFit(frameWrap, iframe, realH);
+            zoomFrameToFit(frameWrap, iframe, realH);
           }
         } catch (err) {
           // cross-origin or sandbox restriction — fall back to default ratio
@@ -1005,29 +1002,27 @@ function render() {
 
   // now that every card is attached to the live DOM, frameWrap has a real
   // clientWidth — safe to compute and apply the scale transform here
-  gameFramesToScale.forEach(({ frameWrap, iframe }) => scaleFrameToFit(frameWrap, iframe));
+  gameFramesToScale.forEach(({ frameWrap, iframe }) => zoomFrameToFit(frameWrap, iframe));
 }
 
-// ── ゲームカード用: スケール処理 ────────────────
-// カード幅がゲームの基準幅(320px)より大きい場合でも、ゲームを拡大はしない
-// （拡大すると操作ボタンが枠の外にはみ出してしまうため、上限を1倍に固定）
-//
-// frameWrap の高さは CSS の aspect-ratio に頼らず、ここで毎回 px で直接計算する。
-// 理由: iOS Safari は JS から aspect-ratio を後から書き換えても再レイアウトが
-// 走らないことがあり、結果としてカードの上下が見切れる不具合が起きていたため。
-function scaleFrameToFit(frameWrap, iframe, contentHeight) {
+// ── ゲームカード用: 縮小表示処理 ────────────────
+// transform:scale ではなく CSS の zoom を使う。理由:
+// transform:scale は見た目だけを縮小し、要素自体のレイアウトサイズ(高さ)は
+// 元のまま変わらないため、周囲の枠(frameWrap)の高さを JS 側で別途計算して
+// 同期させる必要があった。このタイミングのズレ・実機(iOS Safari)での
+// 再計算漏れが、「枠の上下が見切れる」「縮小前の見た目がタップを拾ってしまう」
+// 不具合の原因だった。
+// zoom は要素の実際のレイアウトサイズそのものを縮小するため、frameWrap 側は
+// 通常のレイアウトフローに任せるだけでよく、高さの同期計算が一切不要になる。
+function zoomFrameToFit(frameWrap, iframe, contentHeight) {
   const h = contentHeight || GAME_BASE_H;
   const apply = () => {
     const wrapW = frameWrap.clientWidth;
     if (!wrapW) return;
     const scale = Math.min(1, wrapW / GAME_BASE_W);
-    iframe.style.transform = `scale(${scale})`;
-    const offsetX = (wrapW - GAME_BASE_W * scale) / 2;
-    iframe.style.left = Math.max(0, offsetX) + 'px';
-    iframe.style.top = '0px';
-    // frameWrap's height must be set explicitly — the iframe is
-    // position:absolute so it can't contribute to layout height itself
-    frameWrap.style.height = Math.round(h * scale) + 'px';
+    iframe.style.zoom = scale;
+    // center horizontally if the card is wider than the zoomed game (scale capped at 1)
+    iframe.style.marginLeft = Math.max(0, (wrapW - GAME_BASE_W * scale) / 2) + 'px';
   };
   apply();
   window.addEventListener('resize', apply);
@@ -1298,8 +1293,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .html-card { width:100%; position:relative; background:var(--white); overflow:hidden; }
 .html-card iframe { display:block; width:100%; height:480px; border:none; background:var(--white); }
 .game-card { width:100%; position:relative; background:#0a0a12; overflow:hidden; }
-.game-card-frame-wrap { width:100%; background:#0a0a12; position:relative; overflow:hidden; }
-.game-card-frame-wrap iframe { position:absolute; top:0; left:0; width:320px; height:400px; border:none; pointer-events:none; transform-origin: top left; }
+.game-card-frame-wrap { width:100%; background:#0a0a12; position:relative; overflow:hidden; line-height:0; }
+.game-card-frame-wrap iframe { display:block; width:320px; height:400px; border:none; pointer-events:none; }
 .game-card-tap { position:absolute; inset:0; z-index:3; cursor:pointer; }
 .carousel-card { width:100%; position:relative; background:var(--white); overflow:hidden; cursor:pointer; }
 .carousel-card img { width:100%; height:auto; display:block; }
@@ -1368,25 +1363,20 @@ function cyclerCarousel(el){
 }
 (function(){
   var GAME_BASE_W = 320;
-  var GAME_BASE_H = 554;
 
-  function applyScale(wrap, iframe, contentH){
+  function applyZoom(wrap, iframe){
     var w = wrap.clientWidth;
     if (!w) return;
     var scale = Math.min(1, w / GAME_BASE_W);
-    iframe.style.transform = 'scale(' + scale + ')';
-    var offsetX = (w - GAME_BASE_W * scale) / 2;
-    iframe.style.left = Math.max(0, offsetX) + 'px';
-    iframe.style.top = '0px';
-    wrap.style.height = Math.round((contentH || GAME_BASE_H) * scale) + 'px';
+    iframe.style.zoom = scale;
+    iframe.style.marginLeft = Math.max(0, (w - GAME_BASE_W * scale) / 2) + 'px';
   }
 
   function fitGameFrames(){
     document.querySelectorAll('.game-card-frame-wrap').forEach(function(wrap){
       var iframe = wrap.querySelector('iframe');
       if (!iframe) return;
-      var realH = iframe.dataset.realHeight ? parseInt(iframe.dataset.realHeight, 10) : null;
-      applyScale(wrap, iframe, realH);
+      applyZoom(wrap, iframe);
     });
   }
 
@@ -1399,9 +1389,8 @@ function cyclerCarousel(el){
         var wrapEl = doc.getElementById('wrap');
         var realH = wrapEl ? wrapEl.scrollHeight : doc.body.scrollHeight;
         if (realH && realH > 0) {
-          iframe.dataset.realHeight = realH;
           iframe.style.height = realH + 'px';
-          applyScale(iframe.closest('.game-card-frame-wrap'), iframe, realH);
+          applyZoom(iframe.closest('.game-card-frame-wrap'), iframe);
         }
       } catch (err) {
         console.warn('could not measure game iframe height, using default', err);
