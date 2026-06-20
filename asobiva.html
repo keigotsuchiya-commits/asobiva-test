@@ -163,27 +163,6 @@ body.admin-mode .card:hover img { transform: none; }
 .card-del:hover { background: #c0392b; }
 body.admin-mode .card-del { display: flex; }
 
-.card-replace {
-  display: none;
-  position: absolute;
-  top: 10px; right: 50px;
-  width: 30px; height: 30px;
-  background: rgba(0,0,0,0.5);
-  color: #fff;
-  border: none;
-  border-radius: 50%;
-  font-size: 14px;
-  cursor: pointer;
-  align-items: center;
-  justify-content: center;
-  z-index: 5;
-  transition: background 0.15s;
-}
-.card-replace:hover { background: #1a6e3c; }
-body.admin-mode .card-replace { display: flex; }
-
-.card-replace-input { display: none; }
-
 /* ── ADD BUTTON ── */
 .add-section {
   background: var(--bg);
@@ -522,26 +501,6 @@ function render() {
     img.alt = '';
     img.loading = 'lazy';
 
-    const replaceBtn = document.createElement('button');
-    replaceBtn.className = 'card-replace';
-    replaceBtn.title = '差し替え';
-    replaceBtn.textContent = '⇄';
-
-    const replaceInput = document.createElement('input');
-    replaceInput.type = 'file';
-    replaceInput.accept = 'image/*';
-    replaceInput.className = 'card-replace-input';
-    replaceInput.addEventListener('change', e => {
-      e.preventDefault(); e.stopPropagation();
-      const f = e.target.files[0];
-      if (f) replaceCard(c.id, f);
-    });
-
-    replaceBtn.addEventListener('click', e => {
-      e.preventDefault(); e.stopPropagation();
-      replaceInput.click();
-    });
-
     const delBtn = document.createElement('button');
     delBtn.className = 'card-del';
     delBtn.title = '削除';
@@ -552,8 +511,6 @@ function render() {
     });
 
     a.appendChild(img);
-    a.appendChild(replaceBtn);
-    a.appendChild(replaceInput);
     a.appendChild(delBtn);
     sec.appendChild(a);
     container.appendChild(sec);
@@ -647,16 +604,6 @@ async function addCards() {
 
   btn.textContent = '追加する';
   closePanel();
-  render();
-}
-
-// ── Replace ───────────────────────────────────
-async function replaceCard(id, file) {
-  const base64 = await fileToBase64(file);
-  const link = cards.find(c => c.id === id)?.link || '';
-  await dbOp('cards', 'readwrite', s => s.put({ id, base64, link }));
-  const i = cards.findIndex(c => c.id === id);
-  if (i !== -1) cards[i].base64 = base64;
   render();
 }
 
