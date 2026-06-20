@@ -1,0 +1,3841 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASOBIVA — GAMES</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root { --bg:#f3f3f3; --white:#ffffff; --ink:#1a1a1a; --ink-soft:#888; --border:#e0e0e0; }
+body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; }
+.wrap { max-width: 480px; margin: 0 auto; background: var(--bg); min-height: 100vh; }
+.back-link-wrap { background: var(--white); padding:12px 16px; border-bottom:1px solid var(--border); }
+.back-link { font-size:12px; font-weight:500; letter-spacing:0.04em; color:var(--ink-soft); text-decoration:none; }
+.header-pair { display:flex; flex-direction:column; background:var(--white); }
+.banner-slot { width:100%; min-height:80px; background:var(--white); display:flex; align-items:center; justify-content:center; }
+.banner-slot img { width:100%; height:auto; display:block; }
+.slot-label { font-size:10px; letter-spacing:0.12em; color:#ccc; }
+.card-section { background: var(--bg); padding-top:10px; }
+.card { width:100%; display:block; text-decoration:none; background:var(--white); overflow:hidden; }
+.card img { width:100%; height:auto; display:block; }
+.html-card { width:100%; position:relative; background:var(--white); overflow:hidden; }
+.html-card iframe { display:block; width:100%; height:480px; border:none; background:var(--white); }
+.game-card { width:100%; position:relative; background:#0a0a12; overflow:hidden; }
+.game-card-frame-wrap { width:100%; background:#0a0a12; position:relative; overflow:hidden; line-height:0; }
+.game-card-frame-wrap iframe { display:block; border:none; pointer-events:none; }
+.game-card-tap { position:absolute; inset:0; z-index:3; cursor:pointer; }
+.carousel-card { width:100%; position:relative; background:var(--white); overflow:hidden; cursor:pointer; }
+.carousel-card img { width:100%; height:auto; display:block; }
+.carousel-dots { position:absolute; bottom:10px; left:0; right:0; display:flex; justify-content:center; gap:6px; pointer-events:none; }
+.carousel-dots span { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.55); }
+.carousel-dots span.active { background:#fff; transform:scale(1.25); }
+.carousel-count { position:absolute; top:10px; right:10px; font-size:10px; letter-spacing:0.05em; color:#fff; background:rgba(0,0,0,0.45); padding:3px 8px; border-radius:20px; pointer-events:none; }
+.empty-section { background: var(--bg); padding-top:10px; }
+.empty-state { padding:60px 24px; text-align:center; color:var(--ink-soft); font-size:13px; line-height:2; background:var(--white); }
+.empty-state strong { display:block; font-size:14px; font-weight:600; color:var(--ink); margin-bottom:6px; }
+.footer-section { background: var(--bg); padding-top:10px; }
+footer { padding:28px 16px; text-align:center; font-size:10px; letter-spacing:0.1em; color:var(--ink-soft); background:var(--white); }
+.fullscreen-overlay { position:fixed; inset:0; background:#0a0a12; z-index:500; display:none; flex-direction:column; }
+.fullscreen-overlay.open { display:flex; }
+.fullscreen-topbar { flex-shrink:0; display:flex; justify-content:flex-end; padding:10px 12px; background:#0a0a12; }
+.close-btn { width:36px; height:36px; border-radius:50%; border:1px solid rgba(255,255,255,0.25); background:rgba(255,255,255,0.06); color:#fff; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.fullscreen-frame-wrap { flex:1; min-height:0; display:flex; align-items:center; justify-content:center; }
+.fullscreen-frame-wrap iframe { width:100%; height:100%; max-width:480px; border:none; background:#0a0a12; }
+.tap-to-start { position:absolute; top:56px; left:0; right:0; bottom:0; z-index:10; display:none; align-items:center; justify-content:center; background:rgba(10,10,18,0.35); cursor:pointer; }
+.tap-to-start.show { display:flex; }
+.tap-to-start-circle { width:132px; height:132px; border-radius:50%; border:2px solid #39ff7a; background:rgba(10,10,18,0.85); color:#39ff7a; font-size:15px; font-weight:700; letter-spacing:0.08em; line-height:1.5; text-align:center; display:flex; align-items:center; justify-content:center; text-shadow:0 0 8px #39ff7a; box-shadow:0 0 22px rgba(57,255,122,0.35); animation:pulseRing 1.6s ease-in-out infinite; }
+@keyframes pulseRing { 0%,100% { transform:scale(1); } 50% { transform:scale(1.06); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="back-link-wrap"><a href="asobiva.html" class="back-link">← トップへ戻る</a></div>
+  <div class="header-pair">
+    <div class="banner-slot"><img src="data:image/jpeg;base64,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AKACgAoAKACgAoAKACgAoAKACgD/0/7+KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoA/9T+/igAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAP/V/v4oAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgD/1v7+KACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoA/9f+/igAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKAP/Q/v4oAKACgAoA+Ov+Cgf7YPhb9gX9jL9oT9r7xho8/iLSvgj4Dm8QWXhu3nS0fxN4s1fVNN8J+A/DMl85xp9r4i8ceIPDui3upLHcSadZ3097DZ3ssCWk4B/nU/safscf8FZv+Dn3xj8av2hfjl+2dq3wy+BHg/xLF4IudT1aHxTqHw0tvFktla+II/hj8IPgR4V13wx4RWy8I+HdY0jUPE+q6prWm6kF17w9d6rqPi3XdZ1LULUA/Tn/AIJsf8E8f+DhX/glT/wUe8MfBH4b63eftJfsPmfwpq/xW13xN8TbzS/2Ztb+F3ijUJrLXNS8J6V8QLu613wL8dfCh067n/sj4eeH9W18XVnoi+Iv7d+HevwXd6Af1X/8FiP214f+Cfn/AATi/ag/aVs9Si0/x1oPgC78HfB8F0+0T/GP4jyx+Cvh1Pa2zfNfL4e1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" alt=""></div>
+  </div>
+  <div class="card-section"><div class="game-card"><div class="game-card-frame-wrap"><iframe srcdoc="<!DOCTYPE html>
+<html lang=&quot;ja&quot;>
+<head>
+<meta charset=&quot;UTF-8&quot;>
+<meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no&quot;>
+<title>DOT INVADER</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  html, body {
+    height: 100%;
+    background: #0a0a12;
+    overflow: hidden;
+    font-family: 'Courier New', monospace;
+  }
+
+  #wrap {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    align-items: center;
+    justify-content: center;
+    background: #0a0a12;
+  }
+
+  #hud {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 14px;
+    color: #39ff7a;
+    font-size: 18px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 8px #39ff7a;
+    flex-shrink: 0;
+  }
+
+  #hud .lives {
+    color: #ff3366;
+    text-shadow: 0 0 8px #ff3366;
+  }
+
+  canvas {
+    background: #0a0a12;
+    display: block;
+    image-rendering: pixelated;
+    border-top: 2px solid #1f2a3a;
+    border-bottom: 2px solid #1f2a3a;
+    max-width: 100%;
+  }
+
+  #controls {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    flex-shrink: 0;
+  }
+
+  .btn {
+    width: 78px;
+    height: 78px;
+    border-radius: 14px;
+    border: 2px solid #39ff7a;
+    background: rgba(57,255,122,0.08);
+    color: #39ff7a;
+    font-size: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.05s, transform 0.05s;
+  }
+
+  .btn:active, .btn.active {
+    background: #39ff7a;
+    color: #0a0a12;
+    transform: scale(0.95);
+  }
+
+  #fireBtn {
+    width: 78px;
+    height: 78px;
+    border-radius: 50%;
+    border: 2px solid #ff3366;
+    background: rgba(255,51,102,0.08);
+    color: #ff3366;
+    font-size: 16px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #fireBtn:active, #fireBtn.active {
+    background: #ff3366;
+    color: #0a0a12;
+    transform: scale(0.95);
+  }
+
+  .moveBtns {
+    display: flex;
+    gap: 14px;
+  }
+
+  #overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(10,10,18,0.92);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #39ff7a;
+    text-align: center;
+    z-index: 10;
+    padding: 20px;
+  }
+
+  #overlay h1 {
+    font-size: 42px;
+    letter-spacing: 6px;
+    text-shadow: 0 0 16px #39ff7a;
+    margin-bottom: 8px;
+  }
+
+  #overlay .sub {
+    color: #6fa8ff;
+    font-size: 14px;
+    letter-spacing: 3px;
+    margin-bottom: 28px;
+  }
+
+  #overlay .msg {
+    font-size: 24px;
+    margin-bottom: 8px;
+    letter-spacing: 3px;
+  }
+
+  #overlay .score {
+    color: #ffd23f;
+    font-size: 18px;
+    margin-bottom: 28px;
+    letter-spacing: 2px;
+  }
+
+  #startBtn {
+    border: 2px solid #39ff7a;
+    color: #39ff7a;
+    background: transparent;
+    padding: 14px 40px;
+    font-size: 18px;
+    letter-spacing: 4px;
+    font-family: inherit;
+    border-radius: 6px;
+  }
+
+  #startBtn:active {
+    background: #39ff7a;
+    color: #0a0a12;
+  }
+
+  .hidden { display: none !important; }
+
+  #demoStrip {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0 14px;
+    flex-shrink: 0;
+  }
+
+  #demoBadge {
+    color: #ffd23f;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-shadow: 0 0 8px #ffd23f;
+    border: 1px solid #ffd23f;
+    padding: 5px 14px;
+    border-radius: 4px;
+    background: rgba(10,10,18,0.75);
+    animation: blink 1.4s infinite;
+  }
+
+  #tapHint {
+    color: #6fa8ff;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 6px #6fa8ff;
+    animation: blink 1.4s infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+</style>
+</head>
+<body>
+<div id=&quot;wrap&quot;>
+  <div id=&quot;hud&quot;>
+    <span>SCORE <span id=&quot;scoreVal&quot;>0000</span></span>
+    <span class=&quot;lives&quot;>LIFE <span id=&quot;livesVal&quot;>●●●</span></span>
+  </div>
+
+  <canvas id=&quot;game&quot; width=&quot;320&quot; height=&quot;400&quot;></canvas>
+
+  <div id=&quot;controls&quot;>
+    <div class=&quot;moveBtns&quot;>
+      <div class=&quot;btn&quot; id=&quot;leftBtn&quot;>◀</div>
+      <div class=&quot;btn&quot; id=&quot;rightBtn&quot;>▶</div>
+    </div>
+    <div id=&quot;fireBtn&quot;>FIRE</div>
+  </div>
+
+  <div id=&quot;demoStrip&quot; class=&quot;hidden&quot;>
+    <div id=&quot;demoBadge&quot;>DEMO PLAY</div>
+    <div id=&quot;tapHint&quot;>TAP CONTROLS TO PLAY</div>
+  </div>
+</div>
+
+<div id=&quot;overlay&quot; class=&quot;hidden&quot;>
+  <h1>DOT INVADER</h1>
+  <div class=&quot;sub&quot;>PROTOTYPE v0.1</div>
+  <div class=&quot;msg&quot; id=&quot;overlayMsg&quot;>TAP TO PLAY</div>
+  <div class=&quot;score hidden&quot; id=&quot;finalScore&quot;></div>
+  <button id=&quot;startBtn&quot;>START</button>
+</div>
+
+<script>
+window.ASOBIVA_GAME = true;
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+const W = canvas.width;
+const H = canvas.height;
+
+// --- Game state ---
+let score = 0;
+let lives = 3;
+let gameRunning = false;
+let gameOverFlag = false;
+let demoMode = true; // true = AI auto-play, false = human controlled
+
+// Player
+const player = {
+  w: 20,
+  h: 12,
+  x: W/2 - 10,
+  y: H - 30,
+  speed: 4,
+  movingLeft: false,
+  movingRight: false
+};
+
+// Bullets
+let playerBullets = [];
+let enemyBullets = [];
+
+// Enemies
+let enemies = [];
+const ENEMY_ROWS = 4;
+const ENEMY_COLS = 7;
+const ENEMY_W = 18;
+const ENEMY_H = 14;
+const ENEMY_GAP_X = 8;
+const ENEMY_GAP_Y = 14;
+const ENEMY_START_X = 20;
+const ENEMY_START_Y = 30;
+
+let enemyDir = 1;
+let enemyMoveTimer = 0;
+let enemyMoveInterval = 40; // frames per step, decreases as enemies die
+let enemyDropFlag = false;
+
+let frame = 0;
+
+function initEnemies() {
+  enemies = [];
+  for (let r = 0; r < ENEMY_ROWS; r++) {
+    for (let c = 0; c < ENEMY_COLS; c++) {
+      enemies.push({
+        x: ENEMY_START_X + c * (ENEMY_W + ENEMY_GAP_X),
+        y: ENEMY_START_Y + r * (ENEMY_H + ENEMY_GAP_Y),
+        w: ENEMY_W,
+        h: ENEMY_H,
+        alive: true,
+        type: r % 3
+      });
+    }
+  }
+}
+
+function resetGame() {
+  score = 0;
+  lives = 3;
+  player.x = W/2 - player.w/2;
+  playerBullets = [];
+  enemyBullets = [];
+  enemyDir = 1;
+  enemyMoveTimer = 0;
+  enemyMoveInterval = 40;
+  gameOverFlag = false;
+  initEnemies();
+  updateHUD();
+}
+
+function updateHUD() {
+  document.getElementById('scoreVal').textContent = String(score).padStart(4, '0');
+  document.getElementById('livesVal').textContent = '●'.repeat(Math.max(lives,0)) + '○'.repeat(Math.max(3-lives,0));
+}
+
+// --- Drawing helpers (pixel-art style blocks) ---
+function drawPlayer() {
+  ctx.fillStyle = '#39ff7a';
+  // body
+  ctx.fillRect(player.x, player.y + 4, player.w, player.h - 4);
+  // cannon
+  ctx.fillRect(player.x + player.w/2 - 2, player.y, 4, 6);
+  ctx.shadowColor = '#39ff7a';
+  ctx.shadowBlur = 6;
+  ctx.fillRect(player.x, player.y + 4, player.w, player.h - 4);
+  ctx.shadowBlur = 0;
+}
+
+function drawEnemy(e) {
+  if (!e.alive) return;
+  const colors = ['#ff3366', '#ffd23f', '#6fa8ff'];
+  ctx.fillStyle = colors[e.type];
+  ctx.shadowColor = colors[e.type];
+  ctx.shadowBlur = 5;
+
+  // simple pixel-invader shape (3x3 block grid scaled)
+  const px = e.w / 6;
+  const py = e.h / 5;
+  const pattern = [
+    [0,0,1,1,0,0],
+    [0,1,1,1,1,0],
+    [1,1,1,1,1,1],
+    [1,0,1,1,0,1],
+    [1,0,0,0,0,1]
+  ];
+  for (let row = 0; row < 5; row++) {
+    for (let col = 0; col < 6; col++) {
+      if (pattern[row][col]) {
+        ctx.fillRect(e.x + col*px, e.y + row*py, px, py);
+      }
+    }
+  }
+  ctx.shadowBlur = 0;
+}
+
+function drawBullet(b, color) {
+  ctx.fillStyle = color;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 4;
+  ctx.fillRect(b.x, b.y, b.w, b.h);
+  ctx.shadowBlur = 0;
+}
+
+function drawStars() {
+  ctx.fillStyle = '#1f2a3a';
+  for (let i = 0; i < 30; i++) {
+    const sx = (i * 53) % W;
+    const sy = (i * 97 + frame/3) % H;
+    ctx.fillRect(sx, sy, 1, 1);
+  }
+}
+
+// --- Demo AI ---
+function aiControl() {
+  // reset manual flags; AI drives movement directly
+  player.movingLeft = false;
+  player.movingRight = false;
+
+  const aliveEnemies = enemies.filter(e => e.alive);
+  if (aliveEnemies.length === 0) return;
+
+  // find nearest enemy roughly above player (within a tolerance), else track closest column
+  const playerCenter = player.x + player.w / 2;
+  let target = aliveEnemies.reduce((closest, e) => {
+    const eCenter = e.x + e.w / 2;
+    const closestCenter = closest.x + closest.w / 2;
+    return Math.abs(eCenter - playerCenter) < Math.abs(closestCenter - playerCenter) ? e : closest;
+  }, aliveEnemies[0]);
+
+  const targetCenter = target.x + target.w / 2;
+  const diff = targetCenter - playerCenter;
+
+  if (Math.abs(diff) > 4) {
+    if (diff < 0) player.movingLeft = true;
+    else player.movingRight = true;
+  }
+
+  // fire when roughly aligned with a target
+  const aligned = aliveEnemies.some(e => Math.abs((e.x + e.w/2) - playerCenter) < 10);
+  if (aligned && frame % 12 === 0) {
+    fireBullet();
+  }
+
+  // dodge incoming bullets if very close and not aligned with firing
+  const incoming = enemyBullets.find(b => Math.abs((b.x + b.w/2) - playerCenter) < 14 && b.y > player.y - 80 && b.y < player.y);
+  if (incoming) {
+    if (incoming.x < playerCenter) player.movingRight = true, player.movingLeft = false;
+    else player.movingLeft = true, player.movingRight = false;
+  }
+}
+
+// --- Game logic ---
+function update() {
+  frame++;
+
+  if (demoMode) aiControl();
+
+  // player movement
+  if (player.movingLeft) player.x -= player.speed;
+  if (player.movingRight) player.x += player.speed;
+  player.x = Math.max(0, Math.min(W - player.w, player.x));
+
+  // player bullets
+  playerBullets.forEach(b => b.y -= 6);
+  playerBullets = playerBullets.filter(b => b.y + b.h > 0);
+
+  // enemy movement (step-wise like classic invaders)
+  enemyMoveTimer++;
+  if (enemyMoveTimer >= enemyMoveInterval) {
+    enemyMoveTimer = 0;
+    let hitEdge = false;
+    enemies.forEach(e => {
+      if (!e.alive) return;
+      e.x += enemyDir * 8;
+      if (e.x <= 0 || e.x + e.w >= W) hitEdge = true;
+    });
+    if (hitEdge) {
+      enemyDir *= -1;
+      enemies.forEach(e => { if (e.alive) e.y += 10; });
+    }
+  }
+
+  // enemy shooting (random)
+  if (frame % 50 === 0) {
+    const aliveEnemies = enemies.filter(e => e.alive);
+    if (aliveEnemies.length > 0) {
+      const shooter = aliveEnemies[Math.floor(Math.random()*aliveEnemies.length)];
+      enemyBullets.push({
+        x: shooter.x + shooter.w/2 - 2,
+        y: shooter.y + shooter.h,
+        w: 4, h: 10
+      });
+    }
+  }
+  enemyBullets.forEach(b => b.y += 4);
+  enemyBullets = enemyBullets.filter(b => b.y < H);
+
+  // collisions: player bullets vs enemies
+  playerBullets.forEach(b => {
+    enemies.forEach(e => {
+      if (!e.alive) return;
+      if (b.x < e.x + e.w && b.x + b.w > e.x && b.y < e.y + e.h && b.y + b.h > e.y) {
+        e.alive = false;
+        b.y = -100; // mark for removal
+        score += 100;
+        // speed up as enemies die
+        const aliveCount = enemies.filter(e2 => e2.alive).length;
+        enemyMoveInterval = Math.max(10, 10 + aliveCount * 1.1);
+        updateHUD();
+      }
+    });
+  });
+  playerBullets = playerBullets.filter(b => b.y > -50);
+
+  // collisions: enemy bullets vs player
+  enemyBullets.forEach(b => {
+    if (b.x < player.x + player.w && b.x + b.w > player.x && b.y < player.y + player.h && b.y + b.h > player.y) {
+      b.y = H + 100;
+      lives--;
+      updateHUD();
+      if (lives <= 0) {
+        endGame(false);
+      }
+    }
+  });
+
+  // enemies reach player line -> game over
+  enemies.forEach(e => {
+    if (e.alive && e.y + e.h >= player.y) {
+      endGame(false);
+    }
+  });
+
+  // win condition
+  if (enemies.every(e => !e.alive)) {
+    endGame(true);
+  }
+}
+
+function render() {
+  ctx.clearRect(0, 0, W, H);
+  drawStars();
+  drawPlayer();
+  enemies.forEach(drawEnemy);
+  playerBullets.forEach(b => drawBullet(b, '#39ff7a'));
+  enemyBullets.forEach(b => drawBullet(b, '#ff3366'));
+}
+
+function loop() {
+  if (gameRunning) {
+    update();
+    render();
+  }
+  requestAnimationFrame(loop);
+}
+
+function endGame(won) {
+  gameRunning = false;
+  gameOverFlag = true;
+
+  if (demoMode) {
+    // silent restart loop for attract mode, no overlay interruption
+    setTimeout(() => {
+      if (demoMode) {
+        resetGame();
+        gameRunning = true;
+      }
+    }, 1200);
+    return;
+  }
+
+  const overlay = document.getElementById('overlay');
+  const msg = document.getElementById('overlayMsg');
+  const finalScore = document.getElementById('finalScore');
+  msg.textContent = won ? 'YOU WIN!' : 'GAME OVER';
+  msg.style.color = won ? '#39ff7a' : '#ff3366';
+  finalScore.textContent = 'SCORE: ' + String(score).padStart(4,'0');
+  finalScore.classList.remove('hidden');
+  document.getElementById('startBtn').textContent = 'RETRY';
+  overlay.classList.remove('hidden');
+}
+
+// --- Input handling ---
+document.getElementById('startBtn').addEventListener('click', () => {
+  demoMode = false;
+  document.getElementById('demoStrip').classList.add('hidden');
+  resetGame();
+  document.getElementById('overlay').classList.add('hidden');
+  gameRunning = true;
+});
+
+function fireBullet() {
+  if (!gameRunning) return;
+  if (playerBullets.length >= 3) return; // limit
+  playerBullets.push({
+    x: player.x + player.w/2 - 2,
+    y: player.y,
+    w: 4, h: 10
+  });
+}
+
+// Touch / click controls
+const leftBtn = document.getElementById('leftBtn');
+const rightBtn = document.getElementById('rightBtn');
+const fireBtn = document.getElementById('fireBtn');
+
+function bindHold(el, onStart, onEnd) {
+  el.addEventListener('touchstart', e => { e.preventDefault(); onStart(); el.classList.add('active'); }, {passive:false});
+  el.addEventListener('touchend', e => { e.preventDefault(); onEnd(); el.classList.remove('active'); }, {passive:false});
+  el.addEventListener('mousedown', () => { onStart(); el.classList.add('active'); });
+  el.addEventListener('mouseup', () => { onEnd(); el.classList.remove('active'); });
+  el.addEventListener('mouseleave', () => { onEnd(); el.classList.remove('active'); });
+}
+
+function exitDemoIfActive() {
+  if (demoMode) {
+    demoMode = false;
+    document.getElementById('demoStrip').classList.add('hidden');
+    resetGame();
+    gameRunning = true;
+  }
+}
+
+// allows the parent page (games hub) to exit demo mode from its own
+// &quot;TAP TO START&quot; overlay, since that overlay sits above this iframe
+// and intercepts the tap before it reaches the in-game controls
+window.addEventListener('message', e => {
+  if (e.data && e.data.type === 'asobiva-start-play') exitDemoIfActive();
+});
+
+bindHold(leftBtn, () => { exitDemoIfActive(); player.movingLeft = true; }, () => player.movingLeft = false);
+bindHold(rightBtn, () => { exitDemoIfActive(); player.movingRight = true; }, () => player.movingRight = false);
+
+fireBtn.addEventListener('touchstart', e => { e.preventDefault(); exitDemoIfActive(); fireBullet(); fireBtn.classList.add('active'); }, {passive:false});
+fireBtn.addEventListener('touchend', e => { e.preventDefault(); fireBtn.classList.remove('active'); }, {passive:false});
+fireBtn.addEventListener('mousedown', () => { exitDemoIfActive(); fireBullet(); fireBtn.classList.add('active'); });
+fireBtn.addEventListener('mouseup', () => fireBtn.classList.remove('active'));
+
+// Keyboard support (for desktop testing)
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft') player.movingLeft = true;
+  if (e.key === 'ArrowRight') player.movingRight = true;
+  if (e.key === ' ') { fireBullet(); e.preventDefault(); }
+});
+document.addEventListener('keyup', e => {
+  if (e.key === 'ArrowLeft') player.movingLeft = false;
+  if (e.key === 'ArrowRight') player.movingRight = false;
+});
+
+// init
+initEnemies();
+updateHUD();
+resetGame();
+gameRunning = true;
+document.getElementById('demoStrip').classList.remove('hidden');
+loop();
+</script>
+</body>
+</html>
+" sandbox="allow-scripts allow-same-origin" width="320" height="460"></iframe><div class="game-card-tap" onclick="openFullscreenGameStatic(this)" data-html="<!DOCTYPE html>
+<html lang=&quot;ja&quot;>
+<head>
+<meta charset=&quot;UTF-8&quot;>
+<meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no&quot;>
+<title>DOT INVADER</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  html, body {
+    height: 100%;
+    background: #0a0a12;
+    overflow: hidden;
+    font-family: 'Courier New', monospace;
+  }
+
+  #wrap {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    align-items: center;
+    justify-content: center;
+    background: #0a0a12;
+  }
+
+  #hud {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 14px;
+    color: #39ff7a;
+    font-size: 18px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 8px #39ff7a;
+    flex-shrink: 0;
+  }
+
+  #hud .lives {
+    color: #ff3366;
+    text-shadow: 0 0 8px #ff3366;
+  }
+
+  canvas {
+    background: #0a0a12;
+    display: block;
+    image-rendering: pixelated;
+    border-top: 2px solid #1f2a3a;
+    border-bottom: 2px solid #1f2a3a;
+    max-width: 100%;
+  }
+
+  #controls {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    flex-shrink: 0;
+  }
+
+  .btn {
+    width: 78px;
+    height: 78px;
+    border-radius: 14px;
+    border: 2px solid #39ff7a;
+    background: rgba(57,255,122,0.08);
+    color: #39ff7a;
+    font-size: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.05s, transform 0.05s;
+  }
+
+  .btn:active, .btn.active {
+    background: #39ff7a;
+    color: #0a0a12;
+    transform: scale(0.95);
+  }
+
+  #fireBtn {
+    width: 78px;
+    height: 78px;
+    border-radius: 50%;
+    border: 2px solid #ff3366;
+    background: rgba(255,51,102,0.08);
+    color: #ff3366;
+    font-size: 16px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #fireBtn:active, #fireBtn.active {
+    background: #ff3366;
+    color: #0a0a12;
+    transform: scale(0.95);
+  }
+
+  .moveBtns {
+    display: flex;
+    gap: 14px;
+  }
+
+  #overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(10,10,18,0.92);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #39ff7a;
+    text-align: center;
+    z-index: 10;
+    padding: 20px;
+  }
+
+  #overlay h1 {
+    font-size: 42px;
+    letter-spacing: 6px;
+    text-shadow: 0 0 16px #39ff7a;
+    margin-bottom: 8px;
+  }
+
+  #overlay .sub {
+    color: #6fa8ff;
+    font-size: 14px;
+    letter-spacing: 3px;
+    margin-bottom: 28px;
+  }
+
+  #overlay .msg {
+    font-size: 24px;
+    margin-bottom: 8px;
+    letter-spacing: 3px;
+  }
+
+  #overlay .score {
+    color: #ffd23f;
+    font-size: 18px;
+    margin-bottom: 28px;
+    letter-spacing: 2px;
+  }
+
+  #startBtn {
+    border: 2px solid #39ff7a;
+    color: #39ff7a;
+    background: transparent;
+    padding: 14px 40px;
+    font-size: 18px;
+    letter-spacing: 4px;
+    font-family: inherit;
+    border-radius: 6px;
+  }
+
+  #startBtn:active {
+    background: #39ff7a;
+    color: #0a0a12;
+  }
+
+  .hidden { display: none !important; }
+
+  #demoStrip {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0 14px;
+    flex-shrink: 0;
+  }
+
+  #demoBadge {
+    color: #ffd23f;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-shadow: 0 0 8px #ffd23f;
+    border: 1px solid #ffd23f;
+    padding: 5px 14px;
+    border-radius: 4px;
+    background: rgba(10,10,18,0.75);
+    animation: blink 1.4s infinite;
+  }
+
+  #tapHint {
+    color: #6fa8ff;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 6px #6fa8ff;
+    animation: blink 1.4s infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+</style>
+</head>
+<body>
+<div id=&quot;wrap&quot;>
+  <div id=&quot;hud&quot;>
+    <span>SCORE <span id=&quot;scoreVal&quot;>0000</span></span>
+    <span class=&quot;lives&quot;>LIFE <span id=&quot;livesVal&quot;>●●●</span></span>
+  </div>
+
+  <canvas id=&quot;game&quot; width=&quot;320&quot; height=&quot;400&quot;></canvas>
+
+  <div id=&quot;controls&quot;>
+    <div class=&quot;moveBtns&quot;>
+      <div class=&quot;btn&quot; id=&quot;leftBtn&quot;>◀</div>
+      <div class=&quot;btn&quot; id=&quot;rightBtn&quot;>▶</div>
+    </div>
+    <div id=&quot;fireBtn&quot;>FIRE</div>
+  </div>
+
+  <div id=&quot;demoStrip&quot; class=&quot;hidden&quot;>
+    <div id=&quot;demoBadge&quot;>DEMO PLAY</div>
+    <div id=&quot;tapHint&quot;>TAP CONTROLS TO PLAY</div>
+  </div>
+</div>
+
+<div id=&quot;overlay&quot; class=&quot;hidden&quot;>
+  <h1>DOT INVADER</h1>
+  <div class=&quot;sub&quot;>PROTOTYPE v0.1</div>
+  <div class=&quot;msg&quot; id=&quot;overlayMsg&quot;>TAP TO PLAY</div>
+  <div class=&quot;score hidden&quot; id=&quot;finalScore&quot;></div>
+  <button id=&quot;startBtn&quot;>START</button>
+</div>
+
+<script>
+window.ASOBIVA_GAME = true;
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+const W = canvas.width;
+const H = canvas.height;
+
+// --- Game state ---
+let score = 0;
+let lives = 3;
+let gameRunning = false;
+let gameOverFlag = false;
+let demoMode = true; // true = AI auto-play, false = human controlled
+
+// Player
+const player = {
+  w: 20,
+  h: 12,
+  x: W/2 - 10,
+  y: H - 30,
+  speed: 4,
+  movingLeft: false,
+  movingRight: false
+};
+
+// Bullets
+let playerBullets = [];
+let enemyBullets = [];
+
+// Enemies
+let enemies = [];
+const ENEMY_ROWS = 4;
+const ENEMY_COLS = 7;
+const ENEMY_W = 18;
+const ENEMY_H = 14;
+const ENEMY_GAP_X = 8;
+const ENEMY_GAP_Y = 14;
+const ENEMY_START_X = 20;
+const ENEMY_START_Y = 30;
+
+let enemyDir = 1;
+let enemyMoveTimer = 0;
+let enemyMoveInterval = 40; // frames per step, decreases as enemies die
+let enemyDropFlag = false;
+
+let frame = 0;
+
+function initEnemies() {
+  enemies = [];
+  for (let r = 0; r < ENEMY_ROWS; r++) {
+    for (let c = 0; c < ENEMY_COLS; c++) {
+      enemies.push({
+        x: ENEMY_START_X + c * (ENEMY_W + ENEMY_GAP_X),
+        y: ENEMY_START_Y + r * (ENEMY_H + ENEMY_GAP_Y),
+        w: ENEMY_W,
+        h: ENEMY_H,
+        alive: true,
+        type: r % 3
+      });
+    }
+  }
+}
+
+function resetGame() {
+  score = 0;
+  lives = 3;
+  player.x = W/2 - player.w/2;
+  playerBullets = [];
+  enemyBullets = [];
+  enemyDir = 1;
+  enemyMoveTimer = 0;
+  enemyMoveInterval = 40;
+  gameOverFlag = false;
+  initEnemies();
+  updateHUD();
+}
+
+function updateHUD() {
+  document.getElementById('scoreVal').textContent = String(score).padStart(4, '0');
+  document.getElementById('livesVal').textContent = '●'.repeat(Math.max(lives,0)) + '○'.repeat(Math.max(3-lives,0));
+}
+
+// --- Drawing helpers (pixel-art style blocks) ---
+function drawPlayer() {
+  ctx.fillStyle = '#39ff7a';
+  // body
+  ctx.fillRect(player.x, player.y + 4, player.w, player.h - 4);
+  // cannon
+  ctx.fillRect(player.x + player.w/2 - 2, player.y, 4, 6);
+  ctx.shadowColor = '#39ff7a';
+  ctx.shadowBlur = 6;
+  ctx.fillRect(player.x, player.y + 4, player.w, player.h - 4);
+  ctx.shadowBlur = 0;
+}
+
+function drawEnemy(e) {
+  if (!e.alive) return;
+  const colors = ['#ff3366', '#ffd23f', '#6fa8ff'];
+  ctx.fillStyle = colors[e.type];
+  ctx.shadowColor = colors[e.type];
+  ctx.shadowBlur = 5;
+
+  // simple pixel-invader shape (3x3 block grid scaled)
+  const px = e.w / 6;
+  const py = e.h / 5;
+  const pattern = [
+    [0,0,1,1,0,0],
+    [0,1,1,1,1,0],
+    [1,1,1,1,1,1],
+    [1,0,1,1,0,1],
+    [1,0,0,0,0,1]
+  ];
+  for (let row = 0; row < 5; row++) {
+    for (let col = 0; col < 6; col++) {
+      if (pattern[row][col]) {
+        ctx.fillRect(e.x + col*px, e.y + row*py, px, py);
+      }
+    }
+  }
+  ctx.shadowBlur = 0;
+}
+
+function drawBullet(b, color) {
+  ctx.fillStyle = color;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 4;
+  ctx.fillRect(b.x, b.y, b.w, b.h);
+  ctx.shadowBlur = 0;
+}
+
+function drawStars() {
+  ctx.fillStyle = '#1f2a3a';
+  for (let i = 0; i < 30; i++) {
+    const sx = (i * 53) % W;
+    const sy = (i * 97 + frame/3) % H;
+    ctx.fillRect(sx, sy, 1, 1);
+  }
+}
+
+// --- Demo AI ---
+function aiControl() {
+  // reset manual flags; AI drives movement directly
+  player.movingLeft = false;
+  player.movingRight = false;
+
+  const aliveEnemies = enemies.filter(e => e.alive);
+  if (aliveEnemies.length === 0) return;
+
+  // find nearest enemy roughly above player (within a tolerance), else track closest column
+  const playerCenter = player.x + player.w / 2;
+  let target = aliveEnemies.reduce((closest, e) => {
+    const eCenter = e.x + e.w / 2;
+    const closestCenter = closest.x + closest.w / 2;
+    return Math.abs(eCenter - playerCenter) < Math.abs(closestCenter - playerCenter) ? e : closest;
+  }, aliveEnemies[0]);
+
+  const targetCenter = target.x + target.w / 2;
+  const diff = targetCenter - playerCenter;
+
+  if (Math.abs(diff) > 4) {
+    if (diff < 0) player.movingLeft = true;
+    else player.movingRight = true;
+  }
+
+  // fire when roughly aligned with a target
+  const aligned = aliveEnemies.some(e => Math.abs((e.x + e.w/2) - playerCenter) < 10);
+  if (aligned && frame % 12 === 0) {
+    fireBullet();
+  }
+
+  // dodge incoming bullets if very close and not aligned with firing
+  const incoming = enemyBullets.find(b => Math.abs((b.x + b.w/2) - playerCenter) < 14 && b.y > player.y - 80 && b.y < player.y);
+  if (incoming) {
+    if (incoming.x < playerCenter) player.movingRight = true, player.movingLeft = false;
+    else player.movingLeft = true, player.movingRight = false;
+  }
+}
+
+// --- Game logic ---
+function update() {
+  frame++;
+
+  if (demoMode) aiControl();
+
+  // player movement
+  if (player.movingLeft) player.x -= player.speed;
+  if (player.movingRight) player.x += player.speed;
+  player.x = Math.max(0, Math.min(W - player.w, player.x));
+
+  // player bullets
+  playerBullets.forEach(b => b.y -= 6);
+  playerBullets = playerBullets.filter(b => b.y + b.h > 0);
+
+  // enemy movement (step-wise like classic invaders)
+  enemyMoveTimer++;
+  if (enemyMoveTimer >= enemyMoveInterval) {
+    enemyMoveTimer = 0;
+    let hitEdge = false;
+    enemies.forEach(e => {
+      if (!e.alive) return;
+      e.x += enemyDir * 8;
+      if (e.x <= 0 || e.x + e.w >= W) hitEdge = true;
+    });
+    if (hitEdge) {
+      enemyDir *= -1;
+      enemies.forEach(e => { if (e.alive) e.y += 10; });
+    }
+  }
+
+  // enemy shooting (random)
+  if (frame % 50 === 0) {
+    const aliveEnemies = enemies.filter(e => e.alive);
+    if (aliveEnemies.length > 0) {
+      const shooter = aliveEnemies[Math.floor(Math.random()*aliveEnemies.length)];
+      enemyBullets.push({
+        x: shooter.x + shooter.w/2 - 2,
+        y: shooter.y + shooter.h,
+        w: 4, h: 10
+      });
+    }
+  }
+  enemyBullets.forEach(b => b.y += 4);
+  enemyBullets = enemyBullets.filter(b => b.y < H);
+
+  // collisions: player bullets vs enemies
+  playerBullets.forEach(b => {
+    enemies.forEach(e => {
+      if (!e.alive) return;
+      if (b.x < e.x + e.w && b.x + b.w > e.x && b.y < e.y + e.h && b.y + b.h > e.y) {
+        e.alive = false;
+        b.y = -100; // mark for removal
+        score += 100;
+        // speed up as enemies die
+        const aliveCount = enemies.filter(e2 => e2.alive).length;
+        enemyMoveInterval = Math.max(10, 10 + aliveCount * 1.1);
+        updateHUD();
+      }
+    });
+  });
+  playerBullets = playerBullets.filter(b => b.y > -50);
+
+  // collisions: enemy bullets vs player
+  enemyBullets.forEach(b => {
+    if (b.x < player.x + player.w && b.x + b.w > player.x && b.y < player.y + player.h && b.y + b.h > player.y) {
+      b.y = H + 100;
+      lives--;
+      updateHUD();
+      if (lives <= 0) {
+        endGame(false);
+      }
+    }
+  });
+
+  // enemies reach player line -> game over
+  enemies.forEach(e => {
+    if (e.alive && e.y + e.h >= player.y) {
+      endGame(false);
+    }
+  });
+
+  // win condition
+  if (enemies.every(e => !e.alive)) {
+    endGame(true);
+  }
+}
+
+function render() {
+  ctx.clearRect(0, 0, W, H);
+  drawStars();
+  drawPlayer();
+  enemies.forEach(drawEnemy);
+  playerBullets.forEach(b => drawBullet(b, '#39ff7a'));
+  enemyBullets.forEach(b => drawBullet(b, '#ff3366'));
+}
+
+function loop() {
+  if (gameRunning) {
+    update();
+    render();
+  }
+  requestAnimationFrame(loop);
+}
+
+function endGame(won) {
+  gameRunning = false;
+  gameOverFlag = true;
+
+  if (demoMode) {
+    // silent restart loop for attract mode, no overlay interruption
+    setTimeout(() => {
+      if (demoMode) {
+        resetGame();
+        gameRunning = true;
+      }
+    }, 1200);
+    return;
+  }
+
+  const overlay = document.getElementById('overlay');
+  const msg = document.getElementById('overlayMsg');
+  const finalScore = document.getElementById('finalScore');
+  msg.textContent = won ? 'YOU WIN!' : 'GAME OVER';
+  msg.style.color = won ? '#39ff7a' : '#ff3366';
+  finalScore.textContent = 'SCORE: ' + String(score).padStart(4,'0');
+  finalScore.classList.remove('hidden');
+  document.getElementById('startBtn').textContent = 'RETRY';
+  overlay.classList.remove('hidden');
+}
+
+// --- Input handling ---
+document.getElementById('startBtn').addEventListener('click', () => {
+  demoMode = false;
+  document.getElementById('demoStrip').classList.add('hidden');
+  resetGame();
+  document.getElementById('overlay').classList.add('hidden');
+  gameRunning = true;
+});
+
+function fireBullet() {
+  if (!gameRunning) return;
+  if (playerBullets.length >= 3) return; // limit
+  playerBullets.push({
+    x: player.x + player.w/2 - 2,
+    y: player.y,
+    w: 4, h: 10
+  });
+}
+
+// Touch / click controls
+const leftBtn = document.getElementById('leftBtn');
+const rightBtn = document.getElementById('rightBtn');
+const fireBtn = document.getElementById('fireBtn');
+
+function bindHold(el, onStart, onEnd) {
+  el.addEventListener('touchstart', e => { e.preventDefault(); onStart(); el.classList.add('active'); }, {passive:false});
+  el.addEventListener('touchend', e => { e.preventDefault(); onEnd(); el.classList.remove('active'); }, {passive:false});
+  el.addEventListener('mousedown', () => { onStart(); el.classList.add('active'); });
+  el.addEventListener('mouseup', () => { onEnd(); el.classList.remove('active'); });
+  el.addEventListener('mouseleave', () => { onEnd(); el.classList.remove('active'); });
+}
+
+function exitDemoIfActive() {
+  if (demoMode) {
+    demoMode = false;
+    document.getElementById('demoStrip').classList.add('hidden');
+    resetGame();
+    gameRunning = true;
+  }
+}
+
+// allows the parent page (games hub) to exit demo mode from its own
+// &quot;TAP TO START&quot; overlay, since that overlay sits above this iframe
+// and intercepts the tap before it reaches the in-game controls
+window.addEventListener('message', e => {
+  if (e.data && e.data.type === 'asobiva-start-play') exitDemoIfActive();
+});
+
+bindHold(leftBtn, () => { exitDemoIfActive(); player.movingLeft = true; }, () => player.movingLeft = false);
+bindHold(rightBtn, () => { exitDemoIfActive(); player.movingRight = true; }, () => player.movingRight = false);
+
+fireBtn.addEventListener('touchstart', e => { e.preventDefault(); exitDemoIfActive(); fireBullet(); fireBtn.classList.add('active'); }, {passive:false});
+fireBtn.addEventListener('touchend', e => { e.preventDefault(); fireBtn.classList.remove('active'); }, {passive:false});
+fireBtn.addEventListener('mousedown', () => { exitDemoIfActive(); fireBullet(); fireBtn.classList.add('active'); });
+fireBtn.addEventListener('mouseup', () => fireBtn.classList.remove('active'));
+
+// Keyboard support (for desktop testing)
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft') player.movingLeft = true;
+  if (e.key === 'ArrowRight') player.movingRight = true;
+  if (e.key === ' ') { fireBullet(); e.preventDefault(); }
+});
+document.addEventListener('keyup', e => {
+  if (e.key === 'ArrowLeft') player.movingLeft = false;
+  if (e.key === 'ArrowRight') player.movingRight = false;
+});
+
+// init
+initEnemies();
+updateHUD();
+resetGame();
+gameRunning = true;
+document.getElementById('demoStrip').classList.remove('hidden');
+loop();
+</script>
+</body>
+</html>
+"></div></div></div></div>
+  <div class="card-section"><div class="game-card"><div class="game-card-frame-wrap"><iframe srcdoc="<!DOCTYPE html>
+<html lang=&quot;ja&quot;>
+<head>
+<meta charset=&quot;UTF-8&quot;>
+<meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no&quot;>
+<title>DOT BREAKER</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  html, body {
+    height: 100%;
+    background: #0a0a12;
+    overflow: hidden;
+    font-family: 'Courier New', monospace;
+  }
+
+  #wrap {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    background: #0a0a12;
+  }
+
+  #hud {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 14px;
+    color: #39ff7a;
+    font-size: 18px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 8px #39ff7a;
+    flex-shrink: 0;
+  }
+
+  #hud .lives {
+    color: #ff3366;
+    text-shadow: 0 0 8px #ff3366;
+  }
+
+  canvas {
+    background: #0a0a12;
+    display: block;
+    image-rendering: pixelated;
+    border-top: 2px solid #1f2a3a;
+    border-bottom: 2px solid #1f2a3a;
+    max-width: 100%;
+  }
+
+  #controls {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+    flex-shrink: 0;
+    gap: 14px;
+  }
+
+  .btn {
+    width: 78px;
+    height: 78px;
+    border-radius: 14px;
+    border: 2px solid #39ff7a;
+    background: rgba(57,255,122,0.08);
+    color: #39ff7a;
+    font-size: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.05s, transform 0.05s;
+  }
+
+  .btn:active, .btn.active {
+    background: #39ff7a;
+    color: #0a0a12;
+    transform: scale(0.95);
+  }
+
+  #overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(10,10,18,0.92);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #39ff7a;
+    text-align: center;
+    z-index: 10;
+    padding: 20px;
+  }
+
+  #overlay h1 {
+    font-size: 38px;
+    letter-spacing: 5px;
+    text-shadow: 0 0 16px #39ff7a;
+    margin-bottom: 8px;
+  }
+
+  #overlay .sub {
+    color: #6fa8ff;
+    font-size: 14px;
+    letter-spacing: 3px;
+    margin-bottom: 28px;
+  }
+
+  #overlay .msg {
+    font-size: 24px;
+    margin-bottom: 8px;
+    letter-spacing: 3px;
+  }
+
+  #overlay .score {
+    color: #ffd23f;
+    font-size: 18px;
+    margin-bottom: 28px;
+    letter-spacing: 2px;
+  }
+
+  #startBtn {
+    border: 2px solid #39ff7a;
+    color: #39ff7a;
+    background: transparent;
+    padding: 14px 40px;
+    font-size: 18px;
+    letter-spacing: 4px;
+    font-family: inherit;
+    border-radius: 6px;
+  }
+
+  #startBtn:active {
+    background: #39ff7a;
+    color: #0a0a12;
+  }
+
+  .hidden { display: none !important; }
+
+  #demoStrip {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0 14px;
+    flex-shrink: 0;
+  }
+
+  #demoBadge {
+    color: #ffd23f;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-shadow: 0 0 8px #ffd23f;
+    border: 1px solid #ffd23f;
+    padding: 5px 14px;
+    border-radius: 4px;
+    background: rgba(10,10,18,0.75);
+    animation: blink 1.4s infinite;
+  }
+
+  #tapHint {
+    color: #6fa8ff;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 6px #6fa8ff;
+    animation: blink 1.4s infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+</style>
+</head>
+<body>
+<div id=&quot;wrap&quot;>
+  <div id=&quot;hud&quot;>
+    <span>SCORE <span id=&quot;scoreVal&quot;>0000</span></span>
+    <span class=&quot;lives&quot;>LIFE <span id=&quot;livesVal&quot;>●●●</span></span>
+  </div>
+
+  <canvas id=&quot;game&quot; width=&quot;320&quot; height=&quot;400&quot;></canvas>
+
+  <div id=&quot;controls&quot;>
+    <div class=&quot;btn&quot; id=&quot;leftBtn&quot;>◀</div>
+    <div class=&quot;btn&quot; id=&quot;rightBtn&quot;>▶</div>
+  </div>
+
+  <div id=&quot;demoStrip&quot; class=&quot;hidden&quot;>
+    <div id=&quot;demoBadge&quot;>DEMO PLAY</div>
+    <div id=&quot;tapHint&quot;>TAP CONTROLS TO PLAY</div>
+  </div>
+</div>
+
+<div id=&quot;overlay&quot; class=&quot;hidden&quot;>
+  <h1>DOT BREAKER</h1>
+  <div class=&quot;sub&quot;>PROTOTYPE v0.1</div>
+  <div class=&quot;msg&quot; id=&quot;overlayMsg&quot;>TAP TO PLAY</div>
+  <div class=&quot;score hidden&quot; id=&quot;finalScore&quot;></div>
+  <button id=&quot;startBtn&quot;>START</button>
+</div>
+
+<script>
+window.ASOBIVA_GAME = true;
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+const W = canvas.width;
+const H = canvas.height;
+
+// --- Game state ---
+let score = 0;
+let lives = 3;
+let gameRunning = false;
+let demoMode = true; // true = AI auto-play, false = human controlled
+
+// Paddle
+const paddle = {
+  w: 56,
+  h: 10,
+  x: W/2 - 28,
+  y: H - 24,
+  speed: 5,
+  movingLeft: false,
+  movingRight: false
+};
+
+// Ball
+const BALL_R = 5;
+let ball = {
+  x: W/2,
+  y: H - 40,
+  vx: 2.4,
+  vy: -3.2
+};
+
+// Bricks
+let bricks = [];
+const BRICK_ROWS = 5;
+const BRICK_COLS = 8;
+const BRICK_W = 32;
+const BRICK_H = 12;
+const BRICK_GAP = 4;
+const BRICK_START_Y = 36;
+const BRICK_START_X = (W - (BRICK_COLS * (BRICK_W + BRICK_GAP) - BRICK_GAP)) / 2;
+
+const ROW_COLORS = ['#ff3366', '#ffd23f', '#6fa8ff', '#39ff7a', '#c77dff'];
+
+let frame = 0;
+
+function initBricks() {
+  bricks = [];
+  for (let r = 0; r < BRICK_ROWS; r++) {
+    for (let c = 0; c < BRICK_COLS; c++) {
+      bricks.push({
+        x: BRICK_START_X + c * (BRICK_W + BRICK_GAP),
+        y: BRICK_START_Y + r * (BRICK_H + BRICK_GAP),
+        w: BRICK_W,
+        h: BRICK_H,
+        alive: true,
+        color: ROW_COLORS[r % ROW_COLORS.length]
+      });
+    }
+  }
+}
+
+function resetBall() {
+  ball.x = W/2;
+  ball.y = H - 40;
+  const dir = Math.random() < 0.5 ? -1 : 1;
+  ball.vx = 2.4 * dir;
+  ball.vy = -3.2;
+}
+
+function resetGame() {
+  score = 0;
+  lives = 3;
+  paddle.x = W/2 - paddle.w/2;
+  initBricks();
+  resetBall();
+  updateHUD();
+}
+
+function updateHUD() {
+  document.getElementById('scoreVal').textContent = String(score).padStart(4, '0');
+  document.getElementById('livesVal').textContent = '●'.repeat(Math.max(lives,0)) + '○'.repeat(Math.max(3-lives,0));
+}
+
+// --- Drawing ---
+function drawPaddle() {
+  ctx.fillStyle = '#39ff7a';
+  ctx.shadowColor = '#39ff7a';
+  ctx.shadowBlur = 6;
+  ctx.fillRect(paddle.x, paddle.y, paddle.w, paddle.h);
+  ctx.shadowBlur = 0;
+}
+
+function drawBall() {
+  ctx.fillStyle = '#ffffff';
+  ctx.shadowColor = '#ffffff';
+  ctx.shadowBlur = 8;
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, BALL_R, 0, Math.PI*2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+}
+
+function drawBricks() {
+  bricks.forEach(b => {
+    if (!b.alive) return;
+    ctx.fillStyle = b.color;
+    ctx.shadowColor = b.color;
+    ctx.shadowBlur = 4;
+    ctx.fillRect(b.x, b.y, b.w, b.h);
+    ctx.shadowBlur = 0;
+    // pixel notch detail
+    ctx.fillStyle = 'rgba(10,10,18,0.4)';
+    ctx.fillRect(b.x, b.y, b.w, 3);
+  });
+}
+
+function drawStars() {
+  ctx.fillStyle = '#1f2a3a';
+  for (let i = 0; i < 30; i++) {
+    const sx = (i * 53) % W;
+    const sy = (i * 97 + frame/3) % H;
+    ctx.fillRect(sx, sy, 1, 1);
+  }
+}
+
+// --- Demo AI ---
+function aiControl() {
+  paddle.movingLeft = false;
+  paddle.movingRight = false;
+
+  const paddleCenter = paddle.x + paddle.w / 2;
+  // only react when ball is heading downward toward paddle, for natural movement
+  const diff = ball.x - paddleCenter;
+
+  if (Math.abs(diff) > 5) {
+    if (diff < 0) paddle.movingLeft = true;
+    else paddle.movingRight = true;
+  }
+}
+
+// --- Logic ---
+function update() {
+  frame++;
+
+  if (demoMode) aiControl();
+
+  // paddle movement
+  if (paddle.movingLeft) paddle.x -= paddle.speed;
+  if (paddle.movingRight) paddle.x += paddle.speed;
+  paddle.x = Math.max(0, Math.min(W - paddle.w, paddle.x));
+
+  // ball movement
+  ball.x += ball.vx;
+  ball.y += ball.vy;
+
+  // wall collisions
+  if (ball.x - BALL_R <= 0) { ball.x = BALL_R; ball.vx *= -1; }
+  if (ball.x + BALL_R >= W) { ball.x = W - BALL_R; ball.vx *= -1; }
+  if (ball.y - BALL_R <= 0) { ball.y = BALL_R; ball.vy *= -1; }
+
+  // paddle collision
+  if (ball.y + BALL_R >= paddle.y &&
+      ball.y + BALL_R <= paddle.y + paddle.h + 6 &&
+      ball.x >= paddle.x &&
+      ball.x <= paddle.x + paddle.w &&
+      ball.vy > 0) {
+    ball.y = paddle.y - BALL_R;
+    ball.vy *= -1;
+    // add angle based on hit position
+    const hitPos = (ball.x - (paddle.x + paddle.w/2)) / (paddle.w/2); // -1 to 1
+    ball.vx = hitPos * 4;
+    // slight speed up
+    ball.vy *= 1.01;
+  }
+
+  // brick collisions
+  bricks.forEach(b => {
+    if (!b.alive) return;
+    if (ball.x + BALL_R > b.x && ball.x - BALL_R < b.x + b.w &&
+        ball.y + BALL_R > b.y && ball.y - BALL_R < b.y + b.h) {
+      b.alive = false;
+      ball.vy *= -1;
+      score += 50;
+      updateHUD();
+    }
+  });
+
+  // ball lost
+  if (ball.y - BALL_R > H) {
+    lives--;
+    updateHUD();
+    if (lives <= 0) {
+      endGame(false);
+    } else {
+      resetBall();
+    }
+  }
+
+  // win condition
+  if (bricks.every(b => !b.alive)) {
+    endGame(true);
+  }
+}
+
+function render() {
+  ctx.clearRect(0, 0, W, H);
+  drawStars();
+  drawBricks();
+  drawPaddle();
+  drawBall();
+}
+
+function loop() {
+  if (gameRunning) {
+    update();
+    render();
+  }
+  requestAnimationFrame(loop);
+}
+
+function endGame(won) {
+  gameRunning = false;
+
+  if (demoMode) {
+    setTimeout(() => {
+      if (demoMode) {
+        resetGame();
+        gameRunning = true;
+      }
+    }, 1200);
+    return;
+  }
+
+  const overlay = document.getElementById('overlay');
+  const msg = document.getElementById('overlayMsg');
+  const finalScore = document.getElementById('finalScore');
+  msg.textContent = won ? 'YOU WIN!' : 'GAME OVER';
+  msg.style.color = won ? '#39ff7a' : '#ff3366';
+  finalScore.textContent = 'SCORE: ' + String(score).padStart(4,'0');
+  finalScore.classList.remove('hidden');
+  document.getElementById('startBtn').textContent = 'RETRY';
+  overlay.classList.remove('hidden');
+}
+
+// --- Input handling ---
+document.getElementById('startBtn').addEventListener('click', () => {
+  demoMode = false;
+  document.getElementById('demoStrip').classList.add('hidden');
+  resetGame();
+  document.getElementById('overlay').classList.add('hidden');
+  gameRunning = true;
+});
+
+const leftBtn = document.getElementById('leftBtn');
+const rightBtn = document.getElementById('rightBtn');
+
+function bindHold(el, onStart, onEnd) {
+  el.addEventListener('touchstart', e => { e.preventDefault(); onStart(); el.classList.add('active'); }, {passive:false});
+  el.addEventListener('touchend', e => { e.preventDefault(); onEnd(); el.classList.remove('active'); }, {passive:false});
+  el.addEventListener('mousedown', () => { onStart(); el.classList.add('active'); });
+  el.addEventListener('mouseup', () => { onEnd(); el.classList.remove('active'); });
+  el.addEventListener('mouseleave', () => { onEnd(); el.classList.remove('active'); });
+}
+
+function exitDemoIfActive() {
+  if (demoMode) {
+    demoMode = false;
+    document.getElementById('demoStrip').classList.add('hidden');
+    resetGame();
+    gameRunning = true;
+  }
+}
+
+window.addEventListener('message', e => {
+  if (e.data && e.data.type === 'asobiva-start-play') exitDemoIfActive();
+});
+
+bindHold(leftBtn, () => { exitDemoIfActive(); paddle.movingLeft = true; }, () => paddle.movingLeft = false);
+bindHold(rightBtn, () => { exitDemoIfActive(); paddle.movingRight = true; }, () => paddle.movingRight = false);
+
+// Keyboard support (for desktop testing)
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft') paddle.movingLeft = true;
+  if (e.key === 'ArrowRight') paddle.movingRight = true;
+});
+document.addEventListener('keyup', e => {
+  if (e.key === 'ArrowLeft') paddle.movingLeft = false;
+  if (e.key === 'ArrowRight') paddle.movingRight = false;
+});
+
+// init
+initBricks();
+updateHUD();
+resetGame();
+gameRunning = true;
+document.getElementById('demoStrip').classList.remove('hidden');
+loop();
+</script>
+</body>
+</html>
+" sandbox="allow-scripts allow-same-origin" width="320" height="460"></iframe><div class="game-card-tap" onclick="openFullscreenGameStatic(this)" data-html="<!DOCTYPE html>
+<html lang=&quot;ja&quot;>
+<head>
+<meta charset=&quot;UTF-8&quot;>
+<meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no&quot;>
+<title>DOT BREAKER</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  html, body {
+    height: 100%;
+    background: #0a0a12;
+    overflow: hidden;
+    font-family: 'Courier New', monospace;
+  }
+
+  #wrap {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    background: #0a0a12;
+  }
+
+  #hud {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 14px;
+    color: #39ff7a;
+    font-size: 18px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 8px #39ff7a;
+    flex-shrink: 0;
+  }
+
+  #hud .lives {
+    color: #ff3366;
+    text-shadow: 0 0 8px #ff3366;
+  }
+
+  canvas {
+    background: #0a0a12;
+    display: block;
+    image-rendering: pixelated;
+    border-top: 2px solid #1f2a3a;
+    border-bottom: 2px solid #1f2a3a;
+    max-width: 100%;
+  }
+
+  #controls {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+    flex-shrink: 0;
+    gap: 14px;
+  }
+
+  .btn {
+    width: 78px;
+    height: 78px;
+    border-radius: 14px;
+    border: 2px solid #39ff7a;
+    background: rgba(57,255,122,0.08);
+    color: #39ff7a;
+    font-size: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.05s, transform 0.05s;
+  }
+
+  .btn:active, .btn.active {
+    background: #39ff7a;
+    color: #0a0a12;
+    transform: scale(0.95);
+  }
+
+  #overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(10,10,18,0.92);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #39ff7a;
+    text-align: center;
+    z-index: 10;
+    padding: 20px;
+  }
+
+  #overlay h1 {
+    font-size: 38px;
+    letter-spacing: 5px;
+    text-shadow: 0 0 16px #39ff7a;
+    margin-bottom: 8px;
+  }
+
+  #overlay .sub {
+    color: #6fa8ff;
+    font-size: 14px;
+    letter-spacing: 3px;
+    margin-bottom: 28px;
+  }
+
+  #overlay .msg {
+    font-size: 24px;
+    margin-bottom: 8px;
+    letter-spacing: 3px;
+  }
+
+  #overlay .score {
+    color: #ffd23f;
+    font-size: 18px;
+    margin-bottom: 28px;
+    letter-spacing: 2px;
+  }
+
+  #startBtn {
+    border: 2px solid #39ff7a;
+    color: #39ff7a;
+    background: transparent;
+    padding: 14px 40px;
+    font-size: 18px;
+    letter-spacing: 4px;
+    font-family: inherit;
+    border-radius: 6px;
+  }
+
+  #startBtn:active {
+    background: #39ff7a;
+    color: #0a0a12;
+  }
+
+  .hidden { display: none !important; }
+
+  #demoStrip {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0 14px;
+    flex-shrink: 0;
+  }
+
+  #demoBadge {
+    color: #ffd23f;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-shadow: 0 0 8px #ffd23f;
+    border: 1px solid #ffd23f;
+    padding: 5px 14px;
+    border-radius: 4px;
+    background: rgba(10,10,18,0.75);
+    animation: blink 1.4s infinite;
+  }
+
+  #tapHint {
+    color: #6fa8ff;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 6px #6fa8ff;
+    animation: blink 1.4s infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+</style>
+</head>
+<body>
+<div id=&quot;wrap&quot;>
+  <div id=&quot;hud&quot;>
+    <span>SCORE <span id=&quot;scoreVal&quot;>0000</span></span>
+    <span class=&quot;lives&quot;>LIFE <span id=&quot;livesVal&quot;>●●●</span></span>
+  </div>
+
+  <canvas id=&quot;game&quot; width=&quot;320&quot; height=&quot;400&quot;></canvas>
+
+  <div id=&quot;controls&quot;>
+    <div class=&quot;btn&quot; id=&quot;leftBtn&quot;>◀</div>
+    <div class=&quot;btn&quot; id=&quot;rightBtn&quot;>▶</div>
+  </div>
+
+  <div id=&quot;demoStrip&quot; class=&quot;hidden&quot;>
+    <div id=&quot;demoBadge&quot;>DEMO PLAY</div>
+    <div id=&quot;tapHint&quot;>TAP CONTROLS TO PLAY</div>
+  </div>
+</div>
+
+<div id=&quot;overlay&quot; class=&quot;hidden&quot;>
+  <h1>DOT BREAKER</h1>
+  <div class=&quot;sub&quot;>PROTOTYPE v0.1</div>
+  <div class=&quot;msg&quot; id=&quot;overlayMsg&quot;>TAP TO PLAY</div>
+  <div class=&quot;score hidden&quot; id=&quot;finalScore&quot;></div>
+  <button id=&quot;startBtn&quot;>START</button>
+</div>
+
+<script>
+window.ASOBIVA_GAME = true;
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+const W = canvas.width;
+const H = canvas.height;
+
+// --- Game state ---
+let score = 0;
+let lives = 3;
+let gameRunning = false;
+let demoMode = true; // true = AI auto-play, false = human controlled
+
+// Paddle
+const paddle = {
+  w: 56,
+  h: 10,
+  x: W/2 - 28,
+  y: H - 24,
+  speed: 5,
+  movingLeft: false,
+  movingRight: false
+};
+
+// Ball
+const BALL_R = 5;
+let ball = {
+  x: W/2,
+  y: H - 40,
+  vx: 2.4,
+  vy: -3.2
+};
+
+// Bricks
+let bricks = [];
+const BRICK_ROWS = 5;
+const BRICK_COLS = 8;
+const BRICK_W = 32;
+const BRICK_H = 12;
+const BRICK_GAP = 4;
+const BRICK_START_Y = 36;
+const BRICK_START_X = (W - (BRICK_COLS * (BRICK_W + BRICK_GAP) - BRICK_GAP)) / 2;
+
+const ROW_COLORS = ['#ff3366', '#ffd23f', '#6fa8ff', '#39ff7a', '#c77dff'];
+
+let frame = 0;
+
+function initBricks() {
+  bricks = [];
+  for (let r = 0; r < BRICK_ROWS; r++) {
+    for (let c = 0; c < BRICK_COLS; c++) {
+      bricks.push({
+        x: BRICK_START_X + c * (BRICK_W + BRICK_GAP),
+        y: BRICK_START_Y + r * (BRICK_H + BRICK_GAP),
+        w: BRICK_W,
+        h: BRICK_H,
+        alive: true,
+        color: ROW_COLORS[r % ROW_COLORS.length]
+      });
+    }
+  }
+}
+
+function resetBall() {
+  ball.x = W/2;
+  ball.y = H - 40;
+  const dir = Math.random() < 0.5 ? -1 : 1;
+  ball.vx = 2.4 * dir;
+  ball.vy = -3.2;
+}
+
+function resetGame() {
+  score = 0;
+  lives = 3;
+  paddle.x = W/2 - paddle.w/2;
+  initBricks();
+  resetBall();
+  updateHUD();
+}
+
+function updateHUD() {
+  document.getElementById('scoreVal').textContent = String(score).padStart(4, '0');
+  document.getElementById('livesVal').textContent = '●'.repeat(Math.max(lives,0)) + '○'.repeat(Math.max(3-lives,0));
+}
+
+// --- Drawing ---
+function drawPaddle() {
+  ctx.fillStyle = '#39ff7a';
+  ctx.shadowColor = '#39ff7a';
+  ctx.shadowBlur = 6;
+  ctx.fillRect(paddle.x, paddle.y, paddle.w, paddle.h);
+  ctx.shadowBlur = 0;
+}
+
+function drawBall() {
+  ctx.fillStyle = '#ffffff';
+  ctx.shadowColor = '#ffffff';
+  ctx.shadowBlur = 8;
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, BALL_R, 0, Math.PI*2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+}
+
+function drawBricks() {
+  bricks.forEach(b => {
+    if (!b.alive) return;
+    ctx.fillStyle = b.color;
+    ctx.shadowColor = b.color;
+    ctx.shadowBlur = 4;
+    ctx.fillRect(b.x, b.y, b.w, b.h);
+    ctx.shadowBlur = 0;
+    // pixel notch detail
+    ctx.fillStyle = 'rgba(10,10,18,0.4)';
+    ctx.fillRect(b.x, b.y, b.w, 3);
+  });
+}
+
+function drawStars() {
+  ctx.fillStyle = '#1f2a3a';
+  for (let i = 0; i < 30; i++) {
+    const sx = (i * 53) % W;
+    const sy = (i * 97 + frame/3) % H;
+    ctx.fillRect(sx, sy, 1, 1);
+  }
+}
+
+// --- Demo AI ---
+function aiControl() {
+  paddle.movingLeft = false;
+  paddle.movingRight = false;
+
+  const paddleCenter = paddle.x + paddle.w / 2;
+  // only react when ball is heading downward toward paddle, for natural movement
+  const diff = ball.x - paddleCenter;
+
+  if (Math.abs(diff) > 5) {
+    if (diff < 0) paddle.movingLeft = true;
+    else paddle.movingRight = true;
+  }
+}
+
+// --- Logic ---
+function update() {
+  frame++;
+
+  if (demoMode) aiControl();
+
+  // paddle movement
+  if (paddle.movingLeft) paddle.x -= paddle.speed;
+  if (paddle.movingRight) paddle.x += paddle.speed;
+  paddle.x = Math.max(0, Math.min(W - paddle.w, paddle.x));
+
+  // ball movement
+  ball.x += ball.vx;
+  ball.y += ball.vy;
+
+  // wall collisions
+  if (ball.x - BALL_R <= 0) { ball.x = BALL_R; ball.vx *= -1; }
+  if (ball.x + BALL_R >= W) { ball.x = W - BALL_R; ball.vx *= -1; }
+  if (ball.y - BALL_R <= 0) { ball.y = BALL_R; ball.vy *= -1; }
+
+  // paddle collision
+  if (ball.y + BALL_R >= paddle.y &&
+      ball.y + BALL_R <= paddle.y + paddle.h + 6 &&
+      ball.x >= paddle.x &&
+      ball.x <= paddle.x + paddle.w &&
+      ball.vy > 0) {
+    ball.y = paddle.y - BALL_R;
+    ball.vy *= -1;
+    // add angle based on hit position
+    const hitPos = (ball.x - (paddle.x + paddle.w/2)) / (paddle.w/2); // -1 to 1
+    ball.vx = hitPos * 4;
+    // slight speed up
+    ball.vy *= 1.01;
+  }
+
+  // brick collisions
+  bricks.forEach(b => {
+    if (!b.alive) return;
+    if (ball.x + BALL_R > b.x && ball.x - BALL_R < b.x + b.w &&
+        ball.y + BALL_R > b.y && ball.y - BALL_R < b.y + b.h) {
+      b.alive = false;
+      ball.vy *= -1;
+      score += 50;
+      updateHUD();
+    }
+  });
+
+  // ball lost
+  if (ball.y - BALL_R > H) {
+    lives--;
+    updateHUD();
+    if (lives <= 0) {
+      endGame(false);
+    } else {
+      resetBall();
+    }
+  }
+
+  // win condition
+  if (bricks.every(b => !b.alive)) {
+    endGame(true);
+  }
+}
+
+function render() {
+  ctx.clearRect(0, 0, W, H);
+  drawStars();
+  drawBricks();
+  drawPaddle();
+  drawBall();
+}
+
+function loop() {
+  if (gameRunning) {
+    update();
+    render();
+  }
+  requestAnimationFrame(loop);
+}
+
+function endGame(won) {
+  gameRunning = false;
+
+  if (demoMode) {
+    setTimeout(() => {
+      if (demoMode) {
+        resetGame();
+        gameRunning = true;
+      }
+    }, 1200);
+    return;
+  }
+
+  const overlay = document.getElementById('overlay');
+  const msg = document.getElementById('overlayMsg');
+  const finalScore = document.getElementById('finalScore');
+  msg.textContent = won ? 'YOU WIN!' : 'GAME OVER';
+  msg.style.color = won ? '#39ff7a' : '#ff3366';
+  finalScore.textContent = 'SCORE: ' + String(score).padStart(4,'0');
+  finalScore.classList.remove('hidden');
+  document.getElementById('startBtn').textContent = 'RETRY';
+  overlay.classList.remove('hidden');
+}
+
+// --- Input handling ---
+document.getElementById('startBtn').addEventListener('click', () => {
+  demoMode = false;
+  document.getElementById('demoStrip').classList.add('hidden');
+  resetGame();
+  document.getElementById('overlay').classList.add('hidden');
+  gameRunning = true;
+});
+
+const leftBtn = document.getElementById('leftBtn');
+const rightBtn = document.getElementById('rightBtn');
+
+function bindHold(el, onStart, onEnd) {
+  el.addEventListener('touchstart', e => { e.preventDefault(); onStart(); el.classList.add('active'); }, {passive:false});
+  el.addEventListener('touchend', e => { e.preventDefault(); onEnd(); el.classList.remove('active'); }, {passive:false});
+  el.addEventListener('mousedown', () => { onStart(); el.classList.add('active'); });
+  el.addEventListener('mouseup', () => { onEnd(); el.classList.remove('active'); });
+  el.addEventListener('mouseleave', () => { onEnd(); el.classList.remove('active'); });
+}
+
+function exitDemoIfActive() {
+  if (demoMode) {
+    demoMode = false;
+    document.getElementById('demoStrip').classList.add('hidden');
+    resetGame();
+    gameRunning = true;
+  }
+}
+
+window.addEventListener('message', e => {
+  if (e.data && e.data.type === 'asobiva-start-play') exitDemoIfActive();
+});
+
+bindHold(leftBtn, () => { exitDemoIfActive(); paddle.movingLeft = true; }, () => paddle.movingLeft = false);
+bindHold(rightBtn, () => { exitDemoIfActive(); paddle.movingRight = true; }, () => paddle.movingRight = false);
+
+// Keyboard support (for desktop testing)
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft') paddle.movingLeft = true;
+  if (e.key === 'ArrowRight') paddle.movingRight = true;
+});
+document.addEventListener('keyup', e => {
+  if (e.key === 'ArrowLeft') paddle.movingLeft = false;
+  if (e.key === 'ArrowRight') paddle.movingRight = false;
+});
+
+// init
+initBricks();
+updateHUD();
+resetGame();
+gameRunning = true;
+document.getElementById('demoStrip').classList.remove('hidden');
+loop();
+</script>
+</body>
+</html>
+"></div></div></div></div>
+  <div class="card-section"><div class="game-card"><div class="game-card-frame-wrap"><iframe srcdoc="<!DOCTYPE html>
+<html lang=&quot;ja&quot;>
+<head>
+<meta charset=&quot;UTF-8&quot;>
+<meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no&quot;>
+<title>DOT BLACKJACK</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  html, body {
+    height: 100%;
+    background: #0a0a12;
+    overflow: hidden;
+    font-family: 'Courier New', monospace;
+  }
+
+  #wrap {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    align-items: center;
+    background: #0a0a12;
+    max-width: 480px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  #hud {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 18px;
+    color: #39ff7a;
+    font-size: 16px;
+    letter-spacing: 1px;
+    text-shadow: 0 0 8px #39ff7a;
+    flex-shrink: 0;
+  }
+
+  #hud .chips {
+    color: #ffd23f;
+    text-shadow: 0 0 8px #ffd23f;
+  }
+
+  #table {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    padding: 6px 10px;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  .zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-height: 0;
+  }
+
+  .zoneLabel {
+    color: #6fa8ff;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-shadow: 0 0 6px #6fa8ff;
+  }
+
+  .cardRow {
+    display: flex;
+    gap: 8px;
+    min-height: 86px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .card {
+    width: 22vmin;
+    height: 31.5vmin;
+    max-width: 100px;
+    max-height: 144px;
+    min-width: 60px;
+    min-height: 86px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    background: #f4f4f4;
+    border: 2px solid #1f2a3a;
+    position: relative;
+    padding: 6px;
+    font-weight: bold;
+    font-size: clamp(13px, 5.5vmin, 24px);
+    box-shadow: 0 0 10px rgba(57,255,122,0.25);
+    animation: dealIn 0.25s ease-out;
+    overflow: hidden;
+  }
+
+  @keyframes dealIn {
+    from { transform: translateY(-30px) scale(0.8); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
+  }
+
+  .card.red { color: #d8203c; }
+  .card.black { color: #1a1a1a; }
+
+  .card .top {
+    position: absolute;
+    top: 6px;
+    left: 7px;
+    line-height: 1.1;
+    text-align: center;
+  }
+  .card .suitMid {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: clamp(20px, 8.5vmin, 38px);
+  }
+  .card .bottom {
+    position: absolute;
+    bottom: 6px;
+    right: 7px;
+    line-height: 1.1;
+    text-align: center;
+    transform: rotate(180deg);
+  }
+
+  .card.back {
+    background: repeating-linear-gradient(45deg, #1f2a3a, #1f2a3a 6px, #0a0a12 6px, #0a0a12 12px);
+    border: 2px solid #39ff7a;
+  }
+
+  .handVal {
+    color: #fff;
+    font-size: 18px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 6px #fff;
+    height: 24px;
+    margin-top: 4px;
+  }
+
+  #message {
+    text-align: center;
+    color: #ffd23f;
+    font-size: 16px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 8px #ffd23f;
+    min-height: 20px;
+    margin: 4px 0;
+  }
+
+  #controls {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 14px;
+    flex-shrink: 0;
+  }
+
+  .actionBtn {
+    flex: 1;
+    max-width: 110px;
+    padding: 14px 0;
+    border-radius: 10px;
+    border: 2px solid #39ff7a;
+    background: rgba(57,255,122,0.08);
+    color: #39ff7a;
+    font-size: 14px;
+    letter-spacing: 2px;
+    font-family: inherit;
+    font-weight: bold;
+  }
+
+  .actionBtn:active {
+    background: #39ff7a;
+    color: #0a0a12;
+  }
+
+  .actionBtn:disabled {
+    opacity: 0.3;
+    border-color: #444;
+    color: #444;
+  }
+
+  .actionBtn.danger {
+    border-color: #ff3366;
+    color: #ff3366;
+  }
+  .actionBtn.danger:active {
+    background: #ff3366;
+    color: #0a0a12;
+  }
+
+  #betArea {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+    padding: 6px;
+    flex-shrink: 0;
+  }
+
+  .chipBtn {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 2px solid #ffd23f;
+    background: rgba(255,210,63,0.08);
+    color: #ffd23f;
+    font-size: 14px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .chipBtn:active {
+    background: #ffd23f;
+    color: #0a0a12;
+  }
+
+  #betLabel {
+    color: #fff;
+    font-size: 16px;
+    letter-spacing: 2px;
+  }
+
+  #dealBtn {
+    margin: 0 14px 12px 14px;
+    padding: 14px 0;
+    border-radius: 10px;
+    border: 2px solid #39ff7a;
+    background: rgba(57,255,122,0.08);
+    color: #39ff7a;
+    font-size: 18px;
+    letter-spacing: 4px;
+    font-family: inherit;
+    font-weight: bold;
+    flex-shrink: 0;
+  }
+  #dealBtn:active {
+    background: #39ff7a;
+    color: #0a0a12;
+  }
+
+  #overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(10,10,18,0.95);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #39ff7a;
+    text-align: center;
+    z-index: 10;
+    padding: 20px;
+  }
+
+  #overlay h1 {
+    font-size: 34px;
+    letter-spacing: 4px;
+    text-shadow: 0 0 16px #39ff7a;
+    margin-bottom: 8px;
+  }
+
+  #overlay .sub {
+    color: #6fa8ff;
+    font-size: 13px;
+    letter-spacing: 3px;
+    margin-bottom: 28px;
+  }
+
+  #startBtn {
+    border: 2px solid #39ff7a;
+    color: #39ff7a;
+    background: transparent;
+    padding: 14px 40px;
+    font-size: 18px;
+    letter-spacing: 4px;
+    font-family: inherit;
+    border-radius: 6px;
+  }
+  #startBtn:active {
+    background: #39ff7a;
+    color: #0a0a12;
+  }
+
+  .hidden { display: none !important; }
+
+  #demoStrip {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 6px 0 14px;
+    flex-shrink: 0;
+  }
+
+  #demoBadge {
+    color: #ffd23f;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-shadow: 0 0 8px #ffd23f;
+    border: 1px solid #ffd23f;
+    padding: 5px 14px;
+    border-radius: 4px;
+    background: rgba(10,10,18,0.75);
+    animation: blink 1.4s infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+</style>
+</head>
+<body>
+<div id=&quot;wrap&quot;>
+  <div id=&quot;hud&quot;>
+    <span>CHIPS <span class=&quot;chips&quot; id=&quot;chipsVal&quot;>1000</span></span>
+    <span>BET <span id=&quot;currentBetVal&quot; style=&quot;color:#ffd23f;text-shadow:0 0 8px #ffd23f;&quot;>0</span></span>
+  </div>
+
+  <div id=&quot;table&quot;>
+    <div class=&quot;zone&quot;>
+      <div class=&quot;zoneLabel&quot;>DEALER</div>
+      <div class=&quot;cardRow&quot; id=&quot;dealerCards&quot;></div>
+      <div class=&quot;handVal&quot; id=&quot;dealerVal&quot;></div>
+    </div>
+
+    <div id=&quot;message&quot;></div>
+
+    <div class=&quot;zone&quot;>
+      <div class=&quot;zoneLabel&quot;>YOU</div>
+      <div class=&quot;cardRow&quot; id=&quot;playerCards&quot;></div>
+      <div class=&quot;handVal&quot; id=&quot;playerVal&quot;></div>
+    </div>
+  </div>
+
+  <div id=&quot;betArea&quot;>
+    <div class=&quot;chipBtn&quot; data-amt=&quot;10&quot;>+10</div>
+    <div class=&quot;chipBtn&quot; data-amt=&quot;50&quot;>+50</div>
+    <div class=&quot;chipBtn&quot; data-amt=&quot;100&quot;>+100</div>
+    <div id=&quot;betLabel&quot;>BET: <span id=&quot;betAmt&quot;>0</span></div>
+  </div>
+
+  <button id=&quot;dealBtn&quot;>DEAL</button>
+
+  <div id=&quot;controls&quot; class=&quot;hidden&quot;>
+    <button class=&quot;actionBtn&quot; id=&quot;hitBtn&quot;>HIT</button>
+    <button class=&quot;actionBtn&quot; id=&quot;standBtn&quot;>STAND</button>
+    <button class=&quot;actionBtn danger&quot; id=&quot;doubleBtn&quot;>DOUBLE</button>
+  </div>
+
+  <div id=&quot;demoStrip&quot; class=&quot;hidden&quot;>
+    <div id=&quot;demoBadge&quot;>DEMO PLAY</div>
+  </div>
+</div>
+
+<div id=&quot;overlay&quot;>
+  <h1>DOT BLACKJACK</h1>
+  <div class=&quot;sub&quot;>PROTOTYPE v0.1</div>
+  <div class=&quot;msg&quot; id=&quot;overlayMsg&quot; style=&quot;font-size:16px;color:#6fa8ff;letter-spacing:2px;margin-bottom:24px;&quot;>DEMO PLAYING BELOW</div>
+  <button id=&quot;startBtn&quot;>START</button>
+</div>
+
+<script>
+window.ASOBIVA_GAME = true;
+const SUITS = [
+  { sym: '♠', color: 'black' },
+  { sym: '♥', color: 'red' },
+  { sym: '♦', color: 'red' },
+  { sym: '♣', color: 'black' }
+];
+const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+
+let chips = 1000;
+let bet = 0;
+let deck = [];
+let playerHand = [];
+let dealerHand = [];
+let roundActive = false;
+let dealerHidden = true;
+let demoMode = true; // true = AI auto-plays continuously, false = human controlled
+
+function buildDeck() {
+  const d = [];
+  for (const suit of SUITS) {
+    for (const rank of RANKS) {
+      d.push({ rank, suit: suit.sym, color: suit.color });
+    }
+  }
+  // shuffle
+  for (let i = d.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [d[i], d[j]] = [d[j], d[i]];
+  }
+  return d;
+}
+
+function cardValue(card) {
+  if (card.rank === 'A') return 11;
+  if (['J','Q','K'].includes(card.rank)) return 10;
+  return parseInt(card.rank);
+}
+
+function handValue(hand) {
+  let total = hand.reduce((sum, c) => sum + cardValue(c), 0);
+  let aces = hand.filter(c => c.rank === 'A').length;
+  while (total > 21 && aces > 0) {
+    total -= 10;
+    aces--;
+  }
+  return total;
+}
+
+function renderCard(card, faceDown=false) {
+  if (faceDown) {
+    return `<div class=&quot;card back&quot;></div>`;
+  }
+  return `<div class=&quot;card ${card.color}&quot;>
+    <div class=&quot;top&quot;>${card.rank}<br>${card.suit}</div>
+    <div class=&quot;suitMid&quot;>${card.suit}</div>
+    <div class=&quot;bottom&quot;>${card.rank}<br>${card.suit}</div>
+  </div>`;
+}
+
+function renderHands() {
+  document.getElementById('playerCards').innerHTML = playerHand.map(c => renderCard(c)).join('');
+  document.getElementById('playerVal').textContent = playerHand.length ? handValue(playerHand) : '';
+
+  document.getElementById('dealerCards').innerHTML = dealerHand.map((c,i) =>
+    renderCard(c, dealerHidden && i === 1)
+  ).join('');
+
+  if (dealerHidden && dealerHand.length >= 2) {
+    document.getElementById('dealerVal').textContent = cardValue(dealerHand[0]) + ' + ?';
+  } else {
+    document.getElementById('dealerVal').textContent = dealerHand.length ? handValue(dealerHand) : '';
+  }
+}
+
+function updateHUD() {
+  document.getElementById('chipsVal').textContent = chips;
+  document.getElementById('currentBetVal').textContent = bet;
+  document.getElementById('betAmt').textContent = bet;
+}
+
+function setMessage(msg, color) {
+  const el = document.getElementById('message');
+  el.textContent = msg;
+  el.style.color = color || '#ffd23f';
+  el.style.textShadow = `0 0 8px ${color || '#ffd23f'}`;
+}
+
+function resetRound() {
+  playerHand = [];
+  dealerHand = [];
+  dealerHidden = true;
+  setMessage('');
+  renderHands();
+  document.getElementById('controls').classList.add('hidden');
+  document.getElementById('dealBtn').classList.remove('hidden');
+  document.getElementById('betArea').classList.remove('hidden');
+
+  if (demoMode) {
+    setTimeout(() => { if (demoMode) aiPlayRound(); }, 900);
+  }
+}
+
+function aiPlayRound() {
+  // AI places a random reasonable bet, then deals
+  const amounts = [10, 50, 100];
+  bet = amounts[Math.floor(Math.random() * amounts.length)];
+  if (bet > chips) bet = Math.min(10, chips);
+  if (chips <= 0) { bet = 0; return; } // chips reset handled in endRound
+  updateHUD();
+  setTimeout(() => {
+    startRound();
+  }, 500);
+}
+
+function aiTakeTurn() {
+  if (!demoMode || !roundActive) return;
+  const val = handValue(playerHand);
+  if (val < 17) {
+    setTimeout(() => { if (demoMode && roundActive) hit(); }, 700);
+  } else {
+    setTimeout(() => { if (demoMode && roundActive) stand(); }, 700);
+  }
+}
+
+function startRound() {
+  if (bet <= 0) {
+    setMessage('チップを賭けてください', '#ff3366');
+    return;
+  }
+  if (deck.length < 15) deck = buildDeck();
+
+  playerHand = [deck.pop(), deck.pop()];
+  dealerHand = [deck.pop(), deck.pop()];
+  dealerHidden = true;
+  roundActive = true;
+
+  document.getElementById('dealBtn').classList.add('hidden');
+  document.getElementById('betArea').classList.add('hidden');
+  document.getElementById('controls').classList.remove('hidden');
+
+  const doubleBtn = document.getElementById('doubleBtn');
+  doubleBtn.disabled = chips < bet;
+
+  renderHands();
+  setMessage('');
+
+  // Check natural blackjack
+  if (handValue(playerHand) === 21) {
+    setTimeout(() => stand(), 500);
+  } else if (demoMode) {
+    aiTakeTurn();
+  }
+}
+
+function hit() {
+  if (!roundActive) return;
+  playerHand.push(deck.pop());
+  renderHands();
+  document.getElementById('doubleBtn').disabled = true;
+  if (handValue(playerHand) > 21) {
+    endRound('bust');
+  } else if (demoMode) {
+    aiTakeTurn();
+  }
+}
+
+function doubleDown() {
+  if (!roundActive || chips < bet) return;
+  chips -= bet;
+  bet *= 2;
+  updateHUD();
+  playerHand.push(deck.pop());
+  renderHands();
+  if (handValue(playerHand) > 21) {
+    endRound('bust');
+  } else {
+    stand();
+  }
+}
+
+function stand() {
+  if (!roundActive) return;
+  roundActive = false;
+  dealerHidden = false;
+  renderHands();
+
+  function dealerStep() {
+    if (handValue(dealerHand) < 17) {
+      dealerHand.push(deck.pop());
+      renderHands();
+      setTimeout(dealerStep, 500);
+    } else {
+      resolveRound();
+    }
+  }
+  setTimeout(dealerStep, 400);
+}
+
+function resolveRound() {
+  const pVal = handValue(playerHand);
+  const dVal = handValue(dealerHand);
+  const playerBJ = pVal === 21 && playerHand.length === 2;
+  const dealerBJ = dVal === 21 && dealerHand.length === 2;
+
+  if (dVal > 21) {
+    endRound('dealerBust');
+  } else if (playerBJ && !dealerBJ) {
+    endRound('blackjack');
+  } else if (pVal > dVal) {
+    endRound('win');
+  } else if (pVal < dVal) {
+    endRound('lose');
+  } else {
+    endRound('push');
+  }
+}
+
+function endRound(result) {
+  roundActive = false;
+  dealerHidden = false;
+  renderHands();
+  document.getElementById('controls').classList.add('hidden');
+
+  switch(result) {
+    case 'bust':
+      setMessage('BUST... あなたの負け', '#ff3366');
+      chips -= bet;
+      break;
+    case 'dealerBust':
+      setMessage('ディーラーバースト！あなたの勝ち', '#39ff7a');
+      chips += bet;
+      break;
+    case 'blackjack':
+      setMessage('BLACKJACK！', '#ffd23f');
+      chips += Math.floor(bet * 1.5);
+      break;
+    case 'win':
+      setMessage('あなたの勝ち！', '#39ff7a');
+      chips += bet;
+      break;
+    case 'lose':
+      setMessage('ディーラーの勝ち', '#ff3366');
+      chips -= bet;
+      break;
+    case 'push':
+      setMessage('プッシュ（引き分け）', '#6fa8ff');
+      break;
+  }
+
+  bet = 0;
+  updateHUD();
+
+  if (chips <= 0) {
+    setTimeout(() => {
+      setMessage('チップがなくなりました... リスタートします', '#ff3366');
+      chips = 1000;
+      updateHUD();
+      setTimeout(resetRound, 1500);
+    }, 1200);
+  } else {
+    setTimeout(resetRound, 1600);
+  }
+}
+
+// --- Betting controls ---
+function exitDemoIfActive() {
+  if (demoMode) {
+    demoMode = false;
+    document.getElementById('demoStrip').classList.add('hidden');
+    document.getElementById('overlay').classList.add('hidden');
+    // stop any in-flight round cleanly and reset to a fresh table for the human player
+    roundActive = false;
+    deck = buildDeck();
+    chips = 1000;
+    bet = 0;
+    updateHUD();
+    resetRound();
+  }
+}
+
+window.addEventListener('message', e => {
+  if (e.data && e.data.type === 'asobiva-start-play') exitDemoIfActive();
+});
+
+document.querySelectorAll('.chipBtn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    exitDemoIfActive();
+    const amt = parseInt(btn.dataset.amt);
+    if (bet + amt <= chips) {
+      bet += amt;
+      updateHUD();
+    }
+  });
+});
+
+document.getElementById('dealBtn').addEventListener('click', () => { exitDemoIfActive(); if (!roundActive && bet === 0) return; startRound(); });
+document.getElementById('hitBtn').addEventListener('click', () => { exitDemoIfActive(); hit(); });
+document.getElementById('standBtn').addEventListener('click', () => { exitDemoIfActive(); stand(); });
+document.getElementById('doubleBtn').addEventListener('click', () => { exitDemoIfActive(); doubleDown(); });
+
+document.getElementById('startBtn').addEventListener('click', () => {
+  demoMode = false;
+  document.getElementById('demoStrip').classList.add('hidden');
+  document.getElementById('overlay').classList.add('hidden');
+  deck = buildDeck();
+  chips = 1000;
+  bet = 0;
+  updateHUD();
+  resetRound();
+});
+
+// --- init: auto-start demo mode ---
+deck = buildDeck();
+chips = 1000;
+bet = 0;
+updateHUD();
+document.getElementById('demoStrip').classList.remove('hidden');
+document.getElementById('overlay').classList.add('hidden');
+setTimeout(() => { resetRound(); }, 500);
+</script>
+</body>
+</html>
+" sandbox="allow-scripts allow-same-origin" width="320" height="460"></iframe><div class="game-card-tap" onclick="openFullscreenGameStatic(this)" data-html="<!DOCTYPE html>
+<html lang=&quot;ja&quot;>
+<head>
+<meta charset=&quot;UTF-8&quot;>
+<meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no&quot;>
+<title>DOT BLACKJACK</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  html, body {
+    height: 100%;
+    background: #0a0a12;
+    overflow: hidden;
+    font-family: 'Courier New', monospace;
+  }
+
+  #wrap {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    align-items: center;
+    background: #0a0a12;
+    max-width: 480px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  #hud {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 18px;
+    color: #39ff7a;
+    font-size: 16px;
+    letter-spacing: 1px;
+    text-shadow: 0 0 8px #39ff7a;
+    flex-shrink: 0;
+  }
+
+  #hud .chips {
+    color: #ffd23f;
+    text-shadow: 0 0 8px #ffd23f;
+  }
+
+  #table {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    padding: 6px 10px;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  .zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-height: 0;
+  }
+
+  .zoneLabel {
+    color: #6fa8ff;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-shadow: 0 0 6px #6fa8ff;
+  }
+
+  .cardRow {
+    display: flex;
+    gap: 8px;
+    min-height: 86px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .card {
+    width: 22vmin;
+    height: 31.5vmin;
+    max-width: 100px;
+    max-height: 144px;
+    min-width: 60px;
+    min-height: 86px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    background: #f4f4f4;
+    border: 2px solid #1f2a3a;
+    position: relative;
+    padding: 6px;
+    font-weight: bold;
+    font-size: clamp(13px, 5.5vmin, 24px);
+    box-shadow: 0 0 10px rgba(57,255,122,0.25);
+    animation: dealIn 0.25s ease-out;
+    overflow: hidden;
+  }
+
+  @keyframes dealIn {
+    from { transform: translateY(-30px) scale(0.8); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
+  }
+
+  .card.red { color: #d8203c; }
+  .card.black { color: #1a1a1a; }
+
+  .card .top {
+    position: absolute;
+    top: 6px;
+    left: 7px;
+    line-height: 1.1;
+    text-align: center;
+  }
+  .card .suitMid {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: clamp(20px, 8.5vmin, 38px);
+  }
+  .card .bottom {
+    position: absolute;
+    bottom: 6px;
+    right: 7px;
+    line-height: 1.1;
+    text-align: center;
+    transform: rotate(180deg);
+  }
+
+  .card.back {
+    background: repeating-linear-gradient(45deg, #1f2a3a, #1f2a3a 6px, #0a0a12 6px, #0a0a12 12px);
+    border: 2px solid #39ff7a;
+  }
+
+  .handVal {
+    color: #fff;
+    font-size: 18px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 6px #fff;
+    height: 24px;
+    margin-top: 4px;
+  }
+
+  #message {
+    text-align: center;
+    color: #ffd23f;
+    font-size: 16px;
+    letter-spacing: 2px;
+    text-shadow: 0 0 8px #ffd23f;
+    min-height: 20px;
+    margin: 4px 0;
+  }
+
+  #controls {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 14px;
+    flex-shrink: 0;
+  }
+
+  .actionBtn {
+    flex: 1;
+    max-width: 110px;
+    padding: 14px 0;
+    border-radius: 10px;
+    border: 2px solid #39ff7a;
+    background: rgba(57,255,122,0.08);
+    color: #39ff7a;
+    font-size: 14px;
+    letter-spacing: 2px;
+    font-family: inherit;
+    font-weight: bold;
+  }
+
+  .actionBtn:active {
+    background: #39ff7a;
+    color: #0a0a12;
+  }
+
+  .actionBtn:disabled {
+    opacity: 0.3;
+    border-color: #444;
+    color: #444;
+  }
+
+  .actionBtn.danger {
+    border-color: #ff3366;
+    color: #ff3366;
+  }
+  .actionBtn.danger:active {
+    background: #ff3366;
+    color: #0a0a12;
+  }
+
+  #betArea {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+    padding: 6px;
+    flex-shrink: 0;
+  }
+
+  .chipBtn {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 2px solid #ffd23f;
+    background: rgba(255,210,63,0.08);
+    color: #ffd23f;
+    font-size: 14px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .chipBtn:active {
+    background: #ffd23f;
+    color: #0a0a12;
+  }
+
+  #betLabel {
+    color: #fff;
+    font-size: 16px;
+    letter-spacing: 2px;
+  }
+
+  #dealBtn {
+    margin: 0 14px 12px 14px;
+    padding: 14px 0;
+    border-radius: 10px;
+    border: 2px solid #39ff7a;
+    background: rgba(57,255,122,0.08);
+    color: #39ff7a;
+    font-size: 18px;
+    letter-spacing: 4px;
+    font-family: inherit;
+    font-weight: bold;
+    flex-shrink: 0;
+  }
+  #dealBtn:active {
+    background: #39ff7a;
+    color: #0a0a12;
+  }
+
+  #overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(10,10,18,0.95);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #39ff7a;
+    text-align: center;
+    z-index: 10;
+    padding: 20px;
+  }
+
+  #overlay h1 {
+    font-size: 34px;
+    letter-spacing: 4px;
+    text-shadow: 0 0 16px #39ff7a;
+    margin-bottom: 8px;
+  }
+
+  #overlay .sub {
+    color: #6fa8ff;
+    font-size: 13px;
+    letter-spacing: 3px;
+    margin-bottom: 28px;
+  }
+
+  #startBtn {
+    border: 2px solid #39ff7a;
+    color: #39ff7a;
+    background: transparent;
+    padding: 14px 40px;
+    font-size: 18px;
+    letter-spacing: 4px;
+    font-family: inherit;
+    border-radius: 6px;
+  }
+  #startBtn:active {
+    background: #39ff7a;
+    color: #0a0a12;
+  }
+
+  .hidden { display: none !important; }
+
+  #demoStrip {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 6px 0 14px;
+    flex-shrink: 0;
+  }
+
+  #demoBadge {
+    color: #ffd23f;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-shadow: 0 0 8px #ffd23f;
+    border: 1px solid #ffd23f;
+    padding: 5px 14px;
+    border-radius: 4px;
+    background: rgba(10,10,18,0.75);
+    animation: blink 1.4s infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+</style>
+</head>
+<body>
+<div id=&quot;wrap&quot;>
+  <div id=&quot;hud&quot;>
+    <span>CHIPS <span class=&quot;chips&quot; id=&quot;chipsVal&quot;>1000</span></span>
+    <span>BET <span id=&quot;currentBetVal&quot; style=&quot;color:#ffd23f;text-shadow:0 0 8px #ffd23f;&quot;>0</span></span>
+  </div>
+
+  <div id=&quot;table&quot;>
+    <div class=&quot;zone&quot;>
+      <div class=&quot;zoneLabel&quot;>DEALER</div>
+      <div class=&quot;cardRow&quot; id=&quot;dealerCards&quot;></div>
+      <div class=&quot;handVal&quot; id=&quot;dealerVal&quot;></div>
+    </div>
+
+    <div id=&quot;message&quot;></div>
+
+    <div class=&quot;zone&quot;>
+      <div class=&quot;zoneLabel&quot;>YOU</div>
+      <div class=&quot;cardRow&quot; id=&quot;playerCards&quot;></div>
+      <div class=&quot;handVal&quot; id=&quot;playerVal&quot;></div>
+    </div>
+  </div>
+
+  <div id=&quot;betArea&quot;>
+    <div class=&quot;chipBtn&quot; data-amt=&quot;10&quot;>+10</div>
+    <div class=&quot;chipBtn&quot; data-amt=&quot;50&quot;>+50</div>
+    <div class=&quot;chipBtn&quot; data-amt=&quot;100&quot;>+100</div>
+    <div id=&quot;betLabel&quot;>BET: <span id=&quot;betAmt&quot;>0</span></div>
+  </div>
+
+  <button id=&quot;dealBtn&quot;>DEAL</button>
+
+  <div id=&quot;controls&quot; class=&quot;hidden&quot;>
+    <button class=&quot;actionBtn&quot; id=&quot;hitBtn&quot;>HIT</button>
+    <button class=&quot;actionBtn&quot; id=&quot;standBtn&quot;>STAND</button>
+    <button class=&quot;actionBtn danger&quot; id=&quot;doubleBtn&quot;>DOUBLE</button>
+  </div>
+
+  <div id=&quot;demoStrip&quot; class=&quot;hidden&quot;>
+    <div id=&quot;demoBadge&quot;>DEMO PLAY</div>
+  </div>
+</div>
+
+<div id=&quot;overlay&quot;>
+  <h1>DOT BLACKJACK</h1>
+  <div class=&quot;sub&quot;>PROTOTYPE v0.1</div>
+  <div class=&quot;msg&quot; id=&quot;overlayMsg&quot; style=&quot;font-size:16px;color:#6fa8ff;letter-spacing:2px;margin-bottom:24px;&quot;>DEMO PLAYING BELOW</div>
+  <button id=&quot;startBtn&quot;>START</button>
+</div>
+
+<script>
+window.ASOBIVA_GAME = true;
+const SUITS = [
+  { sym: '♠', color: 'black' },
+  { sym: '♥', color: 'red' },
+  { sym: '♦', color: 'red' },
+  { sym: '♣', color: 'black' }
+];
+const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+
+let chips = 1000;
+let bet = 0;
+let deck = [];
+let playerHand = [];
+let dealerHand = [];
+let roundActive = false;
+let dealerHidden = true;
+let demoMode = true; // true = AI auto-plays continuously, false = human controlled
+
+function buildDeck() {
+  const d = [];
+  for (const suit of SUITS) {
+    for (const rank of RANKS) {
+      d.push({ rank, suit: suit.sym, color: suit.color });
+    }
+  }
+  // shuffle
+  for (let i = d.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [d[i], d[j]] = [d[j], d[i]];
+  }
+  return d;
+}
+
+function cardValue(card) {
+  if (card.rank === 'A') return 11;
+  if (['J','Q','K'].includes(card.rank)) return 10;
+  return parseInt(card.rank);
+}
+
+function handValue(hand) {
+  let total = hand.reduce((sum, c) => sum + cardValue(c), 0);
+  let aces = hand.filter(c => c.rank === 'A').length;
+  while (total > 21 && aces > 0) {
+    total -= 10;
+    aces--;
+  }
+  return total;
+}
+
+function renderCard(card, faceDown=false) {
+  if (faceDown) {
+    return `<div class=&quot;card back&quot;></div>`;
+  }
+  return `<div class=&quot;card ${card.color}&quot;>
+    <div class=&quot;top&quot;>${card.rank}<br>${card.suit}</div>
+    <div class=&quot;suitMid&quot;>${card.suit}</div>
+    <div class=&quot;bottom&quot;>${card.rank}<br>${card.suit}</div>
+  </div>`;
+}
+
+function renderHands() {
+  document.getElementById('playerCards').innerHTML = playerHand.map(c => renderCard(c)).join('');
+  document.getElementById('playerVal').textContent = playerHand.length ? handValue(playerHand) : '';
+
+  document.getElementById('dealerCards').innerHTML = dealerHand.map((c,i) =>
+    renderCard(c, dealerHidden && i === 1)
+  ).join('');
+
+  if (dealerHidden && dealerHand.length >= 2) {
+    document.getElementById('dealerVal').textContent = cardValue(dealerHand[0]) + ' + ?';
+  } else {
+    document.getElementById('dealerVal').textContent = dealerHand.length ? handValue(dealerHand) : '';
+  }
+}
+
+function updateHUD() {
+  document.getElementById('chipsVal').textContent = chips;
+  document.getElementById('currentBetVal').textContent = bet;
+  document.getElementById('betAmt').textContent = bet;
+}
+
+function setMessage(msg, color) {
+  const el = document.getElementById('message');
+  el.textContent = msg;
+  el.style.color = color || '#ffd23f';
+  el.style.textShadow = `0 0 8px ${color || '#ffd23f'}`;
+}
+
+function resetRound() {
+  playerHand = [];
+  dealerHand = [];
+  dealerHidden = true;
+  setMessage('');
+  renderHands();
+  document.getElementById('controls').classList.add('hidden');
+  document.getElementById('dealBtn').classList.remove('hidden');
+  document.getElementById('betArea').classList.remove('hidden');
+
+  if (demoMode) {
+    setTimeout(() => { if (demoMode) aiPlayRound(); }, 900);
+  }
+}
+
+function aiPlayRound() {
+  // AI places a random reasonable bet, then deals
+  const amounts = [10, 50, 100];
+  bet = amounts[Math.floor(Math.random() * amounts.length)];
+  if (bet > chips) bet = Math.min(10, chips);
+  if (chips <= 0) { bet = 0; return; } // chips reset handled in endRound
+  updateHUD();
+  setTimeout(() => {
+    startRound();
+  }, 500);
+}
+
+function aiTakeTurn() {
+  if (!demoMode || !roundActive) return;
+  const val = handValue(playerHand);
+  if (val < 17) {
+    setTimeout(() => { if (demoMode && roundActive) hit(); }, 700);
+  } else {
+    setTimeout(() => { if (demoMode && roundActive) stand(); }, 700);
+  }
+}
+
+function startRound() {
+  if (bet <= 0) {
+    setMessage('チップを賭けてください', '#ff3366');
+    return;
+  }
+  if (deck.length < 15) deck = buildDeck();
+
+  playerHand = [deck.pop(), deck.pop()];
+  dealerHand = [deck.pop(), deck.pop()];
+  dealerHidden = true;
+  roundActive = true;
+
+  document.getElementById('dealBtn').classList.add('hidden');
+  document.getElementById('betArea').classList.add('hidden');
+  document.getElementById('controls').classList.remove('hidden');
+
+  const doubleBtn = document.getElementById('doubleBtn');
+  doubleBtn.disabled = chips < bet;
+
+  renderHands();
+  setMessage('');
+
+  // Check natural blackjack
+  if (handValue(playerHand) === 21) {
+    setTimeout(() => stand(), 500);
+  } else if (demoMode) {
+    aiTakeTurn();
+  }
+}
+
+function hit() {
+  if (!roundActive) return;
+  playerHand.push(deck.pop());
+  renderHands();
+  document.getElementById('doubleBtn').disabled = true;
+  if (handValue(playerHand) > 21) {
+    endRound('bust');
+  } else if (demoMode) {
+    aiTakeTurn();
+  }
+}
+
+function doubleDown() {
+  if (!roundActive || chips < bet) return;
+  chips -= bet;
+  bet *= 2;
+  updateHUD();
+  playerHand.push(deck.pop());
+  renderHands();
+  if (handValue(playerHand) > 21) {
+    endRound('bust');
+  } else {
+    stand();
+  }
+}
+
+function stand() {
+  if (!roundActive) return;
+  roundActive = false;
+  dealerHidden = false;
+  renderHands();
+
+  function dealerStep() {
+    if (handValue(dealerHand) < 17) {
+      dealerHand.push(deck.pop());
+      renderHands();
+      setTimeout(dealerStep, 500);
+    } else {
+      resolveRound();
+    }
+  }
+  setTimeout(dealerStep, 400);
+}
+
+function resolveRound() {
+  const pVal = handValue(playerHand);
+  const dVal = handValue(dealerHand);
+  const playerBJ = pVal === 21 && playerHand.length === 2;
+  const dealerBJ = dVal === 21 && dealerHand.length === 2;
+
+  if (dVal > 21) {
+    endRound('dealerBust');
+  } else if (playerBJ && !dealerBJ) {
+    endRound('blackjack');
+  } else if (pVal > dVal) {
+    endRound('win');
+  } else if (pVal < dVal) {
+    endRound('lose');
+  } else {
+    endRound('push');
+  }
+}
+
+function endRound(result) {
+  roundActive = false;
+  dealerHidden = false;
+  renderHands();
+  document.getElementById('controls').classList.add('hidden');
+
+  switch(result) {
+    case 'bust':
+      setMessage('BUST... あなたの負け', '#ff3366');
+      chips -= bet;
+      break;
+    case 'dealerBust':
+      setMessage('ディーラーバースト！あなたの勝ち', '#39ff7a');
+      chips += bet;
+      break;
+    case 'blackjack':
+      setMessage('BLACKJACK！', '#ffd23f');
+      chips += Math.floor(bet * 1.5);
+      break;
+    case 'win':
+      setMessage('あなたの勝ち！', '#39ff7a');
+      chips += bet;
+      break;
+    case 'lose':
+      setMessage('ディーラーの勝ち', '#ff3366');
+      chips -= bet;
+      break;
+    case 'push':
+      setMessage('プッシュ（引き分け）', '#6fa8ff');
+      break;
+  }
+
+  bet = 0;
+  updateHUD();
+
+  if (chips <= 0) {
+    setTimeout(() => {
+      setMessage('チップがなくなりました... リスタートします', '#ff3366');
+      chips = 1000;
+      updateHUD();
+      setTimeout(resetRound, 1500);
+    }, 1200);
+  } else {
+    setTimeout(resetRound, 1600);
+  }
+}
+
+// --- Betting controls ---
+function exitDemoIfActive() {
+  if (demoMode) {
+    demoMode = false;
+    document.getElementById('demoStrip').classList.add('hidden');
+    document.getElementById('overlay').classList.add('hidden');
+    // stop any in-flight round cleanly and reset to a fresh table for the human player
+    roundActive = false;
+    deck = buildDeck();
+    chips = 1000;
+    bet = 0;
+    updateHUD();
+    resetRound();
+  }
+}
+
+window.addEventListener('message', e => {
+  if (e.data && e.data.type === 'asobiva-start-play') exitDemoIfActive();
+});
+
+document.querySelectorAll('.chipBtn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    exitDemoIfActive();
+    const amt = parseInt(btn.dataset.amt);
+    if (bet + amt <= chips) {
+      bet += amt;
+      updateHUD();
+    }
+  });
+});
+
+document.getElementById('dealBtn').addEventListener('click', () => { exitDemoIfActive(); if (!roundActive && bet === 0) return; startRound(); });
+document.getElementById('hitBtn').addEventListener('click', () => { exitDemoIfActive(); hit(); });
+document.getElementById('standBtn').addEventListener('click', () => { exitDemoIfActive(); stand(); });
+document.getElementById('doubleBtn').addEventListener('click', () => { exitDemoIfActive(); doubleDown(); });
+
+document.getElementById('startBtn').addEventListener('click', () => {
+  demoMode = false;
+  document.getElementById('demoStrip').classList.add('hidden');
+  document.getElementById('overlay').classList.add('hidden');
+  deck = buildDeck();
+  chips = 1000;
+  bet = 0;
+  updateHUD();
+  resetRound();
+});
+
+// --- init: auto-start demo mode ---
+deck = buildDeck();
+chips = 1000;
+bet = 0;
+updateHUD();
+document.getElementById('demoStrip').classList.remove('hidden');
+document.getElementById('overlay').classList.add('hidden');
+setTimeout(() => { resetRound(); }, 500);
+</script>
+</body>
+</html>
+"></div></div></div></div>
+  <div class="footer-section">
+    <footer>ASOBIVA — i.roiro</footer>
+  </div>
+</div>
+
+<div class="fullscreen-overlay" id="fullscreenOverlay">
+  <div class="fullscreen-topbar"><button class="close-btn" id="closeFullscreenBtn">✕</button></div>
+  <div class="fullscreen-frame-wrap" id="fullscreenFrameWrap"></div>
+  <div class="tap-to-start" id="tapToStart"><div class="tap-to-start-circle">TAP TO<br>START</div></div>
+</div>
+
+<script>
+window.addEventListener('message', function(e){
+  if (e.data && e.data.type === 'asobiva-resize') {
+    document.querySelectorAll('.html-card iframe').forEach(function(f){
+      if (f.contentWindow === e.source) f.style.height = Math.max(60, e.data.height) + 'px';
+    });
+  }
+});
+function cyclerCarousel(el){
+  var images = JSON.parse(el.dataset.images);
+  var idx = (parseInt(el.dataset.index, 10) + 1) % images.length;
+  el.dataset.index = String(idx);
+  el.querySelector('img').src = images[idx];
+  var dots = el.querySelectorAll('.carousel-dots span');
+  dots.forEach(function(d, i){ d.classList.toggle('active', i === idx); });
+  var count = el.querySelector('.carousel-count');
+  if (count) count.textContent = (idx + 1) + ' / ' + images.length;
+}
+(function(){
+  var CARD_ASPECT_W = 320;
+  var CARD_ASPECT_H = 460;
+
+  function sizeFrame(wrap, iframe){
+    var w = wrap.clientWidth;
+    if (!w) return;
+    var h = Math.round(w * (CARD_ASPECT_H / CARD_ASPECT_W));
+    iframe.style.width = w + 'px';
+    iframe.style.height = h + 'px';
+  }
+
+  function fitGameFrames(){
+    document.querySelectorAll('.game-card-frame-wrap').forEach(function(wrap){
+      var iframe = wrap.querySelector('iframe');
+      if (!iframe) return;
+      sizeFrame(wrap, iframe);
+    });
+  }
+
+  fitGameFrames();
+  document.addEventListener('DOMContentLoaded', fitGameFrames);
+  window.addEventListener('load', fitGameFrames);
+  window.addEventListener('resize', fitGameFrames);
+  // retry briefly in case layout wasn't ready on first pass
+  setTimeout(fitGameFrames, 100);
+  setTimeout(fitGameFrames, 400);
+})();
+function openFullscreenGameStatic(tapEl){
+  var html = tapEl.getAttribute('data-html');
+  var overlay = document.getElementById('fullscreenOverlay');
+  var frameWrap = document.getElementById('fullscreenFrameWrap');
+  frameWrap.innerHTML = '';
+  var iframe = document.createElement('iframe');
+  iframe.srcdoc = html;
+  iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+  frameWrap.appendChild(iframe);
+  overlay.classList.add('open');
+  document.getElementById('tapToStart').classList.add('show');
+}
+document.getElementById('tapToStart').addEventListener('click', function(){
+  document.getElementById('tapToStart').classList.remove('show');
+  var iframe = document.querySelector('#fullscreenFrameWrap iframe');
+  if (!iframe || !iframe.contentWindow) return;
+  try {
+    if (typeof iframe.contentWindow.exitDemoIfActive === 'function') {
+      iframe.contentWindow.exitDemoIfActive();
+    } else {
+      throw new Error('exitDemoIfActive not found on contentWindow');
+    }
+  } catch (err) {
+    iframe.contentWindow.postMessage({ type: 'asobiva-start-play' }, '*');
+  }
+});
+document.getElementById('closeFullscreenBtn').addEventListener('click', function(){
+  document.getElementById('fullscreenOverlay').classList.remove('open');
+  document.getElementById('fullscreenFrameWrap').innerHTML = '';
+  document.getElementById('tapToStart').classList.remove('show');
+});
+</script>
+</body>
+</html>
