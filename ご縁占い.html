@@ -194,7 +194,7 @@
 
   .comment-text {
     position: absolute;
-    top: 50%;
+    top: 54%;
     left: 8%;
     width: 84%;
     text-align: center;
@@ -358,6 +358,59 @@
     return arr[Math.floor(Math.random() * arr.length)];
   }
 
+  // 最終行が極端に短く（だいたい3文字以下）ならないよう、
+  // 実際の描画幅を測って改行位置を自前で計算し、<br>で明示的に折り返す
+  function fitLastLine(text) {
+    const el = document.getElementById('commentText');
+    el.style.fontSize = '';
+    el.textContent = text;
+
+    requestAnimationFrame(() => {
+      const containerWidth = el.clientWidth;
+      if (containerWidth <= 0) return;
+
+      // 計測用の非表示スパンで1文字ずつ幅を積算し、行の折り返し位置を求める
+      const measurer = document.createElement('span');
+      measurer.style.visibility = 'hidden';
+      measurer.style.position = 'absolute';
+      measurer.style.whiteSpace = 'nowrap';
+      measurer.style.font = getComputedStyle(el).font;
+      measurer.style.letterSpacing = getComputedStyle(el).letterSpacing;
+      document.body.appendChild(measurer);
+
+      const chars = Array.from(text);
+      const breakPoints = [];
+      let lineStart = 0;
+      for (let i = 1; i <= chars.length; i++) {
+        measurer.textContent = chars.slice(lineStart, i).join('');
+        if (measurer.getBoundingClientRect().width > containerWidth) {
+          breakPoints.push(i - 1);
+          lineStart = i - 1;
+        }
+      }
+      document.body.removeChild(measurer);
+
+      if (breakPoints.length === 0) return; // 1行に収まる
+
+      // 最終行の文字数を算出
+      const lastBreak = breakPoints[breakPoints.length - 1];
+      const lastLineLen = chars.length - lastBreak;
+
+      if (lastLineLen >= 1 && lastLineLen <= 3 && breakPoints.length === 1) {
+        // 最終行が短すぎる場合、改行位置を前にずらして2行のバランスを取る
+        const newBreak = Math.ceil(chars.length / 2);
+        const head = chars.slice(0, newBreak).join('');
+        const tail = chars.slice(newBreak).join('');
+        el.innerHTML = escapeHtml(head) + '<br>' + escapeHtml(tail);
+      }
+    });
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+
   function draw() {
     const name1 = document.getElementById('name1').value.trim() || "あなた";
     const name2 = document.getElementById('name2').value.trim() || "お相手";
@@ -377,7 +430,7 @@
       `${name1} ＆ ${name2}<span class="rel">${selectedRelation}</span>`;
     document.getElementById('scoreNum').textContent = score;
     document.getElementById('scoreLabel').textContent = label;
-    document.getElementById('commentText').textContent = comment;
+    fitLastLine(comment);
     document.getElementById('adviceText').innerHTML = `<b>一言アドバイス</b>　${advice}`;
 
     document.getElementById('formWrap').classList.remove('show');
