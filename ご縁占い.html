@@ -411,6 +411,25 @@
   }
 
 
+  // ---- 参拝記録（全占いツール共通） ----
+  function recordVisit(omikujiName, resultSummary) {
+    try {
+      const VISIT_KEY = "asobiva_visit_log";
+      const raw = localStorage.getItem(VISIT_KEY);
+      const visits = raw ? JSON.parse(raw) : [];
+      visits.push({
+        id: Date.now(),
+        omikuji: omikujiName,
+        date: new Date().toISOString(),
+        result: resultSummary || ""
+      });
+      const trimmed = visits.slice(-500);
+      localStorage.setItem(VISIT_KEY, JSON.stringify(trimmed));
+    } catch (e) {
+      // localStorageが使えない環境では何もしない
+    }
+  }
+
   function draw() {
     const name1 = document.getElementById('name1').value.trim() || "あなた";
     const name2 = document.getElementById('name2').value.trim() || "お相手";
@@ -432,6 +451,8 @@
     document.getElementById('scoreLabel').textContent = label;
     fitLastLine(comment);
     document.getElementById('adviceText').innerHTML = `<b>一言アドバイス</b>　${advice}`;
+
+    recordVisit("ご縁占い", `${name1}＆${name2} ${score}%`);
 
     document.getElementById('formWrap').classList.remove('show');
     document.getElementById('omikujiWrap').classList.add('show');

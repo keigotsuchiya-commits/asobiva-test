@@ -453,6 +453,25 @@
     });
   }
 
+  // ---- 参拝記録（全占いツール共通） ----
+  function recordVisit(omikujiName, resultSummary) {
+    try {
+      const VISIT_KEY = "asobiva_visit_log";
+      const raw = localStorage.getItem(VISIT_KEY);
+      const visits = raw ? JSON.parse(raw) : [];
+      visits.push({
+        id: Date.now(),
+        omikuji: omikujiName,
+        date: new Date().toISOString(),
+        result: resultSummary || ""
+      });
+      const trimmed = visits.slice(-500);
+      localStorage.setItem(VISIT_KEY, JSON.stringify(trimmed));
+    } catch (e) {
+      // localStorageが使えない環境では何もしない
+    }
+  }
+
   function draw() {
     const score = Math.floor(Math.random() * 96) + 5; // 5〜100
     const label = scoreLabel(score);
@@ -481,6 +500,8 @@
       `<div class="hint-row"><span class="label">時期</span><span class="text">${timing}</span></div>`;
 
     fitAdviceLine(advice);
+
+    recordVisit("帰福占い", `${selectedItem} ${score}%`);
 
     document.getElementById('formWrap').classList.remove('show');
     document.getElementById('omikujiWrap').classList.add('show');
