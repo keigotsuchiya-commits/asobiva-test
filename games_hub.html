@@ -730,7 +730,8 @@ function fileToText(file) {
 function isGameHtml(html) {
   return /ASOBIVA_GAME\s*=\s*true/.test(html)
     || /id=["']demoBadge["']/.test(html)
-    || /<canvas[\s>]/.test(html);
+    || /<canvas[\s>]/.test(html)
+    || /#39ff7a/.test(html);   // DOT系ゲーム共通のネオングリーン
 }
 
 // ── iframe高さ自動調整（通常HTMLカード用） ─────
