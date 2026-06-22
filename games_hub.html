@@ -262,6 +262,7 @@ body.admin-mode .html-card-label { display: block; }
 .game-card-frame-wrap iframe {
   display: block;
   border: none;
+  margin: 0 auto;
   pointer-events: none !important;
   /* width/height are set inline via JS (px), sized directly to the card's
      real display size. The games use 100vw/100vh internally, so they
@@ -669,7 +670,7 @@ footer {
 // (a real value is needed there since it has no live JS measurement pass
 // before first paint). Not used for fullscreen play — that's always 100%.
 const CARD_ASPECT_W = 320;
-const CARD_ASPECT_H = 460;
+const CARD_ASPECT_H = 560;
 
 // ── IndexedDB (Base64ストレージ) ──────────────
 const DB_NAME = 'asobiva_games_b64';
@@ -881,7 +882,10 @@ function render() {
 
       const tapCatcher = document.createElement('div');
       tapCatcher.className = 'game-card-tap';
+      let _tsy = 0;
+      tapCatcher.addEventListener('touchstart', (e) => { _tsy = e.touches[0].clientY; }, { passive: true });
       tapCatcher.addEventListener('touchend', (e) => {
+        if (Math.abs(e.changedTouches[0].clientY - _tsy) > 12) return;
         e.preventDefault();
         if (adminMode) return;
         openFullscreenGame(c.html);
@@ -1036,9 +1040,12 @@ function render() {
 
 function sizeGameIframeToCard(frameWrap, iframe) {
   const apply = () => {
-    const w = frameWrap.clientWidth || Math.min(window.innerWidth, 480);
-    if (!w) return;
-    const h = Math.round(w * (CARD_ASPECT_H / CARD_ASPECT_W));
+    const cardW = frameWrap.clientWidth || Math.min(window.innerWidth, 480);
+    if (!cardW) return;
+    // ゲームはCARD_ASPECT_W (320px) ネイティブ設計なので、
+    // 幅を320px以上に引き伸ばさず、高さも固定値で全コンテンツを表示する。
+    const w = Math.min(cardW, CARD_ASPECT_W);
+    const h = CARD_ASPECT_H;
     iframe.width = w;
     iframe.height = h;
   };
