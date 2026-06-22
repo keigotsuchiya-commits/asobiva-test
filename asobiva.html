@@ -31,19 +31,15 @@ body {
 
 /* ── ADMIN BUTTON ── */
 .admin-btn {
-  position: fixed;
-  top: 14px; left: 14px;
-  z-index: 100;
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.06em;
-  background: rgba(255,255,255,0.92);
+  background: none;
   border: 1px solid var(--border);
   padding: 6px 14px;
   border-radius: 20px;
   cursor: pointer;
   color: var(--ink-soft);
-  backdrop-filter: blur(4px);
   transition: all 0.15s;
 }
 .admin-btn:hover { border-color: var(--ink); color: var(--ink); }
@@ -54,14 +50,15 @@ body {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  padding: 12px 16px;
+  padding: 10px 16px;
   background: var(--white);
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
-  z-index: 200;
+  z-index: 100;
   max-width: 480px;
   margin: 0 auto;
+  position: relative;
 }
 .burger-btn {
   background: none;
@@ -72,6 +69,7 @@ body {
   flex-direction: column;
   gap: 5px;
   align-items: flex-end;
+  z-index: 2;
 }
 .burger-btn span {
   display: block;
@@ -85,26 +83,41 @@ body {
 .burger-btn span:nth-child(3) { width: 20px; }
 .burger-btn:hover span { width: 20px; }
 
-/* ── DOWNLOAD BUTTON ── */
-.download-btn {
-  position: fixed;
-  top: 14px; left: 78px;
-  z-index: 100;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  background: rgba(255,255,255,0.92);
-  border: 1px solid var(--border);
-  padding: 6px 14px;
-  border-radius: 20px;
-  cursor: pointer;
-  color: var(--ink-soft);
-  backdrop-filter: blur(4px);
-  transition: all 0.15s;
+/* ── BURGER MENU DROPDOWN ── */
+.burger-menu {
   display: none;
+  position: absolute;
+  top: 100%;
+  right: 12px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  overflow: hidden;
+  z-index: 200;
+  min-width: 120px;
 }
-body.admin-mode .download-btn { display: inline-block; }
-.download-btn:hover { border-color: var(--ink); color: var(--ink); }
+.burger-menu.open { display: block; }
+.burger-menu-item {
+  display: block;
+  width: 100%;
+  padding: 14px 20px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+.burger-menu-item:last-child { border-bottom: none; }
+.burger-menu-item:hover { background: var(--bg); }
+.burger-menu-item.active { color: var(--white); background: var(--ink); }
+
+/* ── DOWNLOAD BUTTON (legacy, kept for JS ref) ── */
+.download-btn { display: none; }
 
 /* ── HEADER PAIR ── */
 .header-pair {
@@ -440,14 +453,15 @@ footer {
   <div class="loading-bar-wrap"><div class="loading-bar" id="loadingBar"></div></div>
 </div>
 
-<button class="admin-btn" id="adminBtn" onclick="toggleAdmin()">管理</button>
-<button class="download-btn" id="downloadBtn" onclick="downloadHTML()">保存</button>
-
 <div class="wrap">
   <div class="site-header">
-    <button class="burger-btn" onclick="alert('メニューは準備中です')">
+    <button class="burger-btn" id="burgerBtn" onclick="toggleBurgerMenu()">
       <span></span><span></span><span></span>
     </button>
+    <div class="burger-menu" id="burgerMenu">
+      <button class="burger-menu-item" id="adminBtn" onclick="toggleAdmin()">管理</button>
+      <button class="burger-menu-item" id="downloadBtn" onclick="downloadHTML(); closeBurgerMenu()">保存</button>
+    </div>
   </div>
   <div class="header-pair">
     <div class="banner-slot" id="banner1">
@@ -705,11 +719,30 @@ function render() {
   }
 }
 
+// ── Burger menu ───────────────────────────────
+function toggleBurgerMenu() {
+  document.getElementById('burgerMenu').classList.toggle('open');
+}
+
+function closeBurgerMenu() {
+  document.getElementById('burgerMenu').classList.remove('open');
+}
+
+// 外側タップで閉じる
+document.addEventListener('click', e => {
+  const menu = document.getElementById('burgerMenu');
+  const btn = document.getElementById('burgerBtn');
+  if (menu && !menu.contains(e.target) && !btn.contains(e.target)) {
+    menu.classList.remove('open');
+  }
+});
+
 // ── Admin ─────────────────────────────────────
 function toggleAdmin() {
   adminMode = !adminMode;
   document.body.classList.toggle('admin-mode', adminMode);
   document.getElementById('adminBtn').classList.toggle('active', adminMode);
+  closeBurgerMenu();
   if (!adminMode) closePanel();
   render();
 }
