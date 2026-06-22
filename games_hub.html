@@ -29,7 +29,6 @@ body {
   min-height: 100vh;
 }
 
-/* ── ADMIN BUTTON ── */
 /* ── SITE HEADER (back + burger) ── */
 .site-header {
   display: flex;
@@ -75,11 +74,13 @@ body {
 .burger-btn span:nth-child(2) { width: 14px; }
 .burger-btn span:nth-child(3) { width: 20px; }
 .burger-btn:hover span { width: 20px; }
+
+/* ── BURGER MENU DROPDOWN ── */
 .burger-menu {
   display: none;
   position: absolute;
   top: 100%;
-  right: 0;
+  right: 12px;
   background: var(--white);
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -101,19 +102,11 @@ body {
   color: var(--ink);
   cursor: pointer;
   text-align: left;
-  font-family: inherit;
   transition: background 0.15s;
 }
 .burger-menu-item:last-child { border-bottom: none; }
 .burger-menu-item:hover { background: var(--bg); }
 .burger-menu-item.active { color: var(--white); background: var(--ink); }
-
-/* ── HEADER PAIR ── */
-.header-pair {
-  display: flex;
-  flex-direction: column;
-  background: var(--white);
-}
 
 .banner-slot {
   width: 100%;
@@ -882,6 +875,11 @@ function render() {
 
       const tapCatcher = document.createElement('div');
       tapCatcher.className = 'game-card-tap';
+      tapCatcher.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        if (adminMode) return;
+        openFullscreenGame(c.html);
+      }, { passive: false });
       tapCatcher.addEventListener('click', () => {
         if (adminMode) return;
         openFullscreenGame(c.html);
@@ -1032,19 +1030,18 @@ function render() {
 
 function sizeGameIframeToCard(frameWrap, iframe) {
   const apply = () => {
-    const w = frameWrap.clientWidth;
+    // frameWrap.clientWidth が 0 になる場合（iOS Safari の初回レイアウト前など）は
+    // window.innerWidth から wrap の max-width を考慮して直接計算する。
+    const w = frameWrap.clientWidth || Math.min(window.innerWidth, 480);
     if (!w) return;
     const h = Math.round(w * (CARD_ASPECT_H / CARD_ASPECT_W));
-    iframe.style.width = w + 'px';
-    iframe.style.height = h + 'px';
+    iframe.width = w;
+    iframe.height = h;
   };
   apply();
-  // iOS Safari can take an extra frame (or a brief moment) to settle its
-  // internal layout after an iframe's width/height attributes change,
-  // especially right after the card is first attached to the DOM. Re-apply
-  // on the next frame and once more shortly after as a safety net.
   requestAnimationFrame(apply);
   setTimeout(apply, 150);
+  setTimeout(apply, 500);
   if (window.ResizeObserver) {
     const ro = new ResizeObserver(() => {
       if (frameWrap.clientWidth > 0) apply();
@@ -1110,9 +1107,11 @@ document.getElementById('closeFullscreenBtn').addEventListener('click', closeFul
 function toggleBurgerMenu() {
   document.getElementById('burgerMenu').classList.toggle('open');
 }
+
 function closeBurgerMenu() {
   document.getElementById('burgerMenu').classList.remove('open');
 }
+
 document.addEventListener('click', e => {
   const menu = document.getElementById('burgerMenu');
   const btn = document.getElementById('burgerBtn');
