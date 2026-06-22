@@ -29,59 +29,17 @@ body {
   min-height: 100vh;
 }
 
-/* ── ADMIN BUTTON ── */
-.admin-btn {
-  position: fixed;
-  top: 14px; right: 14px;
-  z-index: 100;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  background: rgba(255,255,255,0.92);
-  border: 1px solid var(--border);
-  padding: 6px 14px;
-  border-radius: 20px;
-  cursor: pointer;
-  color: var(--ink-soft);
-  backdrop-filter: blur(4px);
-  transition: all 0.15s;
-}
-.admin-btn:hover { border-color: var(--ink); color: var(--ink); }
-.admin-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
-
-/* ── DOWNLOAD BUTTON ── */
-.download-btn {
-  position: fixed;
-  top: 14px; right: 78px;
-  z-index: 100;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  background: rgba(255,255,255,0.92);
-  border: 1px solid var(--border);
-  padding: 6px 14px;
-  border-radius: 20px;
-  cursor: pointer;
-  color: var(--ink-soft);
-  backdrop-filter: blur(4px);
-  transition: all 0.15s;
-  display: none;
-}
-body.admin-mode .download-btn { display: inline-block; }
-.download-btn:hover { border-color: var(--ink); color: var(--ink); }
-
-/* ── HEADER PAIR ── */
-.header-pair {
+/* ── SITE HEADER (back + burger) ── */
+.site-header {
   display: flex;
-  flex-direction: column;
-  background: var(--white);
-}
-
-/* ── BACK LINK ── */
-.back-link-wrap {
-  background: var(--white);
+  align-items: center;
+  justify-content: space-between;
   padding: 12px 16px;
+  background: var(--white);
   border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 .back-link {
   font-size: 12px;
@@ -90,8 +48,65 @@ body.admin-mode .download-btn { display: inline-block; }
   color: var(--ink-soft);
   text-decoration: none;
   transition: color 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 .back-link:hover { color: var(--ink); }
+.burger-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: flex-end;
+}
+.burger-btn span {
+  display: block;
+  height: 1.5px;
+  background: var(--ink);
+  border-radius: 1px;
+  transition: width 0.15s;
+}
+.burger-btn span:nth-child(1) { width: 20px; }
+.burger-btn span:nth-child(2) { width: 14px; }
+.burger-btn span:nth-child(3) { width: 20px; }
+.burger-btn:hover span { width: 20px; }
+
+/* ── BURGER MENU DROPDOWN ── */
+.burger-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 12px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  overflow: hidden;
+  z-index: 200;
+  min-width: 120px;
+}
+.burger-menu.open { display: block; }
+.burger-menu-item {
+  display: block;
+  width: 100%;
+  padding: 14px 20px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+.burger-menu-item:last-child { border-bottom: none; }
+.burger-menu-item:hover { background: var(--bg); }
+.burger-menu-item.active { color: var(--white); background: var(--ink); }
 
 .banner-slot {
   width: 100%;
@@ -590,12 +605,18 @@ footer {
   <div class="loading-bar-wrap"><div class="loading-bar" id="loadingBar"></div></div>
 </div>
 
-<button class="admin-btn" id="adminBtn" onclick="toggleAdmin()">管理</button>
-<button class="download-btn" id="downloadBtn" onclick="downloadHTML()">保存</button>
-
 <div class="wrap">
-  <div class="back-link-wrap">
+  <div class="site-header">
     <a href="asobiva.html" class="back-link">← トップへ戻る</a>
+    <div style="position:relative;">
+      <button class="burger-btn" id="burgerBtn" onclick="toggleBurgerMenu()">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="burger-menu" id="burgerMenu">
+        <button class="burger-menu-item" id="adminBtn" onclick="toggleAdmin(); closeBurgerMenu()">管理</button>
+        <button class="burger-menu-item" onclick="downloadHTML(); closeBurgerMenu()">保存</button>
+      </div>
+    </div>
   </div>
   <div class="header-pair">
     <div class="banner-slot" id="banner1">
@@ -1078,6 +1099,23 @@ function closeFullscreenGame() {
 document.getElementById('closeFullscreenBtn').addEventListener('click', closeFullscreenGame);
 
 // ── Admin ─────────────────────────────────────
+// ── Burger menu ───────────────────────────────
+function toggleBurgerMenu() {
+  document.getElementById('burgerMenu').classList.toggle('open');
+}
+
+function closeBurgerMenu() {
+  document.getElementById('burgerMenu').classList.remove('open');
+}
+
+document.addEventListener('click', e => {
+  const menu = document.getElementById('burgerMenu');
+  const btn = document.getElementById('burgerBtn');
+  if (menu && !menu.contains(e.target) && btn && !btn.contains(e.target)) {
+    menu.classList.remove('open');
+  }
+});
+
 function toggleAdmin() {
   adminMode = !adminMode;
   document.body.classList.toggle('admin-mode', adminMode);
@@ -1269,7 +1307,7 @@ function downloadHTML() {
 :root { --bg:#f3f3f3; --white:#ffffff; --ink:#1a1a1a; --ink-soft:#888; --border:#e0e0e0; }
 body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; }
 .wrap { max-width: 480px; margin: 0 auto; background: var(--bg); min-height: 100vh; }
-.back-link-wrap { background: var(--white); padding:12px 16px; border-bottom:1px solid var(--border); }
+.site-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:var(--white); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; }
 .back-link { font-size:12px; font-weight:500; letter-spacing:0.04em; color:var(--ink-soft); text-decoration:none; }
 .header-pair { display:flex; flex-direction:column; background:var(--white); }
 .banner-slot { width:100%; min-height:80px; background:var(--white); display:flex; align-items:center; justify-content:center; }
@@ -1317,7 +1355,7 @@ footer { padding:28px 16px; text-align:center; font-size:10px; letter-spacing:0.
 </head>
 <body>
 <div class="wrap">
-  <div class="back-link-wrap"><a href="asobiva.html" class="back-link">← トップへ戻る</a></div>
+  <div class="site-header"><a href="asobiva.html" class="back-link">← トップへ戻る</a></div>
   <div class="header-pair">
 ${headerHTML}  </div>
 ${cardsHTML}  <div class="footer-section">
