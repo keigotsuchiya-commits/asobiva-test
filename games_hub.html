@@ -29,6 +29,7 @@ body {
   min-height: 100vh;
 }
 
+/* ── ADMIN BUTTON ── */
 /* ── SITE HEADER (back + burger) ── */
 .site-header {
   display: flex;
@@ -48,9 +49,6 @@ body {
   color: var(--ink-soft);
   text-decoration: none;
   transition: color 0.15s;
-  display: flex;
-  align-items: center;
-  gap: 4px;
 }
 .back-link:hover { color: var(--ink); }
 .burger-btn {
@@ -74,13 +72,11 @@ body {
 .burger-btn span:nth-child(2) { width: 14px; }
 .burger-btn span:nth-child(3) { width: 20px; }
 .burger-btn:hover span { width: 20px; }
-
-/* ── BURGER MENU DROPDOWN ── */
 .burger-menu {
   display: none;
   position: absolute;
   top: 100%;
-  right: 12px;
+  right: 0;
   background: var(--white);
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -102,11 +98,19 @@ body {
   color: var(--ink);
   cursor: pointer;
   text-align: left;
+  font-family: inherit;
   transition: background 0.15s;
 }
 .burger-menu-item:last-child { border-bottom: none; }
 .burger-menu-item:hover { background: var(--bg); }
 .burger-menu-item.active { color: var(--white); background: var(--ink); }
+
+/* ── HEADER PAIR ── */
+.header-pair {
+  display: flex;
+  flex-direction: column;
+  background: var(--white);
+}
 
 .banner-slot {
   width: 100%;
@@ -262,7 +266,6 @@ body.admin-mode .html-card-label { display: block; }
 .game-card-frame-wrap iframe {
   display: block;
   border: none;
-  margin: 0 auto;
   pointer-events: none !important;
   /* width/height are set inline via JS (px), sized directly to the card's
      real display size. The games use 100vw/100vh internally, so they
@@ -614,7 +617,7 @@ footer {
         <span></span><span></span><span></span>
       </button>
       <div class="burger-menu" id="burgerMenu">
-        <button class="burger-menu-item" id="adminBtn" onclick="toggleAdmin(); closeBurgerMenu()">管理</button>
+        <button class="burger-menu-item" id="adminBtn" onclick="toggleAdmin()">管理</button>
         <button class="burger-menu-item" onclick="downloadHTML(); closeBurgerMenu()">保存</button>
       </div>
     </div>
@@ -670,7 +673,7 @@ footer {
 // (a real value is needed there since it has no live JS measurement pass
 // before first paint). Not used for fullscreen play — that's always 100%.
 const CARD_ASPECT_W = 320;
-const CARD_ASPECT_H = 560;
+const CARD_ASPECT_H = 460;
 
 // ── IndexedDB (Base64ストレージ) ──────────────
 const DB_NAME = 'asobiva_games_b64';
@@ -729,12 +732,7 @@ function fileToText(file) {
 // ゲーム本体には目印として window.ASOBIVA_GAME = true; を含める想定。
 // 含まれていない通常のHTML（記事・ツール等）は従来通りの html-card として扱う。
 function isGameHtml(html) {
-  return /ASOBIVA_GAME\s*=\s*true/.test(html)
-    || /id=["']demoBadge["']/.test(html)
-    || /<canvas[\s>]/.test(html)
-    || /#39ff7a/.test(html)
-    || /PROTOTYPE\s+v/.test(html)
-    || /exitDemoIfActive/.test(html);
+  return /ASOBIVA_GAME\s*=\s*true/.test(html) || /id=["']demoBadge["']/.test(html);
 }
 
 // ── iframe高さ自動調整（通常HTMLカード用） ─────
@@ -860,8 +858,7 @@ function render() {
 
     let wrap, replaceAccept, supportsReplace = true;
 
-    const effectiveType = (c.type === 'html' && c.html && isGameHtml(c.html)) ? 'game' : c.type;
-    if (effectiveType === 'game') {
+    if (c.type === 'game') {
       wrap = document.createElement('div');
       wrap.className = 'game-card';
 
@@ -882,14 +879,6 @@ function render() {
 
       const tapCatcher = document.createElement('div');
       tapCatcher.className = 'game-card-tap';
-      let _tsy = 0;
-      tapCatcher.addEventListener('touchstart', (e) => { _tsy = e.touches[0].clientY; }, { passive: true });
-      tapCatcher.addEventListener('touchend', (e) => {
-        if (Math.abs(e.changedTouches[0].clientY - _tsy) > 12) return;
-        e.preventDefault();
-        if (adminMode) return;
-        openFullscreenGame(c.html);
-      }, { passive: false });
       tapCatcher.addEventListener('click', () => {
         if (adminMode) return;
         openFullscreenGame(c.html);
@@ -900,7 +889,7 @@ function render() {
       gameFramesToScale.push({ frameWrap, iframe });
 
       replaceAccept = '.html,text/html';
-    } else if (effectiveType === 'image') {
+    } else if (c.type === 'image') {
       wrap = document.createElement('a');
       wrap.className = 'card';
       wrap.href = adminMode ? '#' : (c.link || '#');
@@ -913,7 +902,7 @@ function render() {
       img.loading = 'lazy';
       wrap.appendChild(img);
       replaceAccept = 'image/*,text/html,.html';
-    } else if (effectiveType === 'carousel') {
+    } else if (c.type === 'carousel') {
       wrap = document.createElement('div');
       wrap.className = 'carousel-card';
       wrap.dataset.index = '0';
@@ -1040,22 +1029,17 @@ function render() {
 
 function sizeGameIframeToCard(frameWrap, iframe) {
   const apply = () => {
-    const cardW = frameWrap.clientWidth || Math.min(window.innerWidth, 480);
-    if (!cardW) return;
-    // ゲームはCARD_ASPECT_W (320px) ネイティブ設計なので、
-    // 幅を320px以上に引き伸ばさず、高さも固定値で全コンテンツを表示する。
-    const w = Math.min(cardW, CARD_ASPECT_W);
-    const h = CARD_ASPECT_H;
-    iframe.width = w;
-    iframe.height = h;
+    // use parentElement width as fallback if frameWrap itself has no width yet
+    const w = frameWrap.clientWidth || frameWrap.parentElement?.clientWidth || 0;
+    if (!w) return;
+    const h = Math.round(w * (CARD_ASPECT_H / CARD_ASPECT_W));
+    iframe.style.width = w + 'px';
+    iframe.style.height = h + 'px';
   };
   apply();
-  // iOS Safari can take an extra frame (or a brief moment) to settle its
-  // internal layout after an iframe's width/height attributes change,
-  // especially right after the card is first attached to the DOM. Re-apply
-  // on the next frame and once more shortly after as a safety net.
   requestAnimationFrame(apply);
   setTimeout(apply, 150);
+  setTimeout(apply, 500);
   if (window.ResizeObserver) {
     const ro = new ResizeObserver(() => {
       if (frameWrap.clientWidth > 0) apply();
@@ -1073,6 +1057,10 @@ function openFullscreenGame(html) {
   const iframe = document.createElement('iframe');
   iframe.srcdoc = html; // fresh instance so demo restarts cleanly each time
   iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+  // set explicit px size so the game's 100%/100% CSS resolves to the
+  // actual screen dimensions — avoids ambiguity on iOS Safari
+  iframe.style.width = window.innerWidth + 'px';
+  iframe.style.height = (window.innerHeight - 56) + 'px'; // subtract topbar height
   frameWrap.appendChild(iframe);
 
   overlay.classList.add('open');
@@ -1121,11 +1109,9 @@ document.getElementById('closeFullscreenBtn').addEventListener('click', closeFul
 function toggleBurgerMenu() {
   document.getElementById('burgerMenu').classList.toggle('open');
 }
-
 function closeBurgerMenu() {
   document.getElementById('burgerMenu').classList.remove('open');
 }
-
 document.addEventListener('click', e => {
   const menu = document.getElementById('burgerMenu');
   const btn = document.getElementById('burgerBtn');
@@ -1138,6 +1124,7 @@ function toggleAdmin() {
   adminMode = !adminMode;
   document.body.classList.toggle('admin-mode', adminMode);
   document.getElementById('adminBtn').classList.toggle('active', adminMode);
+  closeBurgerMenu();
   if (!adminMode) closePanel();
   render();
 }
