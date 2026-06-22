@@ -838,6 +838,12 @@ function applyBanner(slot, base64) {
 function render() {
   const container = document.getElementById('cardContainer');
   container.innerHTML = '';
+  // DEBUG
+  const _d = document.createElement('div');
+  _d.setAttribute('data-dbg','1');
+  _d.style.cssText='background:#ffff00;color:#000;font:11px monospace;padding:8px;position:relative;z-index:9999;white-space:pre-wrap;';
+  _d.textContent='cards:'+cards.length+' types:'+cards.map(c=>c.type).join(',');
+  container.appendChild(_d);
 
   if (cards.length === 0 && !adminMode) {
     const sec = document.createElement('div');
@@ -875,11 +881,6 @@ function render() {
 
       const tapCatcher = document.createElement('div');
       tapCatcher.className = 'game-card-tap';
-      tapCatcher.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        if (adminMode) return;
-        openFullscreenGame(c.html);
-      }, { passive: false });
       tapCatcher.addEventListener('click', () => {
         if (adminMode) return;
         openFullscreenGame(c.html);
@@ -1030,18 +1031,19 @@ function render() {
 
 function sizeGameIframeToCard(frameWrap, iframe) {
   const apply = () => {
-    // frameWrap.clientWidth が 0 になる場合（iOS Safari の初回レイアウト前など）は
-    // window.innerWidth から wrap の max-width を考慮して直接計算する。
-    const w = frameWrap.clientWidth || Math.min(window.innerWidth, 480);
+    const w = frameWrap.clientWidth;
     if (!w) return;
     const h = Math.round(w * (CARD_ASPECT_H / CARD_ASPECT_W));
-    iframe.width = w;
-    iframe.height = h;
+    iframe.style.width = w + 'px';
+    iframe.style.height = h + 'px';
   };
   apply();
+  // iOS Safari can take an extra frame (or a brief moment) to settle its
+  // internal layout after an iframe's width/height attributes change,
+  // especially right after the card is first attached to the DOM. Re-apply
+  // on the next frame and once more shortly after as a safety net.
   requestAnimationFrame(apply);
   setTimeout(apply, 150);
-  setTimeout(apply, 500);
   if (window.ResizeObserver) {
     const ro = new ResizeObserver(() => {
       if (frameWrap.clientWidth > 0) apply();
