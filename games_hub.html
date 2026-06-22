@@ -875,6 +875,11 @@ function render() {
 
       const tapCatcher = document.createElement('div');
       tapCatcher.className = 'game-card-tap';
+      tapCatcher.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        if (adminMode) return;
+        openFullscreenGame(c.html);
+      }, { passive: false });
       tapCatcher.addEventListener('click', () => {
         if (adminMode) return;
         openFullscreenGame(c.html);
@@ -1032,12 +1037,9 @@ function sizeGameIframeToCard(frameWrap, iframe) {
     iframe.height = h;
   };
   apply();
-  // iOS Safari can take an extra frame (or a brief moment) to settle its
-  // internal layout after an iframe's width/height attributes change,
-  // especially right after the card is first attached to the DOM. Re-apply
-  // on the next frame and once more shortly after as a safety net.
-  requestAnimationFrame(apply);
+  requestAnimationFrame(() => { apply(); requestAnimationFrame(apply); });
   setTimeout(apply, 150);
+  setTimeout(apply, 400);
   if (window.ResizeObserver) {
     const ro = new ResizeObserver(() => {
       if (frameWrap.clientWidth > 0) apply();
@@ -1395,8 +1397,8 @@ function cyclerCarousel(el){
     var w = wrap.clientWidth;
     if (!w) return;
     var h = Math.round(w * (CARD_ASPECT_H / CARD_ASPECT_W));
-    iframe.width = w;
-    iframe.height = h;
+    iframe.style.width = w + 'px';
+    iframe.style.height = h + 'px';
   }
 
   function fitGameFrames(){
