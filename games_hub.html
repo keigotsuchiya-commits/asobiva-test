@@ -728,7 +728,9 @@ function fileToText(file) {
 // ゲーム本体には目印として window.ASOBIVA_GAME = true; を含める想定。
 // 含まれていない通常のHTML（記事・ツール等）は従来通りの html-card として扱う。
 function isGameHtml(html) {
-  return /ASOBIVA_GAME\s*=\s*true/.test(html) || /id=["']demoBadge["']/.test(html);
+  return /ASOBIVA_GAME\s*=\s*true/.test(html)
+    || /id=["']demoBadge["']/.test(html)
+    || /<canvas[\s>]/.test(html);
 }
 
 // ── iframe高さ自動調整（通常HTMLカード用） ─────
@@ -838,12 +840,6 @@ function applyBanner(slot, base64) {
 function render() {
   const container = document.getElementById('cardContainer');
   container.innerHTML = '';
-  // DEBUG
-  const _d = document.createElement('div');
-  _d.setAttribute('data-dbg','1');
-  _d.style.cssText='background:#ffff00;color:#000;font:11px monospace;padding:8px;position:relative;z-index:9999;white-space:pre-wrap;';
-  _d.textContent='cards:'+cards.length+' types:'+cards.map(c=>c.type).join(',');
-  container.appendChild(_d);
 
   if (cards.length === 0 && !adminMode) {
     const sec = document.createElement('div');
@@ -860,7 +856,8 @@ function render() {
 
     let wrap, replaceAccept, supportsReplace = true;
 
-    if (c.type === 'game') {
+    const effectiveType = (c.type === 'html' && c.html && isGameHtml(c.html)) ? 'game' : c.type;
+    if (effectiveType === 'game') {
       wrap = document.createElement('div');
       wrap.className = 'game-card';
 
@@ -891,7 +888,7 @@ function render() {
       gameFramesToScale.push({ frameWrap, iframe });
 
       replaceAccept = '.html,text/html';
-    } else if (c.type === 'image') {
+    } else if (effectiveType === 'image') {
       wrap = document.createElement('a');
       wrap.className = 'card';
       wrap.href = adminMode ? '#' : (c.link || '#');
@@ -904,7 +901,7 @@ function render() {
       img.loading = 'lazy';
       wrap.appendChild(img);
       replaceAccept = 'image/*,text/html,.html';
-    } else if (c.type === 'carousel') {
+    } else if (effectiveType === 'carousel') {
       wrap = document.createElement('div');
       wrap.className = 'carousel-card';
       wrap.dataset.index = '0';
