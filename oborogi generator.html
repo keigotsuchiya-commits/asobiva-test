@@ -33,7 +33,6 @@
     align-items: flex-start;
   }
 
-  /* ===== EDITOR ===== */
   .editor {
     flex: 1;
     min-width: 0;
@@ -75,11 +74,8 @@
   }
 
   .editor-section input[type="text"]:focus,
-  .editor-section textarea:focus {
-    border-color: #666;
-  }
+  .editor-section textarea:focus { border-color: #666; }
 
-  /* 画像アップロード共通 */
   .image-upload-area {
     border: 2px dashed #3a3a3a;
     border-radius: 6px;
@@ -102,10 +98,7 @@
     height: 100%;
   }
 
-  .image-upload-area .placeholder {
-    font-size: 12px;
-    color: #666;
-  }
+  .image-upload-area .placeholder { font-size: 12px; color: #666; }
 
   .image-upload-area img {
     max-width: 100%;
@@ -115,12 +108,7 @@
     display: none;
   }
 
-  /* アバター専用 */
-  .avatar-upload-area {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-  }
+  .avatar-upload-area { display: flex; align-items: center; gap: 14px; }
 
   .avatar-circle-wrap {
     width: 52px;
@@ -149,36 +137,13 @@
     height: 100%;
   }
 
-  .avatar-circle-wrap img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: none;
-    border-radius: 50%;
-  }
+  .avatar-circle-wrap img { width: 100%; height: 100%; object-fit: cover; display: none; border-radius: 50%; }
+  .avatar-circle-wrap .avatar-icon { font-size: 20px; color: #555; }
+  .avatar-hint { font-size: 12px; color: #666; }
 
-  .avatar-circle-wrap .avatar-icon {
-    font-size: 20px;
-    color: #555;
-  }
+  .blocks-container { display: flex; flex-direction: column; gap: 10px; }
 
-  .avatar-hint {
-    font-size: 12px;
-    color: #666;
-  }
-
-  /* 段落ブロック */
-  .blocks-container {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .block-row {
-    display: flex;
-    gap: 8px;
-    align-items: flex-start;
-  }
+  .block-row { display: flex; gap: 8px; align-items: flex-start; }
 
   .block-type-select {
     background: #1a1a1a;
@@ -241,11 +206,9 @@
 
   .add-block-btn:hover { color: #ccc; border-color: #666; }
 
-  /* 次回予告 */
   .next-row { display: flex; gap: 8px; }
   .next-row input { flex: 1; }
 
-  /* ボタン */
   .action-btns { display: flex; gap: 10px; }
 
   .btn-generate {
@@ -280,7 +243,6 @@
 
   .btn-copy:hover { color: #e8e4dc; border-color: #666; }
 
-  /* ===== PREVIEW ===== */
   .preview-wrap {
     flex: 1.1;
     min-width: 0;
@@ -301,7 +263,6 @@
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 4px 32px rgba(0,0,0,0.5);
-    font-family: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
     color: #333;
     max-height: 85vh;
     overflow-y: auto;
@@ -310,136 +271,6 @@
   #preview::-webkit-scrollbar { width: 4px; }
   #preview::-webkit-scrollbar-track { background: #f5f5f5; }
   #preview::-webkit-scrollbar-thumb { background: #ccc; border-radius: 2px; }
-
-  /* ヘッダー画像 */
-  .p-header-img {
-    width: 100%;
-    aspect-ratio: 2 / 1;
-    object-fit: cover;
-    display: block;
-    background: #222;
-  }
-
-  .p-header-img.empty {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #888;
-    font-size: 12px;
-  }
-
-  .p-body { padding: 24px 20px 40px; }
-
-  /* タイトル */
-  .p-title {
-    font-size: 17px;
-    font-weight: bold;
-    line-height: 1.6;
-    color: #1a1a1a;
-    margin-bottom: 14px;
-    letter-spacing: 0.02em;
-  }
-
-  /* 著者 */
-  .p-author {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 28px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid #eee;
-  }
-
-  .p-author-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: #555;
-    flex-shrink: 0;
-    overflow: hidden;
-  }
-
-  .p-author-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-  .p-author-name {
-    font-size: 13px;
-    color: #333;
-    font-weight: bold;
-    line-height: 1.3;
-  }
-
-  .p-author-date {
-    font-size: 12px;
-    color: #aaa;
-  }
-
-  /* 本文 */
-  .p-text-block {
-    font-size: 14px;
-    line-height: 2.0;
-    color: #333;
-    margin-bottom: 24px;
-    letter-spacing: 0.03em;
-  }
-
-  /* 太文字ブロック */
-  .p-bold-block {
-    font-size: 14px;
-    line-height: 2.0;
-    color: #1a1a1a;
-    margin-bottom: 24px;
-    letter-spacing: 0.03em;
-    font-weight: bold;
-  }
-
-  /* 引用ブロック */
-  .p-quote-block {
-    background: #f7f7f7;
-    border-radius: 4px;
-    padding: 14px 18px;
-    margin-bottom: 24px;
-    font-size: 14px;
-    line-height: 1.8;
-    color: #1a1a1a;
-    font-weight: bold;
-    letter-spacing: 0.03em;
-  }
-
-  /* 区切り */
-  .p-divider {
-    border: none;
-    border-top: 1px solid #e8e8e8;
-    margin: 28px 0;
-  }
-
-  /* 次回予告 */
-  .p-next {
-    font-size: 14px;
-    line-height: 1.8;
-    color: #333;
-    margin-bottom: 28px;
-    display: flex;
-    gap: 6px;
-    align-items: baseline;
-  }
-
-  .p-next .diamond { color: #333; font-size: 13px; }
-
-  /* ハッシュタグ */
-  .p-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 8px;
-  }
-
-  .p-tag {
-    background: #f0f0f0;
-    border-radius: 20px;
-    font-size: 12px;
-    color: #555;
-    padding: 4px 12px;
-  }
 
   @media (max-width: 768px) {
     .workspace { flex-direction: column; }
@@ -454,10 +285,8 @@
 
 <div class="workspace">
 
-  <!-- ===== EDITOR ===== -->
   <div class="editor">
 
-    <!-- ヘッダー画像 -->
     <div class="editor-section">
       <label>ヘッダー画像</label>
       <div class="image-upload-area" id="uploadArea">
@@ -467,11 +296,10 @@
       </div>
     </div>
 
-    <!-- 著者アバター -->
     <div class="editor-section">
-      <label>著者アイコン（朧木周吾郎の写真）</label>
+      <label>著者アイコン</label>
       <div class="avatar-upload-area">
-        <div class="avatar-circle-wrap" id="avatarWrap">
+        <div class="avatar-circle-wrap">
           <input type="file" accept="image/*" id="avatarImageInput">
           <span class="avatar-icon">＋</span>
           <img id="avatarPreviewThumb" alt="">
@@ -480,20 +308,17 @@
       </div>
     </div>
 
-    <!-- タイトル -->
     <div class="editor-section">
       <label>タイトル</label>
       <input type="text" id="articleTitle" placeholder="名を持たぬ哲学者｜第一回：沈黙の塔">
     </div>
 
-    <!-- 本文ブロック -->
     <div class="editor-section">
       <label>本文</label>
       <div class="blocks-container" id="blocksContainer"></div>
       <button class="add-block-btn" id="addBlockBtn">＋ 段落を追加</button>
     </div>
 
-    <!-- 次回予告 -->
     <div class="editor-section">
       <label>次回予告（省略可）</label>
       <div class="next-row">
@@ -501,13 +326,6 @@
       </div>
     </div>
 
-    <!-- ハッシュタグ -->
-    <div class="editor-section">
-      <label>ハッシュタグ（スペース区切り）</label>
-      <input type="text" id="tagsInput" placeholder="哲学 朗読 沈黙 名を持たぬ哲学者">
-    </div>
-
-    <!-- 生成・コピー -->
     <div class="action-btns">
       <button class="btn-generate" id="generateBtn">プレビュー更新</button>
       <button class="btn-copy" id="copyBtn">HTMLコピー</button>
@@ -515,7 +333,6 @@
 
   </div>
 
-  <!-- ===== PREVIEW ===== -->
   <div class="preview-wrap">
     <div class="preview-label">Preview</div>
     <div id="preview">
@@ -533,7 +350,6 @@
     { type: 'text', content: '誰の記録にも残っていなかった。書物にも、口伝にも。ただ、いくつかの痕跡だけがある。ある石板。誰にも読まれなかった本。崩れかけた、塔。' },
   ];
 
-  // ===== ヘッダー画像 =====
   document.getElementById('headerImageInput').addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -549,7 +365,6 @@
     reader.readAsDataURL(file);
   });
 
-  // ===== アバター画像 =====
   document.getElementById('avatarImageInput').addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -565,7 +380,6 @@
     reader.readAsDataURL(file);
   });
 
-  // ===== ブロック管理 =====
   function renderBlocks() {
     const container = document.getElementById('blocksContainer');
     container.innerHTML = '';
@@ -602,34 +416,43 @@
     renderBlocks();
   });
 
-  // ===== プレビュー生成 =====
-  function buildPreviewHTML() {
+  // 記事ページ用CSS
+  const articleCSS = `
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif; background: #fff; color: #333; }
+    .p-header-img { width: 100%; aspect-ratio: 2 / 1; object-fit: cover; display: block; background: #222; }
+    .p-body { padding: 24px 20px 48px; max-width: 680px; margin: 0 auto; }
+    .p-title { font-size: 17px; font-weight: bold; line-height: 1.6; color: #1a1a1a; margin-bottom: 14px; letter-spacing: 0.02em; }
+    .p-author { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
+    .p-author-avatar { width: 40px; height: 40px; border-radius: 50%; background: #555; flex-shrink: 0; overflow: hidden; }
+    .p-author-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .p-author-name { font-size: 13px; color: #333; font-weight: bold; line-height: 1.3; }
+    .p-author-date { font-size: 12px; color: #aaa; }
+    .p-text-block { font-size: 14px; line-height: 2.0; color: #333; margin-bottom: 24px; letter-spacing: 0.03em; }
+    .p-bold-block { font-size: 14px; line-height: 2.0; color: #1a1a1a; margin-bottom: 24px; letter-spacing: 0.03em; font-weight: bold; }
+    .p-quote-block { background: #f7f7f7; border-radius: 4px; padding: 14px 18px; margin-bottom: 24px; font-size: 14px; line-height: 1.8; color: #1a1a1a; font-weight: bold; letter-spacing: 0.03em; }
+    .p-divider { border: none; border-top: 1px solid #e8e8e8; margin: 28px 0; }
+    .p-next { font-size: 14px; line-height: 1.8; color: #333; margin-bottom: 28px; display: flex; gap: 6px; align-items: baseline; }
+    .p-next .diamond { color: #333; font-size: 13px; }
+  `;
+
+  function buildArticleBodyHTML() {
     const title = document.getElementById('articleTitle').value || '（タイトル未入力）';
     const nextTitle = document.getElementById('nextTitle').value.trim();
-    const tagsRaw = document.getElementById('tagsInput').value.trim();
-    const tags = tagsRaw ? tagsRaw.split(/\s+/).filter(Boolean) : [];
 
     const now = new Date();
     const dateStr = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
 
     let html = '';
 
-    // ヘッダー画像
     if (headerImageDataURL) {
       html += `<img class="p-header-img" src="${headerImageDataURL}" alt="">`;
-    } else {
-      html += `<div class="p-header-img empty">ヘッダー画像</div>`;
     }
 
     html += `<div class="p-body">`;
-
-    // タイトル
     html += `<h1 class="p-title">${escHtml(title)}</h1>`;
 
-    // 著者
-    const avatarInner = avatarImageDataURL
-      ? `<img src="${avatarImageDataURL}" alt="">`
-      : '';
+    const avatarInner = avatarImageDataURL ? `<img src="${avatarImageDataURL}" alt="">` : '';
     html += `<div class="p-author">
       <div class="p-author-avatar">${avatarInner}</div>
       <div>
@@ -638,7 +461,6 @@
       </div>
     </div>`;
 
-    // 本文ブロック
     blocks.forEach(block => {
       if (!block.content.trim()) return;
       if (block.type === 'quote') {
@@ -650,20 +472,30 @@
       }
     });
 
-    // 次回予告
     if (nextTitle) {
       html += `<hr class="p-divider">`;
       html += `<div class="p-next"><span class="diamond">◆</span> 次回：${escHtml(nextTitle)}</div>`;
     }
 
-    // タグ
-    if (tags.length > 0) {
-      html += `<hr class="p-divider">`;
-      html += `<div class="p-tags">` + tags.map(t => `<span class="p-tag">#${escHtml(t)}</span>`).join('') + `</div>`;
-    }
-
     html += `</div>`;
     return html;
+  }
+
+  function buildFullHTML() {
+    const title = document.getElementById('articleTitle').value || '朧木周吾郎';
+    const body = buildArticleBodyHTML();
+    return `<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${escHtml(title)}</title>
+<style>${articleCSS}</style>
+</head>
+<body>
+${body}
+</body>
+</html>`;
   }
 
   function escHtml(str) {
@@ -671,12 +503,14 @@
   }
 
   function renderPreview() {
-    document.getElementById('previewContent').innerHTML = buildPreviewHTML();
+    // プレビュー内にarticleCSSをscoped styleとして適用
+    const body = buildArticleBodyHTML();
+    document.getElementById('previewContent').innerHTML =
+      `<style>${articleCSS.replace(/body\s*{/g, '#previewContent {')}</style>` + body;
   }
 
-  // ===== コピー =====
   document.getElementById('copyBtn').addEventListener('click', () => {
-    navigator.clipboard.writeText(buildPreviewHTML()).then(() => {
+    navigator.clipboard.writeText(buildFullHTML()).then(() => {
       const btn = document.getElementById('copyBtn');
       btn.textContent = 'コピー完了 ✓';
       setTimeout(() => btn.textContent = 'HTMLコピー', 2000);
@@ -684,8 +518,7 @@
   });
 
   document.getElementById('generateBtn').addEventListener('click', renderPreview);
-
-  ['articleTitle','nextTitle','tagsInput'].forEach(id => {
+  ['articleTitle','nextTitle'].forEach(id => {
     document.getElementById(id).addEventListener('input', renderPreview);
   });
 
