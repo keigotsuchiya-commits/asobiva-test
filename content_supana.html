@@ -390,7 +390,33 @@ footer {
   background: var(--white);
 }
 
-/* ── PANEL ── */
+/* ── TABS ── */
+.tab-bar {
+  display: flex;
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 45px;
+  z-index: 90;
+}
+.tab-btn {
+  flex: 1;
+  padding: 12px 4px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.tab-btn.active {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+.tab-btn:hover { color: var(--ink); }
 .overlay {
   display: none;
   position: fixed; inset: 0;
@@ -549,6 +575,14 @@ footer {
     </div>
   </div>
 
+  <!-- タブバー -->
+  <div class="tab-bar" id="tabBar">
+    <button class="tab-btn active" data-tab="chara" onclick="switchTab('chara')">キャラ</button>
+    <button class="tab-btn" data-tab="dougu" onclick="switchTab('dougu')">道具</button>
+    <button class="tab-btn" data-tab="haikei" onclick="switchTab('haikei')">背景</button>
+    <button class="tab-btn" data-tab="poster" onclick="switchTab('poster')">ポスター</button>
+  </div>
+
   <div id="cardContainer"></div>
 
   <div class="footer-section">
@@ -671,10 +705,11 @@ window.addEventListener('message', e => {
 });
 
 // ── State ─────────────────────────────────────
-let cards = [];       // [{ id, type: 'image'|'html'|'carousel', html?, base64?, images?, name?, link }]
+let cards = [];       // [{ id, type: 'image'|'html'|'carousel', html?, base64?, images?, name?, link, tab }]
 let banners = { 1: null }; // base64 strings
 let pendingFiles = [];
 let adminMode = false;
+let activeTab = 'chara';
 
 // ── Init ──────────────────────────────────────
 async function init() {
@@ -699,7 +734,8 @@ async function init() {
       base64: r.base64,
       images: r.images,
       name: r.name || '',
-      link: r.link || ''
+      link: r.link || '',
+      tab: r.tab || 'chara'
     }));
     setLoadingBar(100);
   } catch (err) {
@@ -745,14 +781,16 @@ function render() {
   const container = document.getElementById('cardContainer');
   container.innerHTML = '';
 
-  if (cards.length === 0 && !adminMode) {
+  const filtered = cards.filter(c => (c.tab || 'chara') === activeTab);
+
+  if (filtered.length === 0 && !adminMode) {
     const sec = document.createElement('div');
     sec.className = 'empty-section';
     sec.innerHTML = '<div class="empty-state"><strong>まだカードがありません</strong>右上の「管理」から追加できます</div>';
     container.appendChild(sec);
   }
 
-  cards.forEach(c => {
+  filtered.forEach(c => {
     const sec = document.createElement('div');
     sec.className = 'card-section';
 
@@ -909,6 +947,15 @@ function toggleAdmin() {
   render();
 }
 
+// ── Tab ───────────────────────────────────────
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tab);
+  });
+  render();
+}
+
 // ── Panel ─────────────────────────────────────
 function openPanel() {
   document.getElementById('overlay').classList.add('open');
@@ -1001,19 +1048,19 @@ async function addCards() {
     const images = pendingFiles.filter(f => !isHtmlFile(f));
     const images64 = [];
     for (const f of images) images64.push(await fileToBase64(f));
-    const id = await dbOp('cards', 'readwrite', s => s.add({ type: 'carousel', images: images64, link: '' }));
-    cards.push({ id, type: 'carousel', images: images64, link: '' });
+    const id = await dbOp('cards', 'readwrite', s => s.add({ type: 'carousel', images: images64, link: '', tab: activeTab }));
+    cards.push({ id, type: 'carousel', images: images64, link: '', tab: activeTab });
   } else {
     for (const f of pendingFiles) {
       if (isHtmlFile(f)) {
         const html = await fileToText(f);
         const name = f.name;
-        const id = await dbOp('cards', 'readwrite', s => s.add({ type: 'html', html, name, link }));
-        cards.push({ id, type: 'html', html, name, link });
+        const id = await dbOp('cards', 'readwrite', s => s.add({ type: 'html', html, name, link, tab: activeTab }));
+        cards.push({ id, type: 'html', html, name, link, tab: activeTab });
       } else {
         const base64 = await fileToBase64(f);
-        const id = await dbOp('cards', 'readwrite', s => s.add({ type: 'image', base64, link }));
-        cards.push({ id, type: 'image', base64, link });
+        const id = await dbOp('cards', 'readwrite', s => s.add({ type: 'image', base64, link, tab: activeTab }));
+        cards.push({ id, type: 'image', base64, link, tab: activeTab });
       }
     }
   }
