@@ -390,6 +390,50 @@ footer {
   background: var(--white);
 }
 
+/* ── INTRO SECTION ── */
+.intro-section {
+  position: relative;
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+}
+.intro-content {
+  width: 100%;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.intro-content iframe {
+  display: block;
+  width: 100%;
+  border: none;
+  background: var(--white);
+  min-height: 60px;
+}
+.intro-edit {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.25);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
+}
+.intro-edit span {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: #fff;
+  background: rgba(0,0,0,0.45);
+  padding: 8px 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.4);
+  pointer-events: none;
+}
+body.admin-mode .intro-edit { display: flex; }
+
 /* ── TABS ── */
 .tab-bar {
   display: flex;
@@ -575,6 +619,17 @@ footer {
     </div>
   </div>
 
+  <!-- 紹介エリア -->
+  <div class="intro-section" id="introSection">
+    <div class="intro-content" id="introContent">
+      <span class="slot-label">紹介エリア（管理モードで設定）</span>
+    </div>
+    <div class="intro-edit" id="introEdit" onclick="openIntroPanel()">
+      <span>HTMLを設定</span>
+    </div>
+    <input type="file" id="introFile" accept="text/html,.html" style="display:none;" onchange="onIntroFile(this)">
+  </div>
+
   <!-- タブバー -->
   <div class="tab-bar" id="tabBar">
     <button class="tab-btn active" data-tab="chara" onclick="switchTab('chara')">キャラ</button>
@@ -723,6 +778,9 @@ async function init() {
       const row = await dbOp('banners', 'readonly', s => s.get(1));
       if (row?.base64) { banners[1] = row.base64; applyBanner(1, row.base64); }
     } catch {}
+
+    // intro HTML
+    await loadIntro();
     setLoadingBar(60);
 
     // cards
@@ -750,6 +808,42 @@ async function init() {
 
 function setLoadingBar(pct) {
   document.getElementById('loadingBar').style.width = pct + '%';
+}
+
+// ── Intro HTML ────────────────────────────────
+let introHTML = null;
+
+async function loadIntro() {
+  try {
+    const row = await dbOp('banners', 'readonly', s => s.get(99)); // slot 99 = intro
+    if (row?.html) { introHTML = row.html; applyIntro(row.html); }
+  } catch {}
+}
+
+function applyIntro(html) {
+  const content = document.getElementById('introContent');
+  content.querySelector('.slot-label')?.remove();
+  content.querySelector('iframe')?.remove();
+  const iframe = document.createElement('iframe');
+  iframe.srcdoc = injectAutoResize(html);
+  iframe.sandbox = 'allow-scripts allow-popups allow-forms allow-same-origin';
+  iframe.addEventListener('load', () => {
+    iframe.contentWindow.postMessage({ type: 'asobiva-init' }, '*');
+  });
+  content.appendChild(iframe);
+}
+
+function openIntroPanel() {
+  document.getElementById('introFile').click();
+}
+
+async function onIntroFile(input) {
+  const f = input.files[0];
+  if (!f) return;
+  const html = await fileToText(f);
+  await dbOp('banners', 'readwrite', s => s.put({ slot: 99, html }));
+  introHTML = html;
+  applyIntro(html);
 }
 
 // ── Banners ───────────────────────────────────
