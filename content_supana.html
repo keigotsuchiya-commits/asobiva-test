@@ -410,6 +410,7 @@ footer {
   border: none;
   background: var(--white);
   min-height: 60px;
+  overflow: hidden;
 }
 .intro-edit {
   display: none;
@@ -751,11 +752,17 @@ function injectAutoResize(html) {
 // ── iframeリサイズメッセージ受信 ───────────────
 window.addEventListener('message', e => {
   if (e.data && e.data.type === 'asobiva-resize') {
+    // html-card iframes
     document.querySelectorAll('.html-card iframe').forEach(f => {
       if (f.contentWindow === e.source) {
         f.style.height = Math.max(60, e.data.height) + 'px';
       }
     });
+    // intro iframe
+    const introIframe = document.querySelector('#introContent iframe');
+    if (introIframe && introIframe.contentWindow === e.source) {
+      introIframe.style.height = Math.max(60, e.data.height) + 'px';
+    }
   }
 });
 
