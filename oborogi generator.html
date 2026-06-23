@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>朧木周吾郎 記事ジェネレーター</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'Georgia', serif;
+    background: #1a1a1a;
+    color: #e8e4dc;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px;
+  }
+
+  h1.app-title {
+    font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    color: #888;
+    margin-bottom: 32px;
+    text-transform: uppercase;
+  }
+
+  .workspace {
+    display: flex;
+    gap: 24px;
+    width: 100%;
+    max-width: 1100px;
+    align-items: flex-start;
+  }
+
+  /* ===== EDITOR ===== */
+  .editor {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .editor-section {
+    background: #252525;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 16px;
+  }
+
+  .editor-section label {
+    display: block;
+    font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: #888;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+
+  .editor-section input[type="text"],
+  .editor-section textarea {
+    width: 100%;
+    background: #1a1a1a;
+    border: 1px solid #3a3a3a;
+    border-radius: 4px;
+    color: #e8e4dc;
+    font-family: 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+    font-size: 14px;
+    padding: 10px 12px;
+    resize: vertical;
+    line-height: 1.7;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .editor-section input[type="text"]:focus,
+  .editor-section textarea:focus {
+    border-color: #666;
+  }
+
+  /* ヘッダー画像 */
+  .image-upload-area {
+    border: 2px dashed #3a3a3a;
+    border-radius: 6px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .image-upload-area:hover { border-color: #666; }
+
+  .image-upload-area input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .image-upload-area .placeholder {
+    font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
+    font-size: 12px;
+    color: #666;
+  }
+
+  .image-upload-area img {
+    max-width: 100%;
+    max-height: 160px;
+    object-fit: cover;
+    border-radius: 4px;
+    display: none;
+  }
+
+  /* 段落ブロック */
+  .blocks-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .block-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .block-type-select {
+    background: #1a1a1a;
+    border: 1px solid #3a3a3a;
+    border-radius: 4px;
+    color: #aaa;
+    font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
+    font-size: 11px;
+    padding: 8px 6px;
+    cursor: pointer;
+    flex-shrink: 0;
+    outline: none;
+    width: 72px;
+  }
+
+  .block-textarea {
+    flex: 1;
+    background: #1a1a1a;
+    border: 1px solid #3a3a3a;
+    border-radius: 4px;
+    color: #e8e4dc;
+    font-family: 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+    font-size: 14px;
+    padding: 8px 12px;
+    resize: vertical;
+    line-height: 1.7;
+    outline: none;
+    min-height: 60px;
+    transition: border-color 0.2s;
+  }
+
+  .block-textarea:focus { border-color: #666; }
+
+  .block-del-btn {
+    background: none;
+    border: 1px solid #3a3a3a;
+    border-radius: 4px;
+    color: #666;
+    cursor: pointer;
+    padding: 6px 8px;
+    font-size: 14px;
+    flex-shrink: 0;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  .block-del-btn:hover { color: #ccc; border-color: #666; }
+
+  .add-block-btn {
+    background: none;
+    border: 1px dashed #3a3a3a;
+    border-radius: 4px;
+    color: #666;
+    cursor: pointer;
+    font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
+    font-size: 12px;
+    padding: 8px;
+    width: 100%;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  .add-block-btn:hover { color: #ccc; border-color: #666; }
+
+  /* 次回予告 */
+  .next-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .next-row input {
+    flex: 1;
+  }
+
+  /* ボタン */
+  .action-btns {
+    display: flex;
+    gap: 10px;
+  }
+
+  .btn-generate {
+    flex: 1;
+    background: #e8e4dc;
+    border: none;
+    border-radius: 6px;
+    color: #1a1a1a;
+    font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
+    font-size: 13px;
+    font-weight: bold;
+    letter-spacing: 0.1em;
+    padding: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .btn-generate:hover { background: #fff; }
+
+  .btn-copy {
+    background: #2e2e2e;
+    border: 1px solid #444;
+    border-radius: 6px;
+    color: #aaa;
+    font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
+    font-size: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn-copy:hover { color: #e8e4dc; border-color: #666; }
+
+  /* ===== PREVIEW ===== */
+  .preview-wrap {
+    flex: 1.1;
+    min-width: 0;
+    position: sticky;
+    top: 24px;
+  }
+
+  .preview-label {
+    font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: #666;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+
+  /* note風プレビューフレーム */
+  #preview {
+    background: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 32px rgba(0,0,0,0.5);
+    font-family: 'Hiragino Mincho ProN', 'Yu Mincho', 'Georgia', serif;
+    color: #333;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+
+  /* noteっぽいスクロールバー */
+  #preview::-webkit-scrollbar { width: 4px; }
+  #preview::-webkit-scrollbar-track { background: #f5f5f5; }
+  #preview::-webkit-scrollbar-thumb { background: #ccc; border-radius: 2px; }
+
+  /* ヘッダー画像 */
+  .p-header-img {
+    width: 100%;
+    aspect-ratio: 2 / 1;
+    object-fit: cover;
+    display: block;
+    background: #222;
+  }
+
+  .p-header-img.empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #888;
+    font-family: sans-serif;
+    font-size: 12px;
+  }
+
+  .p-body {
+    padding: 24px 20px 40px;
+  }
+
+  /* タイトル */
+  .p-title {
+    font-size: 22px;
+    font-weight: bold;
+    line-height: 1.5;
+    color: #1a1a1a;
+    margin-bottom: 12px;
+    letter-spacing: 0.02em;
+  }
+
+  /* いいね */
+  .p-likes {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #aaa;
+    font-size: 14px;
+    font-family: sans-serif;
+    margin-bottom: 14px;
+  }
+
+  .p-likes svg { width: 16px; height: 16px; }
+
+  /* 著者 */
+  .p-author {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eee;
+  }
+
+  .p-author-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #555;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .p-author-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+  .p-author-name {
+    font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
+    font-size: 13px;
+    color: #333;
+    font-weight: bold;
+    line-height: 1.3;
+  }
+
+  .p-author-date {
+    font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
+    font-size: 12px;
+    color: #aaa;
+  }
+
+  /* 本文 */
+  .p-text-block {
+    font-size: 16px;
+    line-height: 2.0;
+    color: #333;
+    margin-bottom: 28px;
+    letter-spacing: 0.03em;
+  }
+
+  /* 引用ブロック */
+  .p-quote-block {
+    background: #f7f7f7;
+    border-left: none;
+    border-radius: 4px;
+    padding: 16px 20px;
+    margin-bottom: 28px;
+    font-size: 16px;
+    line-height: 1.8;
+    color: #1a1a1a;
+    font-weight: bold;
+    letter-spacing: 0.03em;
+  }
+
+  /* 区切り */
+  .p-divider {
+    border: none;
+    border-top: 1px solid #e8e8e8;
+    margin: 32px 0;
+  }
+
+  /* 次回予告 */
+  .p-next {
+    font-size: 15px;
+    line-height: 1.8;
+    color: #333;
+    margin-bottom: 32px;
+    display: flex;
+    gap: 6px;
+    align-items: baseline;
+  }
+
+  .p-next .diamond { color: #333; font-size: 14px; }
+
+  /* ハッシュタグ */
+  .p-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .p-tag {
+    background: #f0f0f0;
+    border-radius: 20px;
+    font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
+    font-size: 12px;
+    color: #555;
+    padding: 4px 12px;
+  }
+
+  /* レスポンシブ */
+  @media (max-width: 768px) {
+    .workspace { flex-direction: column; }
+    .preview-wrap { position: static; }
+    #preview { max-height: none; }
+  }
+</style>
+</head>
+<body>
+
+<h1 class="app-title">朧木周吾郎 ／ 記事ジェネレーター</h1>
+
+<div class="workspace">
+
+  <!-- ===== EDITOR ===== -->
+  <div class="editor">
+
+    <!-- ヘッダー画像 -->
+    <div class="editor-section">
+      <label>ヘッダー画像</label>
+      <div class="image-upload-area" id="uploadArea">
+        <input type="file" accept="image/*" id="headerImageInput">
+        <span class="placeholder">タップして画像を選択</span>
+        <img id="uploadPreviewThumb" alt="">
+      </div>
+    </div>
+
+    <!-- タイトル -->
+    <div class="editor-section">
+      <label>タイトル</label>
+      <input type="text" id="articleTitle" placeholder="名を持たぬ哲学者｜第一回：沈黙の塔">
+    </div>
+
+    <!-- 本文ブロック -->
+    <div class="editor-section">
+      <label>本文</label>
+      <div class="blocks-container" id="blocksContainer"></div>
+      <button class="add-block-btn" id="addBlockBtn">＋ 段落を追加</button>
+    </div>
+
+    <!-- 次回予告 -->
+    <div class="editor-section">
+      <label>次回予告（省略可）</label>
+      <div class="next-row">
+        <input type="text" id="nextTitle" placeholder="「白紙の書棚」——声を持たない記憶と、読まれなかった書物について。">
+      </div>
+    </div>
+
+    <!-- ハッシュタグ -->
+    <div class="editor-section">
+      <label>ハッシュタグ（スペース区切り）</label>
+      <input type="text" id="tagsInput" placeholder="哲学 朗読 沈黙 名を持たぬ哲学者">
+    </div>
+
+    <!-- 生成・コピー -->
+    <div class="action-btns">
+      <button class="btn-generate" id="generateBtn">プレビュー更新</button>
+      <button class="btn-copy" id="copyBtn">HTMLコピー</button>
+    </div>
+
+  </div>
+
+  <!-- ===== PREVIEW ===== -->
+  <div class="preview-wrap">
+    <div class="preview-label">Preview</div>
+    <div id="preview">
+      <div id="previewContent"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ===== 状態 =====
+  let headerImageDataURL = null;
+  let blocks = [
+    { type: 'text', content: 'その哲学者の名を、私は知らない。' },
+    { type: 'text', content: '誰の記録にも残っていなかった。書物にも、口伝にも。ただ、いくつかの痕跡だけがある。ある石板。誰にも読まれなかった本。崩れかけた、塔。' },
+  ];
+
+  // ===== 画像アップロード =====
+  const headerImageInput = document.getElementById('headerImageInput');
+  const uploadPreviewThumb = document.getElementById('uploadPreviewThumb');
+  const uploadPlaceholder = document.querySelector('.image-upload-area .placeholder');
+
+  headerImageInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      headerImageDataURL = ev.target.result;
+      uploadPreviewThumb.src = headerImageDataURL;
+      uploadPreviewThumb.style.display = 'block';
+      uploadPlaceholder.style.display = 'none';
+      renderPreview();
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // ===== ブロック管理 =====
+  function renderBlocks() {
+    const container = document.getElementById('blocksContainer');
+    container.innerHTML = '';
+    blocks.forEach((block, i) => {
+      const row = document.createElement('div');
+      row.className = 'block-row';
+
+      const sel = document.createElement('select');
+      sel.className = 'block-type-select';
+      sel.innerHTML = '<option value="text">本文</option><option value="quote">引用</option>';
+      sel.value = block.type;
+      sel.addEventListener('change', () => { blocks[i].type = sel.value; renderPreview(); });
+
+      const ta = document.createElement('textarea');
+      ta.className = 'block-textarea';
+      ta.value = block.content;
+      ta.rows = 3;
+      ta.addEventListener('input', () => { blocks[i].content = ta.value; renderPreview(); });
+
+      const del = document.createElement('button');
+      del.className = 'block-del-btn';
+      del.textContent = '×';
+      del.addEventListener('click', () => { blocks.splice(i, 1); renderBlocks(); renderPreview(); });
+
+      row.appendChild(sel);
+      row.appendChild(ta);
+      row.appendChild(del);
+      container.appendChild(row);
+    });
+  }
+
+  document.getElementById('addBlockBtn').addEventListener('click', () => {
+    blocks.push({ type: 'text', content: '' });
+    renderBlocks();
+  });
+
+  // ===== プレビュー生成 =====
+  function buildPreviewHTML() {
+    const title = document.getElementById('articleTitle').value || '（タイトル未入力）';
+    const nextTitle = document.getElementById('nextTitle').value.trim();
+    const tagsRaw = document.getElementById('tagsInput').value.trim();
+    const tags = tagsRaw ? tagsRaw.split(/\s+/).filter(Boolean) : [];
+
+    // 今日の日付
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+    let html = '';
+
+    // ヘッダー画像
+    if (headerImageDataURL) {
+      html += `<img class="p-header-img" src="${headerImageDataURL}" alt="">`;
+    } else {
+      html += `<div class="p-header-img empty">ヘッダー画像</div>`;
+    }
+
+    html += `<div class="p-body">`;
+
+    // タイトル
+    html += `<h1 class="p-title">${escHtml(title)}</h1>`;
+
+    // いいね
+    html += `<div class="p-likes"><svg viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>1</div>`;
+
+    // 著者
+    html += `<div class="p-author">
+      <div class="p-author-avatar"></div>
+      <div>
+        <div class="p-author-name">朧木 周吾郎 | SHUGORO OBOROGI</div>
+        <div class="p-author-date">${dateStr}</div>
+      </div>
+    </div>`;
+
+    // 本文ブロック
+    blocks.forEach(block => {
+      if (!block.content.trim()) return;
+      if (block.type === 'quote') {
+        html += `<div class="p-quote-block">${escHtml(block.content)}</div>`;
+      } else {
+        html += `<p class="p-text-block">${escHtml(block.content)}</p>`;
+      }
+    });
+
+    // 次回予告
+    if (nextTitle) {
+      html += `<hr class="p-divider">`;
+      html += `<div class="p-next"><span class="diamond">◆</span> 次回：${escHtml(nextTitle)}</div>`;
+    }
+
+    // タグ
+    if (tags.length > 0) {
+      html += `<hr class="p-divider">`;
+      html += `<div class="p-tags">` + tags.map(t => `<span class="p-tag">#${escHtml(t)}</span>`).join('') + `</div>`;
+    }
+
+    html += `</div>`;
+    return html;
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function renderPreview() {
+    document.getElementById('previewContent').innerHTML = buildPreviewHTML();
+  }
+
+  // ===== HTML コピー =====
+  document.getElementById('copyBtn').addEventListener('click', () => {
+    const html = buildPreviewHTML();
+    navigator.clipboard.writeText(html).then(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.textContent = 'コピー完了 ✓';
+      setTimeout(() => btn.textContent = 'HTMLコピー', 2000);
+    });
+  });
+
+  document.getElementById('generateBtn').addEventListener('click', renderPreview);
+
+  // ライブ更新
+  ['articleTitle','nextTitle','tagsInput'].forEach(id => {
+    document.getElementById(id).addEventListener('input', renderPreview);
+  });
+
+  // ===== 初期描画 =====
+  renderBlocks();
+  renderPreview();
+</script>
+</body>
+</html>
