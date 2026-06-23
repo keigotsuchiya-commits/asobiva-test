@@ -459,7 +459,8 @@ footer {
     </button>
     <div class="burger-menu" id="burgerMenu">
       <button class="burger-menu-item" id="adminBtn" onclick="toggleAdmin()">管理</button>
-      <button class="burger-menu-item" id="downloadBtn" onclick="downloadHTML(); closeBurgerMenu()">保存</button>
+      <button class="burger-menu-item" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
+      <button class="burger-menu-item" onclick="downloadHTML(); closeBurgerMenu()">公開用保存</button>
     </div>
   </div>
   <div class="header-pair">
@@ -558,21 +559,54 @@ async function init() {
   await openDB();
   setLoadingBar(30);
 
-  // banners
-  for (const slot of [1, 2]) {
-    try {
-      const row = await dbOp('banners', 'readonly', s => s.get(slot));
-      if (row?.base64) { banners[slot] = row.base64; applyBanner(slot, row.base64); }
-    } catch {}
+  // 埋め込み初期データがあれば優先して使い、IndexedDBに書き込む
+  if (window.__ASOBIVA_INIT__) {
+    const data = window.__ASOBIVA_INIT__;
+
+    // banners
+    for (const slot of [1, 2]) {
+      const b64 = data.banners?.[slot];
+      if (b64) {
+        await dbOp('banners', 'readwrite', s => s.put({ slot, base64: b64 }));
+        banners[slot] = b64;
+        applyBanner(slot, b64);
+      }
+    }
+    setLoadingBar(60);
+
+    // cards - IndexedDBをクリアして埋め込みデータで上書き
+    const existing = await dbOp('cards', 'readonly', s => s.getAll());
+    for (const r of existing) {
+      await dbOp('cards', 'readwrite', s => s.delete(r.id));
+    }
+    cards = [];
+    let order = 1;
+    for (const c of (data.cards || [])) {
+      const record = { base64: c.base64, link: c.link || '', order: c.order ?? order++ };
+      const id = await dbOp('cards', 'readwrite', s => s.add(record));
+      cards.push({ id, base64: c.base64, link: c.link || '', order: record.order });
+    }
+    cards.sort((a, b) => a.order - b.order);
+
+    // 一度使ったら初期データを削除（次回はIndexedDBから読む）
+    window.__ASOBIVA_INIT__ = null;
+
+  } else {
+    // 通常起動: IndexedDBから読む
+    for (const slot of [1, 2]) {
+      try {
+        const row = await dbOp('banners', 'readonly', s => s.get(slot));
+        if (row?.base64) { banners[slot] = row.base64; applyBanner(slot, row.base64); }
+      } catch {}
+    }
+    setLoadingBar(60);
+
+    const rows = await dbOp('cards', 'readonly', s => s.getAll());
+    cards = rows.map(r => ({ id: r.id, base64: r.base64, link: r.link || '', order: (r.order ?? r.id) }));
+    cards.sort((a, b) => a.order - b.order);
   }
-  setLoadingBar(60);
 
-  // cards
-  const rows = await dbOp('cards', 'readonly', s => s.getAll());
-  cards = rows.map(r => ({ id: r.id, base64: r.base64, link: r.link || '', order: (r.order ?? r.id) }));
-  cards.sort((a, b) => a.order - b.order);
   setLoadingBar(100);
-
   setTimeout(() => {
     document.getElementById('loading').style.display = 'none';
     render();
@@ -882,6 +916,36 @@ async function saveLinkEdit() {
   await dbOp('cards', 'readwrite', s => s.put({ id: c.id, base64: c.base64, link: c.link, order: c.order }));
   closeLinkEditor();
   render();
+}
+
+// ── 編集用HTMLとして保存（データ埋め込み） ─────────
+function downloadEditHTML() {
+  // 現在のページのHTMLを取得
+  const source = document.documentElement.outerHTML;
+
+  // 初期データをJSとして埋め込む
+  const initData = {
+    banners: banners,
+    cards: cards
+  };
+
+  const initScript = `
+<scr` + `ipt>
+// ── 埋め込み初期データ ──
+window.__ASOBIVA_INIT__ = ${JSON.stringify(initData)};
+</scr` + `ipt>`;
+
+  // </head>の直前に初期データを挿入
+  const output = source.replace('</head>', initScript + '\n</head>');
+
+  const blob = new Blob([output], { type: 'text/html;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+  a.download = `asobiva_edit_${ts}.html`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
 }
 
 // ── HTMLとして保存（静的スナップショット） ─────────
