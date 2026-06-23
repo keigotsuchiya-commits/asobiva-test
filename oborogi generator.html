@@ -6,7 +6,6 @@
 <title>朧木周吾郎 記事ジェネレーター</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
   html, body { width: 100%; }
 
   body {
@@ -14,30 +13,27 @@
     background: #1a1a1a;
     color: #e8e4dc;
     min-height: 100vh;
-    padding: 20px 16px 40px;
   }
 
   h1.app-title {
     font-size: 11px;
     letter-spacing: 0.2em;
     color: #666;
-    margin-bottom: 20px;
     text-transform: uppercase;
+    padding: 16px 16px 12px;
   }
 
-  /* ===== EDITOR ===== */
   .editor {
     display: flex;
     flex-direction: column;
-    gap: 12px;
     width: 100%;
   }
 
   .editor-section {
     background: #252525;
-    border: 1px solid #333;
-    border-radius: 8px;
-    padding: 14px;
+    border-bottom: 1px solid #2e2e2e;
+    padding: 14px 16px;
+    width: 100%;
   }
 
   .editor-section label {
@@ -199,85 +195,99 @@
   }
 
   /* ボタン */
-  .action-btns { display: flex; gap: 10px; margin-top: 4px; }
+  .action-btns {
+    display: flex;
+    gap: 0;
+    width: 100%;
+  }
 
   .btn-generate {
     flex: 1;
-    background: #e8e4dc;
+    background: #e0dcd4;
     border: none;
-    border-radius: 8px;
+    border-right: 1px solid #ccc;
+    border-radius: 0;
     color: #1a1a1a;
     font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
     font-size: 14px;
     font-weight: bold;
     letter-spacing: 0.08em;
-    padding: 16px;
+    padding: 18px;
     cursor: pointer;
     -webkit-appearance: none;
   }
 
   .btn-copy {
-    background: #2e2e2e;
-    border: 1px solid #444;
-    border-radius: 8px;
+    flex: 1;
+    background: #2a2a2a;
+    border: none;
+    border-radius: 0;
     color: #aaa;
     font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
-    font-size: 13px;
-    padding: 16px 18px;
+    font-size: 14px;
+    padding: 18px;
     cursor: pointer;
-    white-space: nowrap;
     -webkit-appearance: none;
   }
 
-  /* ===== PREVIEW ===== */
-  .preview-section {
-    margin-top: 24px;
-  }
+  /* プレビュー */
+  .preview-section { width: 100%; }
 
   .preview-label {
     font-size: 10px;
     letter-spacing: 0.15em;
     color: #555;
-    margin-bottom: 10px;
     text-transform: uppercase;
+    padding: 12px 16px 8px;
   }
 
   #preview {
     background: #ffffff;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+    width: 100%;
     color: #333;
   }
 
-  /* ===== PC layout ===== */
+  /* PC layout */
   @media (min-width: 768px) {
-    body { padding: 32px 24px 48px; }
+    body { display: flex; flex-direction: column; }
+
+    h1.app-title { padding: 24px 24px 16px; }
 
     .main-layout {
       display: flex;
-      gap: 28px;
       align-items: flex-start;
+      flex: 1;
     }
 
-    .editor { flex: 1; min-width: 0; }
+    .editor {
+      flex: 1;
+      min-width: 0;
+      border-right: 1px solid #2e2e2e;
+    }
+
+    .editor-section { padding: 16px 24px; }
 
     .preview-section {
       flex: 1.1;
       min-width: 0;
-      margin-top: 0;
       position: sticky;
-      top: 32px;
+      top: 0;
+      max-height: 100vh;
+      overflow-y: auto;
     }
 
+    .preview-label { padding: 16px 24px 8px; }
+
     #preview {
-      max-height: 88vh;
+      max-height: calc(100vh - 60px);
       overflow-y: auto;
     }
 
     #preview::-webkit-scrollbar { width: 4px; }
     #preview::-webkit-scrollbar-track { background: #f5f5f5; }
     #preview::-webkit-scrollbar-thumb { background: #ccc; border-radius: 2px; }
+
+    .action-btns { border-top: 1px solid #2e2e2e; }
   }
 </style>
 </head>
@@ -348,7 +358,6 @@
     { type: 'text', content: '誰の記録にも残っていなかった。書物にも、口伝にも。ただ、いくつかの痕跡だけがある。ある石板。誰にも読まれなかった本。崩れかけた、塔。' },
   ];
 
-  // ヘッダー画像
   document.getElementById('headerImageInput').addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -364,7 +373,6 @@
     reader.readAsDataURL(file);
   });
 
-  // アバター
   document.getElementById('avatarImageInput').addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -380,7 +388,6 @@
     reader.readAsDataURL(file);
   });
 
-  // ブロック描画
   function renderBlocks() {
     const container = document.getElementById('blocksContainer');
     container.innerHTML = '';
@@ -417,7 +424,6 @@
     renderBlocks();
   });
 
-  // 記事CSS（書き出し用・プレビュー用共通）
   const articleCSS = `
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif; background: #fff; color: #333; }
@@ -443,46 +449,25 @@ body { font-family: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif; backgr
     const dateStr = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
 
     let html = '';
-
-    if (headerImageDataURL) {
-      html += `<img class="p-header-img" src="${headerImageDataURL}" alt="">`;
-    }
-
+    if (headerImageDataURL) html += `<img class="p-header-img" src="${headerImageDataURL}" alt="">`;
     html += `<div class="p-body">`;
     html += `<h1 class="p-title">${esc(title)}</h1>`;
-
     const avatarInner = avatarImageDataURL ? `<img src="${avatarImageDataURL}" alt="">` : '';
     html += `<div class="p-author"><div class="p-author-avatar">${avatarInner}</div><div><div class="p-author-name">朧木 周吾郎 | SHUGORO OBOROGI</div><div class="p-author-date">${dateStr}</div></div></div>`;
-
     blocks.forEach(b => {
       if (!b.content.trim()) return;
       if (b.type === 'quote') html += `<div class="p-quote-block">${esc(b.content)}</div>`;
       else if (b.type === 'bold') html += `<p class="p-bold-block">${esc(b.content)}</p>`;
       else html += `<p class="p-text-block">${esc(b.content)}</p>`;
     });
-
-    if (nextTitle) {
-      html += `<hr class="p-divider"><div class="p-next"><span>◆</span> 次回：${esc(nextTitle)}</div>`;
-    }
-
+    if (nextTitle) html += `<hr class="p-divider"><div class="p-next"><span>◆</span> 次回：${esc(nextTitle)}</div>`;
     html += `</div>`;
     return html;
   }
 
   function buildFullHTML() {
     const title = document.getElementById('articleTitle').value || '朧木周吾郎';
-    return `<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${esc(title)}</title>
-<style>${articleCSS}</style>
-</head>
-<body>
-${buildArticleBody()}
-</body>
-</html>`;
+    return `<!DOCTYPE html>\n<html lang="ja">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<title>${esc(title)}</title>\n<style>${articleCSS}</style>\n</head>\n<body>\n${buildArticleBody()}\n</body>\n</html>`;
   }
 
   function esc(str) {
@@ -496,25 +481,24 @@ ${buildArticleBody()}
 
   document.getElementById('copyBtn').addEventListener('click', () => {
     const html = buildFullHTML();
-    navigator.clipboard.writeText(html).then(() => {
-      const btn = document.getElementById('copyBtn');
-      btn.textContent = '完了 ✓';
-      setTimeout(() => btn.textContent = 'HTMLコピー', 2000);
-    }).catch(() => {
-      // fallback
+    const copy = () => {
       const ta = document.createElement('textarea');
       ta.value = html;
-      ta.style.position = 'fixed';
-      ta.style.opacity = '0';
+      ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
       document.body.appendChild(ta);
       ta.focus();
       ta.select();
       document.execCommand('copy');
       document.body.removeChild(ta);
-      const btn = document.getElementById('copyBtn');
-      btn.textContent = '完了 ✓';
-      setTimeout(() => btn.textContent = 'HTMLコピー', 2000);
-    });
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(html).catch(copy);
+    } else {
+      copy();
+    }
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '完了 ✓';
+    setTimeout(() => btn.textContent = 'HTMLコピー', 2000);
   });
 
   document.getElementById('generateBtn').addEventListener('click', renderPreview);
