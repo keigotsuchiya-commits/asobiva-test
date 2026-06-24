@@ -71,7 +71,6 @@
   #evidence3 { height: 80px; }
 
   .btn-group { display: flex; gap: 10px; margin-top: 4px; }
-
   .btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; transition: opacity 0.15s; }
   .btn:hover { opacity: 0.8; }
   .btn-primary { background: #222; color: #fff; }
@@ -98,9 +97,7 @@
     left: 50%; transform: translateX(-50%);
     top: 8.7%; width: 28.8%; aspect-ratio: 1;
   }
-
   .card-icon { object-fit: contain; }
-
   .card-icon-placeholder {
     background: #f0ede8; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
@@ -110,9 +107,13 @@
   .card-insight {
     position: absolute;
     top: 35%; left: 6.9%; right: 6.9%;
-    font-size: 4.4cqw; font-weight: 900;
-    line-height: 1.55; text-align: center;
-    color: #111; letter-spacing: 0.01em;
+    font-size: 5.2cqw;
+    font-weight: 900;
+    line-height: 1.55;
+    text-align: center;
+    color: #111;
+    letter-spacing: 0.01em;
+    white-space: pre-wrap;
   }
 
   .card-evidences {
@@ -123,7 +124,7 @@
   }
 
   .card-evidence {
-    font-size: 2.3cqw;
+    font-size: 3.0cqw;
     line-height: 1.75;
     color: #333;
     white-space: pre-wrap;
@@ -164,25 +165,25 @@
   </div>
 
   <div class="field">
-    <label>気付き（上限26文字・改行含む）</label>
+    <label>気付き（上限26文字）</label>
     <textarea id="insight" placeholder="例: 当たり前にあるものほど、なくなった時に価値に気付く。"></textarea>
     <div class="char-count" id="cnt-insight">0 / 26</div>
   </div>
 
   <div class="field">
-    <label>エビデンス 1段落目（上限28文字・改行含む）</label>
+    <label>エビデンス 1段落目（上限28文字）</label>
     <textarea id="evidence1" placeholder="1文目"></textarea>
     <div class="char-count" id="cnt-ev1">0 / 28</div>
   </div>
 
   <div class="field">
-    <label>エビデンス 2段落目（上限74文字・改行含む）</label>
+    <label>エビデンス 2段落目（上限74文字）</label>
     <textarea id="evidence2" placeholder="2文目"></textarea>
     <div class="char-count" id="cnt-ev2">0 / 74</div>
   </div>
 
   <div class="field">
-    <label>エビデンス 3段落目（上限53文字・改行含む・任意）</label>
+    <label>エビデンス 3段落目（上限53文字・任意）</label>
     <textarea id="evidence3" placeholder="3文目（省略可）"></textarea>
     <div class="char-count" id="cnt-ev3">0 / 53</div>
   </div>
@@ -213,7 +214,6 @@
   const counterMap = { insight: 'cnt-insight', evidence1: 'cnt-ev1', evidence2: 'cnt-ev2', evidence3: 'cnt-ev3' };
   let iconDataURL = '';
 
-  // 改行を除いた文字数でカウント
   function charCount(str) {
     return str.replace(/\n/g, '').length;
   }
@@ -227,16 +227,21 @@
     el.classList.toggle('over', len > limit);
   }
 
+  function setText(el, val) {
+    // 改行をそのままDOMに反映
+    el.innerText = val;
+  }
+
   function updatePreview() {
     const insight = document.getElementById('insight').value;
     const ev1 = document.getElementById('evidence1').value;
     const ev2 = document.getElementById('evidence2').value;
     const ev3 = document.getElementById('evidence3').value;
 
-    document.getElementById('cardInsight').textContent = insight.trim() || '気付きを入力してください';
-    document.getElementById('cardEv1').textContent = ev1;
-    document.getElementById('cardEv2').textContent = ev2;
-    document.getElementById('cardEv3').textContent = ev3;
+    setText(document.getElementById('cardInsight'), insight.trim() || '気付きを入力してください');
+    setText(document.getElementById('cardEv1'), ev1);
+    setText(document.getElementById('cardEv2'), ev2);
+    setText(document.getElementById('cardEv3'), ev3);
     document.getElementById('cardEv3').style.display = ev3.trim() ? 'block' : 'none';
 
     Object.keys(LIMITS).forEach(id => updateCount(id));
@@ -260,8 +265,6 @@
     reader.readAsDataURL(file);
   });
 
-  // テキストファイル読み込み
-  // フォーマット: 「キー: 値」。値が複数行にまたがる場合は次のキーまでを値として扱う
   document.getElementById('txtInput').addEventListener('change', function() {
     const file = this.files[0];
     if (!file) return;
@@ -271,12 +274,10 @@
       const text = e.target.result;
       const keys = ['気付き', 'エビデンス1', 'エビデンス2', 'エビデンス3'];
       const data = {};
-
       keys.forEach((key, i) => {
         const start = text.indexOf(key + ':');
         if (start === -1) return;
         const valueStart = start + key.length + 1;
-        // 次のキーの位置を探す
         let end = text.length;
         for (let j = i + 1; j < keys.length; j++) {
           const nextIdx = text.indexOf(keys[j] + ':', valueStart);
@@ -284,7 +285,6 @@
         }
         data[key] = text.substring(valueStart, end).trim();
       });
-
       if (data['気付き'])      document.getElementById('insight').value   = data['気付き'];
       if (data['エビデンス1']) document.getElementById('evidence1').value = data['エビデンス1'];
       if (data['エビデンス2']) document.getElementById('evidence2').value = data['エビデンス2'];
@@ -332,15 +332,14 @@
   .card-icon-placeholder { background:#f0ede8; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:2cqw; color:#aaa; }
   .card-insight {
     position: absolute; top: 35%; left: 6.9%; right: 6.9%;
-    font-size: 4.4cqw; font-weight: 900; line-height: 1.55;
-    text-align: center; color: #111; letter-spacing: 0.01em;
-    white-space: pre-wrap;
+    font-size: 5.2cqw; font-weight: 900; line-height: 1.55;
+    text-align: center; color: #111; letter-spacing: 0.01em; white-space: pre-wrap;
   }
   .card-evidences {
     position: absolute; top: 50.5%; left: 6.9%; right: 6.9%;
     display: flex; flex-direction: column; gap: 3cqw;
   }
-  .card-evidence { font-size: 2.3cqw; line-height: 1.75; color: #333; white-space: pre-wrap; }
+  .card-evidence { font-size: 3.0cqw; line-height: 1.75; color: #333; white-space: pre-wrap; }
   .card-credit { position: absolute; bottom: 2.5%; right: 4%; font-size: 1.5cqw; color: #aaa; letter-spacing: 0.04em; }
 </style>
 </head>
