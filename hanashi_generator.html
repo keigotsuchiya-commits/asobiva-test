@@ -42,7 +42,6 @@
     margin-bottom: 6px;
   }
 
-  .field input,
   .field textarea {
     width: 100%;
     border: 1.5px solid #e0ddd8;
@@ -57,7 +56,6 @@
     line-height: 1.6;
   }
 
-  .field input:focus,
   .field textarea:focus {
     outline: none;
     border-color: #aaa;
@@ -71,10 +69,7 @@
     color: #aaa;
   }
 
-  .char-count.over {
-    color: #e05555;
-    font-weight: 700;
-  }
+  .char-count.over { color: #e05555; font-weight: 700; }
 
   .upload-area {
     border: 2px dashed #d8d4ce;
@@ -107,11 +102,7 @@
   #evidence2 { height: 88px; }
   #evidence3 { height: 72px; }
 
-  .btn-group {
-    display: flex;
-    gap: 10px;
-    margin-top: 4px;
-  }
+  .btn-group { display: flex; gap: 10px; margin-top: 4px; }
 
   .btn {
     flex: 1;
@@ -148,38 +139,31 @@
     margin-bottom: 10px;
   }
 
-  #card-wrapper {
-    width: 100%;
-    max-width: 600px;
-    margin: 0 auto;
-  }
-
+  /* カード: 画面幅いっぱい、縦横比728:1030固定 */
   #card {
-    width: 100%;
-    /* 縦横比 728:1030 = 1:1.4148 */
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
     aspect-ratio: 728 / 1030;
     background: #fff;
     position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 6% 8%;
     font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
     overflow: hidden;
   }
 
-  .card-icon {
-    display: block;
-    width: 20%;
+  /* アイコン: 幅の28.8%、上から8.7% */
+  .card-icon,
+  .card-icon-placeholder {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 8.7%;
+    width: 28.8%;
     aspect-ratio: 1;
-    object-fit: contain;
-    margin-bottom: 6%;
   }
 
+  .card-icon { object-fit: contain; }
+
   .card-icon-placeholder {
-    width: 20%;
-    aspect-ratio: 1;
     background: #f0ede8;
     border-radius: 50%;
     display: flex;
@@ -187,33 +171,44 @@
     justify-content: center;
     font-size: 10px;
     color: #aaa;
-    margin-bottom: 6%;
   }
 
+  /* 見出し: 上から35%、フォント幅の6.7% */
   .card-insight {
-    font-size: clamp(14px, 4.5vw, 22px);
+    position: absolute;
+    top: 35%;
+    left: 0; right: 0;
+    padding: 0 8%;
+    font-size: 6.7vw;
     font-weight: 900;
     line-height: 1.55;
     text-align: center;
     color: #111;
-    margin-bottom: 6%;
     letter-spacing: 0.01em;
-    width: 100%;
+  }
+
+  /* エビデンス: 見出し下から順に */
+  .card-evidences {
+    position: absolute;
+    top: 54%;
+    left: 0; right: 0;
+    padding: 0 8%;
+    display: flex;
+    flex-direction: column;
+    gap: 3.5%;
   }
 
   .card-evidence {
-    font-size: clamp(10px, 2.8vw, 14px);
+    font-size: 2.3vw;
     line-height: 1.75;
     color: #333;
-    margin-bottom: 4%;
-    width: 100%;
   }
 
   .card-credit {
     position: absolute;
-    bottom: 3%;
-    right: 5%;
-    font-size: clamp(8px, 1.8vw, 11px);
+    bottom: 2.5%;
+    right: 4%;
+    font-size: 1.5vw;
     color: #aaa;
     letter-spacing: 0.04em;
   }
@@ -225,7 +220,6 @@
 
 <div class="form-panel">
 
-  <!-- テキストファイル読み込み -->
   <div class="field">
     <label>テキストファイルを読み込む</label>
     <div class="upload-area">
@@ -237,7 +231,6 @@
     <div class="template-link" onclick="downloadTemplate()">▼ テンプレートをダウンロード</div>
   </div>
 
-  <!-- アイコン画像 -->
   <div class="field">
     <label>アイコン画像</label>
     <div class="upload-area">
@@ -248,28 +241,24 @@
     </div>
   </div>
 
-  <!-- 気付き -->
   <div class="field">
     <label>気付き（上限26文字）</label>
     <textarea id="insight" maxlength="26" placeholder="例: 当たり前にあるものほど、なくなった時に価値に気付く。"></textarea>
     <div class="char-count" id="cnt-insight">0 / 26</div>
   </div>
 
-  <!-- エビデンス1 -->
   <div class="field">
     <label>エビデンス 1段落目（上限28文字）</label>
     <textarea id="evidence1" maxlength="28" placeholder="1文目"></textarea>
     <div class="char-count" id="cnt-ev1">0 / 28</div>
   </div>
 
-  <!-- エビデンス2 -->
   <div class="field">
     <label>エビデンス 2段落目（上限74文字）</label>
     <textarea id="evidence2" maxlength="74" placeholder="2文目"></textarea>
     <div class="char-count" id="cnt-ev2">0 / 74</div>
   </div>
 
-  <!-- エビデンス3 -->
   <div class="field">
     <label>エビデンス 3段落目（上限53文字・任意）</label>
     <textarea id="evidence3" maxlength="53" placeholder="3文目（省略可）"></textarea>
@@ -283,18 +272,18 @@
 
 </div>
 
-<!-- プレビュー -->
 <div class="preview-label">プレビュー</div>
-<div id="card-wrapper">
-  <div id="card">
-    <div class="card-icon-placeholder" id="iconPlaceholder">画像なし</div>
-    <img class="card-icon" id="cardIcon" src="" alt="" style="display:none;">
-    <div class="card-insight" id="cardInsight">気付きを入力してください</div>
+
+<div id="card">
+  <div class="card-icon-placeholder" id="iconPlaceholder">画像なし</div>
+  <img class="card-icon" id="cardIcon" src="" alt="" style="display:none;">
+  <div class="card-insight" id="cardInsight">気付きを入力してください</div>
+  <div class="card-evidences">
     <div class="card-evidence" id="cardEv1"></div>
     <div class="card-evidence" id="cardEv2"></div>
     <div class="card-evidence" id="cardEv3" style="display:none;"></div>
-    <div class="card-credit">© i.roiro</div>
   </div>
+  <div class="card-credit">© i.roiro</div>
 </div>
 
 <script>
@@ -330,7 +319,6 @@
     document.getElementById(id).addEventListener('input', updatePreview);
   });
 
-  // 画像
   document.getElementById('imageInput').addEventListener('change', function() {
     const file = this.files[0];
     if (!file) return;
@@ -345,7 +333,6 @@
     reader.readAsDataURL(file);
   });
 
-  // テキストファイル読み込み
   document.getElementById('txtInput').addEventListener('change', function() {
     const file = this.files[0];
     if (!file) return;
@@ -364,13 +351,12 @@
       if (data['気付き'])      document.getElementById('insight').value   = data['気付き'];
       if (data['エビデンス1']) document.getElementById('evidence1').value = data['エビデンス1'];
       if (data['エビデンス2']) document.getElementById('evidence2').value = data['エビデンス2'];
-      if (data['エビデンス3']) document.getElementById('evidence3').value = data['エビデンス3'] || '';
+      document.getElementById('evidence3').value = data['エビデンス3'] || '';
       updatePreview();
     };
     reader.readAsText(file, 'UTF-8');
   });
 
-  // HTMLで保存
   function downloadHTML() {
     const insight = document.getElementById('cardInsight').textContent;
     const ev1 = document.getElementById('cardEv1').textContent;
@@ -391,34 +377,44 @@
 <title>${insight}</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #fff; display: flex; justify-content: center; }
+  body { background: #fff; }
   .card {
     width: 100vw;
     aspect-ratio: 728 / 1030;
     background: #fff;
     position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 6% 8%;
     font-family: 'Hiragino Kaku Gothic ProN','Hiragino Sans','Noto Sans JP',sans-serif;
     overflow: hidden;
   }
-  .card-icon { display:block; width:20%; aspect-ratio:1; object-fit:contain; margin-bottom:6%; }
-  .card-icon-placeholder { width:20%; aspect-ratio:1; background:#f0ede8; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; color:#aaa; margin-bottom:6%; }
-  .card-insight { font-size:clamp(14px,4.5vw,22px); font-weight:900; line-height:1.55; text-align:center; color:#111; margin-bottom:6%; letter-spacing:0.01em; width:100%; }
-  .card-evidence { font-size:clamp(10px,2.8vw,14px); line-height:1.75; color:#333; margin-bottom:4%; width:100%; }
-  .card-credit { position:absolute; bottom:3%; right:5%; font-size:clamp(8px,1.8vw,11px); color:#aaa; letter-spacing:0.04em; }
+  .card-icon, .card-icon-placeholder {
+    position: absolute;
+    left: 50%; transform: translateX(-50%);
+    top: 8.7%; width: 28.8%; aspect-ratio: 1;
+  }
+  .card-icon { object-fit: contain; }
+  .card-icon-placeholder { background:#f0ede8; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; color:#aaa; }
+  .card-insight {
+    position: absolute; top: 35%; left: 0; right: 0;
+    padding: 0 8%; font-size: 6.7vw; font-weight: 900;
+    line-height: 1.55; text-align: center; color: #111; letter-spacing: 0.01em;
+  }
+  .card-evidences {
+    position: absolute; top: 54%; left: 0; right: 0;
+    padding: 0 8%; display: flex; flex-direction: column; gap: 3.5%;
+  }
+  .card-evidence { font-size: 2.3vw; line-height: 1.75; color: #333; }
+  .card-credit { position: absolute; bottom: 2.5%; right: 4%; font-size: 1.5vw; color: #aaa; letter-spacing: 0.04em; }
 </style>
 </head>
 <body>
 <div class="card">
   ${iconHTML}
   <div class="card-insight">${insight}</div>
-  <div class="card-evidence">${ev1}</div>
-  <div class="card-evidence">${ev2}</div>
-  ${ev3HTML}
+  <div class="card-evidences">
+    <div class="card-evidence">${ev1}</div>
+    <div class="card-evidence">${ev2}</div>
+    ${ev3HTML}
+  </div>
   <div class="card-credit">© i.roiro</div>
 </div>
 </body>
@@ -431,12 +427,8 @@
     link.click();
   }
 
-  // テンプレートDL
   function downloadTemplate() {
-    const template = `気付き: （26文字以内）
-エビデンス1: （28文字以内）
-エビデンス2: （74文字以内）
-エビデンス3: （53文字以内・省略可）`;
+    const template = `気付き: （26文字以内）\nエビデンス1: （28文字以内）\nエビデンス2: （74文字以内）\nエビデンス3: （53文字以内・省略可）`;
     const blob = new Blob([template], { type: 'text/plain;charset=utf-8' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -444,7 +436,6 @@
     link.click();
   }
 
-  // リセット
   function resetForm() {
     ['insight','evidence1','evidence2','evidence3'].forEach(id => {
       document.getElementById(id).value = '';
