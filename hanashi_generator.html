@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>○○の話 ジェネレーター</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+    background: #f0ede8;
+    min-height: 100vh;
+    padding: 24px 16px;
+  }
+
+  h1 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+
+  .form-panel {
+    max-width: 600px;
+    margin: 0 auto 32px;
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #888;
+    margin-bottom: 6px;
+  }
+
+  .field input,
+  .field textarea {
+    width: 100%;
+    border: 1.5px solid #e0ddd8;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    color: #222;
+    background: #faf9f7;
+    resize: none;
+    transition: border-color 0.15s;
+    line-height: 1.6;
+  }
+
+  .field input:focus,
+  .field textarea:focus {
+    outline: none;
+    border-color: #aaa;
+    background: #fff;
+  }
+
+  .char-count {
+    font-size: 10px;
+    text-align: right;
+    margin-top: 3px;
+    color: #aaa;
+  }
+
+  .char-count.over {
+    color: #e05555;
+    font-weight: 700;
+  }
+
+  .upload-area {
+    border: 2px dashed #d8d4ce;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    background: #faf9f7;
+    transition: border-color 0.15s;
+    position: relative;
+  }
+
+  .upload-area:hover { border-color: #999; }
+
+  .upload-area input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .upload-area .upload-icon { font-size: 28px; margin-bottom: 6px; }
+  .upload-area .upload-text { font-size: 12px; color: #888; }
+  .upload-area .upload-filename { font-size: 12px; color: #555; margin-top: 6px; font-weight: 600; }
+
+  #insight   { height: 64px; }
+  #evidence1 { height: 64px; }
+  #evidence2 { height: 88px; }
+  #evidence3 { height: 72px; }
+
+  .btn-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  .btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .btn:hover { opacity: 0.8; }
+  .btn-primary { background: #222; color: #fff; }
+  .btn-secondary { background: #e8e4de; color: #333; }
+
+  .template-link {
+    font-size: 11px;
+    color: #888;
+    text-align: center;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  .template-link:hover { color: #333; }
+
+  /* ── カードプレビュー ── */
+  .preview-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #888;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  #card-wrapper {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  #card {
+    width: 100%;
+    /* 縦横比 728:1030 = 1:1.4148 */
+    aspect-ratio: 728 / 1030;
+    background: #fff;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6% 8%;
+    font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+    overflow: hidden;
+  }
+
+  .card-icon {
+    display: block;
+    width: 20%;
+    aspect-ratio: 1;
+    object-fit: contain;
+    margin-bottom: 6%;
+  }
+
+  .card-icon-placeholder {
+    width: 20%;
+    aspect-ratio: 1;
+    background: #f0ede8;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #aaa;
+    margin-bottom: 6%;
+  }
+
+  .card-insight {
+    font-size: clamp(14px, 4.5vw, 22px);
+    font-weight: 900;
+    line-height: 1.55;
+    text-align: center;
+    color: #111;
+    margin-bottom: 6%;
+    letter-spacing: 0.01em;
+    width: 100%;
+  }
+
+  .card-evidence {
+    font-size: clamp(10px, 2.8vw, 14px);
+    line-height: 1.75;
+    color: #333;
+    margin-bottom: 4%;
+    width: 100%;
+  }
+
+  .card-credit {
+    position: absolute;
+    bottom: 3%;
+    right: 5%;
+    font-size: clamp(8px, 1.8vw, 11px);
+    color: #aaa;
+    letter-spacing: 0.04em;
+  }
+</style>
+</head>
+<body>
+
+<h1>○○の話 ジェネレーター</h1>
+
+<div class="form-panel">
+
+  <!-- テキストファイル読み込み -->
+  <div class="field">
+    <label>テキストファイルを読み込む</label>
+    <div class="upload-area">
+      <div class="upload-icon">📄</div>
+      <div class="upload-text">テンプレートに沿った .txt ファイルを選択</div>
+      <div class="upload-filename" id="txtFilename"></div>
+      <input type="file" id="txtInput" accept=".txt">
+    </div>
+    <div class="template-link" onclick="downloadTemplate()">▼ テンプレートをダウンロード</div>
+  </div>
+
+  <!-- アイコン画像 -->
+  <div class="field">
+    <label>アイコン画像</label>
+    <div class="upload-area">
+      <div class="upload-icon">🖼</div>
+      <div class="upload-text">タップして画像を選択</div>
+      <div class="upload-filename" id="imgFilename"></div>
+      <input type="file" id="imageInput" accept="image/*">
+    </div>
+  </div>
+
+  <!-- 気付き -->
+  <div class="field">
+    <label>気付き（上限26文字）</label>
+    <textarea id="insight" maxlength="26" placeholder="例: 当たり前にあるものほど、なくなった時に価値に気付く。"></textarea>
+    <div class="char-count" id="cnt-insight">0 / 26</div>
+  </div>
+
+  <!-- エビデンス1 -->
+  <div class="field">
+    <label>エビデンス 1段落目（上限28文字）</label>
+    <textarea id="evidence1" maxlength="28" placeholder="1文目"></textarea>
+    <div class="char-count" id="cnt-ev1">0 / 28</div>
+  </div>
+
+  <!-- エビデンス2 -->
+  <div class="field">
+    <label>エビデンス 2段落目（上限74文字）</label>
+    <textarea id="evidence2" maxlength="74" placeholder="2文目"></textarea>
+    <div class="char-count" id="cnt-ev2">0 / 74</div>
+  </div>
+
+  <!-- エビデンス3 -->
+  <div class="field">
+    <label>エビデンス 3段落目（上限53文字・任意）</label>
+    <textarea id="evidence3" maxlength="53" placeholder="3文目（省略可）"></textarea>
+    <div class="char-count" id="cnt-ev3">0 / 53</div>
+  </div>
+
+  <div class="btn-group">
+    <button class="btn btn-primary" onclick="downloadHTML()">HTMLで保存</button>
+    <button class="btn btn-secondary" onclick="resetForm()">リセット</button>
+  </div>
+
+</div>
+
+<!-- プレビュー -->
+<div class="preview-label">プレビュー</div>
+<div id="card-wrapper">
+  <div id="card">
+    <div class="card-icon-placeholder" id="iconPlaceholder">画像なし</div>
+    <img class="card-icon" id="cardIcon" src="" alt="" style="display:none;">
+    <div class="card-insight" id="cardInsight">気付きを入力してください</div>
+    <div class="card-evidence" id="cardEv1"></div>
+    <div class="card-evidence" id="cardEv2"></div>
+    <div class="card-evidence" id="cardEv3" style="display:none;"></div>
+    <div class="card-credit">© i.roiro</div>
+  </div>
+</div>
+
+<script>
+  const LIMITS = { insight: 26, evidence1: 28, evidence2: 74, evidence3: 53 };
+  const counterMap = { insight: 'cnt-insight', evidence1: 'cnt-ev1', evidence2: 'cnt-ev2', evidence3: 'cnt-ev3' };
+  let iconDataURL = '';
+
+  function updateCount(id) {
+    const limit = LIMITS[id];
+    const len = document.getElementById(id).value.length;
+    const el = document.getElementById(counterMap[id]);
+    if (!el) return;
+    el.textContent = len + ' / ' + limit;
+    el.classList.toggle('over', len > limit);
+  }
+
+  function updatePreview() {
+    const insight = document.getElementById('insight').value.trim();
+    const ev1 = document.getElementById('evidence1').value.trim();
+    const ev2 = document.getElementById('evidence2').value.trim();
+    const ev3 = document.getElementById('evidence3').value.trim();
+
+    document.getElementById('cardInsight').textContent = insight || '気付きを入力してください';
+    document.getElementById('cardEv1').textContent = ev1;
+    document.getElementById('cardEv2').textContent = ev2;
+    document.getElementById('cardEv3').textContent = ev3;
+    document.getElementById('cardEv3').style.display = ev3 ? 'block' : 'none';
+
+    Object.keys(LIMITS).forEach(id => updateCount(id));
+  }
+
+  ['insight','evidence1','evidence2','evidence3'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updatePreview);
+  });
+
+  // 画像
+  document.getElementById('imageInput').addEventListener('change', function() {
+    const file = this.files[0];
+    if (!file) return;
+    document.getElementById('imgFilename').textContent = file.name;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      iconDataURL = e.target.result;
+      document.getElementById('cardIcon').src = iconDataURL;
+      document.getElementById('cardIcon').style.display = 'block';
+      document.getElementById('iconPlaceholder').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // テキストファイル読み込み
+  document.getElementById('txtInput').addEventListener('change', function() {
+    const file = this.files[0];
+    if (!file) return;
+    document.getElementById('txtFilename').textContent = file.name;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const lines = e.target.result.split('\n');
+      const data = {};
+      lines.forEach(line => {
+        const sep = line.indexOf(':');
+        if (sep === -1) return;
+        const key = line.substring(0, sep).trim();
+        const val = line.substring(sep + 1).trim();
+        data[key] = val;
+      });
+      if (data['気付き'])      document.getElementById('insight').value   = data['気付き'];
+      if (data['エビデンス1']) document.getElementById('evidence1').value = data['エビデンス1'];
+      if (data['エビデンス2']) document.getElementById('evidence2').value = data['エビデンス2'];
+      if (data['エビデンス3']) document.getElementById('evidence3').value = data['エビデンス3'] || '';
+      updatePreview();
+    };
+    reader.readAsText(file, 'UTF-8');
+  });
+
+  // HTMLで保存
+  function downloadHTML() {
+    const insight = document.getElementById('cardInsight').textContent;
+    const ev1 = document.getElementById('cardEv1').textContent;
+    const ev2 = document.getElementById('cardEv2').textContent;
+    const ev3 = document.getElementById('cardEv3').textContent;
+
+    const iconHTML = iconDataURL
+      ? `<img class="card-icon" src="${iconDataURL}" alt="">`
+      : `<div class="card-icon-placeholder">画像なし</div>`;
+
+    const ev3HTML = ev3 ? `<div class="card-evidence">${ev3}</div>` : '';
+
+    const html = `<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${insight}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #fff; display: flex; justify-content: center; }
+  .card {
+    width: 100vw;
+    aspect-ratio: 728 / 1030;
+    background: #fff;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6% 8%;
+    font-family: 'Hiragino Kaku Gothic ProN','Hiragino Sans','Noto Sans JP',sans-serif;
+    overflow: hidden;
+  }
+  .card-icon { display:block; width:20%; aspect-ratio:1; object-fit:contain; margin-bottom:6%; }
+  .card-icon-placeholder { width:20%; aspect-ratio:1; background:#f0ede8; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; color:#aaa; margin-bottom:6%; }
+  .card-insight { font-size:clamp(14px,4.5vw,22px); font-weight:900; line-height:1.55; text-align:center; color:#111; margin-bottom:6%; letter-spacing:0.01em; width:100%; }
+  .card-evidence { font-size:clamp(10px,2.8vw,14px); line-height:1.75; color:#333; margin-bottom:4%; width:100%; }
+  .card-credit { position:absolute; bottom:3%; right:5%; font-size:clamp(8px,1.8vw,11px); color:#aaa; letter-spacing:0.04em; }
+</style>
+</head>
+<body>
+<div class="card">
+  ${iconHTML}
+  <div class="card-insight">${insight}</div>
+  <div class="card-evidence">${ev1}</div>
+  <div class="card-evidence">${ev2}</div>
+  ${ev3HTML}
+  <div class="card-credit">© i.roiro</div>
+</div>
+</body>
+</html>`;
+
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'hanashi_card.html';
+    link.click();
+  }
+
+  // テンプレートDL
+  function downloadTemplate() {
+    const template = `気付き: （26文字以内）
+エビデンス1: （28文字以内）
+エビデンス2: （74文字以内）
+エビデンス3: （53文字以内・省略可）`;
+    const blob = new Blob([template], { type: 'text/plain;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'hanashi_template.txt';
+    link.click();
+  }
+
+  // リセット
+  function resetForm() {
+    ['insight','evidence1','evidence2','evidence3'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    iconDataURL = '';
+    document.getElementById('cardIcon').src = '';
+    document.getElementById('cardIcon').style.display = 'none';
+    document.getElementById('iconPlaceholder').style.display = 'flex';
+    document.getElementById('imgFilename').textContent = '';
+    document.getElementById('txtFilename').textContent = '';
+    updatePreview();
+  }
+
+  updatePreview();
+</script>
+</body>
+</html>
