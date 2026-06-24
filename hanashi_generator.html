@@ -14,13 +14,7 @@
     padding: 24px 16px;
   }
 
-  h1 {
-    font-size: 15px;
-    font-weight: 700;
-    color: #333;
-    margin-bottom: 24px;
-    text-align: center;
-  }
+  h1 { font-size: 15px; font-weight: 700; color: #333; margin-bottom: 24px; text-align: center; }
 
   .form-panel {
     max-width: 600px;
@@ -33,14 +27,7 @@
     gap: 16px;
   }
 
-  .field label {
-    display: block;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    color: #888;
-    margin-bottom: 6px;
-  }
+  .field label { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #888; margin-bottom: 6px; }
 
   .field textarea {
     width: 100%;
@@ -51,7 +38,7 @@
     font-family: inherit;
     color: #222;
     background: #faf9f7;
-    resize: none;
+    resize: vertical;
     transition: border-color 0.15s;
     line-height: 1.6;
   }
@@ -80,17 +67,12 @@
 
   #insight   { height: 64px; }
   #evidence1 { height: 64px; }
-  #evidence2 { height: 88px; }
-  #evidence3 { height: 72px; }
+  #evidence2 { height: 100px; }
+  #evidence3 { height: 80px; }
 
   .btn-group { display: flex; gap: 10px; margin-top: 4px; }
 
-  .btn {
-    flex: 1; padding: 12px; border: none; border-radius: 8px;
-    font-size: 13px; font-weight: 700; font-family: inherit;
-    cursor: pointer; transition: opacity 0.15s;
-  }
-
+  .btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; transition: opacity 0.15s; }
   .btn:hover { opacity: 0.8; }
   .btn-primary { background: #222; color: #fff; }
   .btn-secondary { background: #e8e4de; color: #333; }
@@ -100,10 +82,8 @@
 
   .preview-label { font-size: 11px; font-weight: 700; color: #888; text-align: center; margin-bottom: 10px; }
 
-  /* ── カード: container queryで自己参照 ── */
   #card {
     container-type: inline-size;
-    container-name: card;
     width: 100vw;
     margin-left: calc(-50vw + 50%);
     aspect-ratio: 728 / 1030;
@@ -113,63 +93,46 @@
     overflow: hidden;
   }
 
-  .card-icon,
-  .card-icon-placeholder {
+  .card-icon, .card-icon-placeholder {
     position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    top: 8.7%;
-    width: 28.8%;
-    aspect-ratio: 1;
+    left: 50%; transform: translateX(-50%);
+    top: 8.7%; width: 28.8%; aspect-ratio: 1;
   }
 
   .card-icon { object-fit: contain; }
 
   .card-icon-placeholder {
-    background: #f0ede8;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #aaa;
-    font-size: 2cqw;
+    background: #f0ede8; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #aaa; font-size: 2cqw;
   }
 
-  /* 見出し: 4.4cqw */
   .card-insight {
     position: absolute;
-    top: 35%;
-    left: 6.9%; right: 6.9%;
-    font-size: 4.4cqw;
-    font-weight: 900;
-    line-height: 1.55;
-    text-align: center;
-    color: #111;
-    letter-spacing: 0.01em;
+    top: 35%; left: 6.9%; right: 6.9%;
+    font-size: 4.4cqw; font-weight: 900;
+    line-height: 1.55; text-align: center;
+    color: #111; letter-spacing: 0.01em;
   }
 
-  /* エビデンス: 2.3cqw */
   .card-evidences {
     position: absolute;
-    top: 50.5%;
-    left: 6.9%; right: 6.9%;
-    display: flex;
-    flex-direction: column;
-    gap: 4%;
+    top: 50.5%; left: 6.9%; right: 6.9%;
+    display: flex; flex-direction: column;
+    gap: 3cqw;
   }
 
   .card-evidence {
     font-size: 2.3cqw;
     line-height: 1.75;
     color: #333;
+    white-space: pre-wrap;
   }
 
   .card-credit {
     position: absolute;
     bottom: 2.5%; right: 4%;
-    font-size: 1.5cqw;
-    color: #aaa;
-    letter-spacing: 0.04em;
+    font-size: 1.5cqw; color: #aaa; letter-spacing: 0.04em;
   }
 </style>
 </head>
@@ -201,26 +164,26 @@
   </div>
 
   <div class="field">
-    <label>気付き（上限26文字）</label>
-    <textarea id="insight" maxlength="26" placeholder="例: 当たり前にあるものほど、なくなった時に価値に気付く。"></textarea>
+    <label>気付き（上限26文字・改行含む）</label>
+    <textarea id="insight" placeholder="例: 当たり前にあるものほど、なくなった時に価値に気付く。"></textarea>
     <div class="char-count" id="cnt-insight">0 / 26</div>
   </div>
 
   <div class="field">
-    <label>エビデンス 1段落目（上限28文字）</label>
-    <textarea id="evidence1" maxlength="28" placeholder="1文目"></textarea>
+    <label>エビデンス 1段落目（上限28文字・改行含む）</label>
+    <textarea id="evidence1" placeholder="1文目"></textarea>
     <div class="char-count" id="cnt-ev1">0 / 28</div>
   </div>
 
   <div class="field">
-    <label>エビデンス 2段落目（上限74文字）</label>
-    <textarea id="evidence2" maxlength="74" placeholder="2文目"></textarea>
+    <label>エビデンス 2段落目（上限74文字・改行含む）</label>
+    <textarea id="evidence2" placeholder="2文目"></textarea>
     <div class="char-count" id="cnt-ev2">0 / 74</div>
   </div>
 
   <div class="field">
-    <label>エビデンス 3段落目（上限53文字・任意）</label>
-    <textarea id="evidence3" maxlength="53" placeholder="3文目（省略可）"></textarea>
+    <label>エビデンス 3段落目（上限53文字・改行含む・任意）</label>
+    <textarea id="evidence3" placeholder="3文目（省略可）"></textarea>
     <div class="char-count" id="cnt-ev3">0 / 53</div>
   </div>
 
@@ -250,9 +213,14 @@
   const counterMap = { insight: 'cnt-insight', evidence1: 'cnt-ev1', evidence2: 'cnt-ev2', evidence3: 'cnt-ev3' };
   let iconDataURL = '';
 
+  // 改行を除いた文字数でカウント
+  function charCount(str) {
+    return str.replace(/\n/g, '').length;
+  }
+
   function updateCount(id) {
     const limit = LIMITS[id];
-    const len = document.getElementById(id).value.length;
+    const len = charCount(document.getElementById(id).value);
     const el = document.getElementById(counterMap[id]);
     if (!el) return;
     el.textContent = len + ' / ' + limit;
@@ -260,16 +228,16 @@
   }
 
   function updatePreview() {
-    const insight = document.getElementById('insight').value.trim();
-    const ev1 = document.getElementById('evidence1').value.trim();
-    const ev2 = document.getElementById('evidence2').value.trim();
-    const ev3 = document.getElementById('evidence3').value.trim();
+    const insight = document.getElementById('insight').value;
+    const ev1 = document.getElementById('evidence1').value;
+    const ev2 = document.getElementById('evidence2').value;
+    const ev3 = document.getElementById('evidence3').value;
 
-    document.getElementById('cardInsight').textContent = insight || '気付きを入力してください';
+    document.getElementById('cardInsight').textContent = insight.trim() || '気付きを入力してください';
     document.getElementById('cardEv1').textContent = ev1;
     document.getElementById('cardEv2').textContent = ev2;
     document.getElementById('cardEv3').textContent = ev3;
-    document.getElementById('cardEv3').style.display = ev3 ? 'block' : 'none';
+    document.getElementById('cardEv3').style.display = ev3.trim() ? 'block' : 'none';
 
     Object.keys(LIMITS).forEach(id => updateCount(id));
   }
@@ -292,21 +260,31 @@
     reader.readAsDataURL(file);
   });
 
+  // テキストファイル読み込み
+  // フォーマット: 「キー: 値」。値が複数行にまたがる場合は次のキーまでを値として扱う
   document.getElementById('txtInput').addEventListener('change', function() {
     const file = this.files[0];
     if (!file) return;
     document.getElementById('txtFilename').textContent = file.name;
     const reader = new FileReader();
     reader.onload = function(e) {
-      const lines = e.target.result.split('\n');
+      const text = e.target.result;
+      const keys = ['気付き', 'エビデンス1', 'エビデンス2', 'エビデンス3'];
       const data = {};
-      lines.forEach(line => {
-        const sep = line.indexOf(':');
-        if (sep === -1) return;
-        const key = line.substring(0, sep).trim();
-        const val = line.substring(sep + 1).trim();
-        data[key] = val;
+
+      keys.forEach((key, i) => {
+        const start = text.indexOf(key + ':');
+        if (start === -1) return;
+        const valueStart = start + key.length + 1;
+        // 次のキーの位置を探す
+        let end = text.length;
+        for (let j = i + 1; j < keys.length; j++) {
+          const nextIdx = text.indexOf(keys[j] + ':', valueStart);
+          if (nextIdx !== -1 && nextIdx < end) end = nextIdx;
+        }
+        data[key] = text.substring(valueStart, end).trim();
       });
+
       if (data['気付き'])      document.getElementById('insight').value   = data['気付き'];
       if (data['エビデンス1']) document.getElementById('evidence1').value = data['エビデンス1'];
       if (data['エビデンス2']) document.getElementById('evidence2').value = data['エビデンス2'];
@@ -317,16 +295,16 @@
   });
 
   function downloadHTML() {
-    const insight = document.getElementById('cardInsight').textContent;
-    const ev1 = document.getElementById('cardEv1').textContent;
-    const ev2 = document.getElementById('cardEv2').textContent;
-    const ev3 = document.getElementById('cardEv3').textContent;
+    const insight = document.getElementById('insight').value.trim();
+    const ev1 = document.getElementById('evidence1').value;
+    const ev2 = document.getElementById('evidence2').value;
+    const ev3 = document.getElementById('evidence3').value;
 
     const iconHTML = iconDataURL
       ? `<img class="card-icon" src="${iconDataURL}" alt="">`
       : `<div class="card-icon-placeholder">画像なし</div>`;
 
-    const ev3HTML = ev3 ? `<div class="card-evidence">${ev3}</div>` : '';
+    const ev3HTML = ev3.trim() ? `<div class="card-evidence">${ev3}</div>` : '';
 
     const html = `<!DOCTYPE html>
 <html lang="ja">
@@ -356,12 +334,13 @@
     position: absolute; top: 35%; left: 6.9%; right: 6.9%;
     font-size: 4.4cqw; font-weight: 900; line-height: 1.55;
     text-align: center; color: #111; letter-spacing: 0.01em;
+    white-space: pre-wrap;
   }
   .card-evidences {
     position: absolute; top: 50.5%; left: 6.9%; right: 6.9%;
-    display: flex; flex-direction: column; gap: 4%;
+    display: flex; flex-direction: column; gap: 3cqw;
   }
-  .card-evidence { font-size: 2.3cqw; line-height: 1.75; color: #333; }
+  .card-evidence { font-size: 2.3cqw; line-height: 1.75; color: #333; white-space: pre-wrap; }
   .card-credit { position: absolute; bottom: 2.5%; right: 4%; font-size: 1.5cqw; color: #aaa; letter-spacing: 0.04em; }
 </style>
 </head>
@@ -387,7 +366,10 @@
   }
 
   function downloadTemplate() {
-    const template = `気付き: （26文字以内）\nエビデンス1: （28文字以内）\nエビデンス2: （74文字以内）\nエビデンス3: （53文字以内・省略可）`;
+    const template = `気付き: （26文字以内）
+エビデンス1: （28文字以内）
+エビデンス2: （74文字以内）
+エビデンス3: （53文字以内・省略可）`;
     const blob = new Blob([template], { type: 'text/plain;charset=utf-8' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
