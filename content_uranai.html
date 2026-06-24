@@ -156,6 +156,89 @@ body.admin-mode .download-btn { display: inline-block; }
 .burger-menu-item:hover { background: var(--bg); }
 .burger-menu-item.active { color: var(--white); background: var(--ink); }
 
+/* 管理モード以外では管理専用ボタンを非表示 */
+.admin-only { display: none; }
+body.admin-mode .admin-only { display: block; }
+
+.burger-menu-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+/* ── NAV LINK items ── */
+.nav-link-item {
+  display: block;
+  width: 100%;
+  padding: 14px 20px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.nav-link-item:hover { background: var(--bg); }
+
+/* ── NAV EDITOR PANEL ── */
+.nav-editor-panel {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--white);
+  border-radius: 16px 16px 0 0;
+  padding: 28px 20px 48px;
+  z-index: 300;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.34,1.2,0.64,1);
+  max-width: 480px;
+  margin: 0 auto;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.nav-editor-panel.open { transform: translateY(0); }
+
+.nav-editor-list { margin-bottom: 16px; }
+.nav-editor-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.nav-editor-row-label {
+  flex: 1;
+  font-size: 13px;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nav-editor-row-url {
+  font-size: 10px;
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 120px;
+}
+.nav-editor-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.nav-editor-btn:hover { border-color: var(--ink); color: var(--ink); }
+.nav-editor-btn.del { border-color: transparent; color: #c0392b; }
+.nav-editor-btn.del:hover { background: #fdf0f0; }
+
 .banner-slot {
   width: 100%;
   position: relative;
@@ -526,7 +609,7 @@ footer {
 </div>
 
 <button class="admin-btn" id="adminBtn" onclick="toggleAdmin()">管理</button>
-<button class="download-btn" id="downloadBtn" onclick="downloadHTML()">保存</button>
+
 
 <div class="wrap">
   <div class="site-header">
@@ -536,8 +619,13 @@ footer {
         <span></span><span></span><span></span>
       </button>
       <div class="burger-menu" id="burgerMenu">
+        <!-- ナビリンク一覧（動的に生成） -->
+        <div id="navLinks"></div>
+        <div class="burger-menu-divider"></div>
         <button class="burger-menu-item" id="adminBtn" onclick="toggleAdmin()">管理</button>
-        <button class="burger-menu-item" onclick="downloadHTML(); closeBurgerMenu()">保存</button>
+        <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
+        <button class="burger-menu-item admin-only" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
+        <button class="burger-menu-item admin-only" onclick="downloadHTML(); closeBurgerMenu()">公開用保存</button>
       </div>
     </div>
   </div>
@@ -709,6 +797,7 @@ async function init() {
   setTimeout(() => {
     document.getElementById('loading').style.display = 'none';
     render();
+    renderNavLinks();
   }, 200);
 }
 
@@ -900,6 +989,100 @@ document.addEventListener('click', e => {
   }
 });
 
+// ── Nav Menu (localStorage共通) ───────────────
+const NAV_KEY = 'asobiva_nav_v1';
+
+function loadNavItems() {
+  try { return JSON.parse(localStorage.getItem(NAV_KEY)) || []; }
+  catch { return []; }
+}
+
+function saveNavItems(items) {
+  localStorage.setItem(NAV_KEY, JSON.stringify(items));
+}
+
+function renderNavLinks() {
+  const items = loadNavItems();
+  const container = document.getElementById('navLinks');
+  if (!container) return;
+  container.innerHTML = '';
+  items.forEach(item => {
+    const a = document.createElement('a');
+    a.className = 'nav-link-item';
+    a.href = item.url;
+    a.textContent = item.label;
+    container.appendChild(a);
+  });
+}
+
+function openNavEditor() {
+  renderNavEditorList();
+  document.getElementById('navEditorOverlay').classList.add('open');
+  document.getElementById('navEditorPanel').classList.add('open');
+}
+
+function closeNavEditor() {
+  document.getElementById('navEditorOverlay').classList.remove('open');
+  document.getElementById('navEditorPanel').classList.remove('open');
+  document.getElementById('navLabelInput').value = '';
+  document.getElementById('navUrlInput').value = '';
+}
+
+function renderNavEditorList() {
+  const items = loadNavItems();
+  const list = document.getElementById('navEditorList');
+  list.innerHTML = '';
+  if (items.length === 0) {
+    list.innerHTML = '<p style="font-size:12px;color:#999;padding:8px 0 16px;">まだ項目がありません</p>';
+    return;
+  }
+  items.forEach((item, i) => {
+    const row = document.createElement('div');
+    row.className = 'nav-editor-row';
+    row.innerHTML = `
+      <div style="flex:1;overflow:hidden;">
+        <div class="nav-editor-row-label">${item.label}</div>
+        <div class="nav-editor-row-url">${item.url}</div>
+      </div>
+      <button class="nav-editor-btn" onclick="moveNavItem(${i},-1)">↑</button>
+      <button class="nav-editor-btn" onclick="moveNavItem(${i},1)">↓</button>
+      <button class="nav-editor-btn del" onclick="deleteNavItem(${i})">✕</button>
+    `;
+    list.appendChild(row);
+  });
+}
+
+function addNavItem() {
+  const label = document.getElementById('navLabelInput').value.trim();
+  const url = document.getElementById('navUrlInput').value.trim();
+  if (!label || !url) return;
+  const items = loadNavItems();
+  items.push({ label, url });
+  saveNavItems(items);
+  document.getElementById('navLabelInput').value = '';
+  document.getElementById('navUrlInput').value = '';
+  renderNavEditorList();
+  renderNavLinks();
+}
+
+function deleteNavItem(i) {
+  const items = loadNavItems();
+  items.splice(i, 1);
+  saveNavItems(items);
+  renderNavEditorList();
+  renderNavLinks();
+}
+
+function moveNavItem(i, dir) {
+  const items = loadNavItems();
+  const j = i + dir;
+  if (j < 0 || j >= items.length) return;
+  [items[i], items[j]] = [items[j], items[i]];
+  saveNavItems(items);
+  renderNavEditorList();
+  renderNavLinks();
+}
+
 function toggleAdmin() {
   adminMode = !adminMode;
   document.body.classList.toggle('admin-mode', adminMode);
@@ -1047,6 +1230,22 @@ async function deleteCard(id) {
   const i = cards.findIndex(c => c.id === id);
   if (i !== -1) cards.splice(i, 1);
   render();
+}
+
+// ── 編集用HTMLとして保存（データ埋め込み） ─────────
+function downloadEditHTML() {
+  const source = document.documentElement.outerHTML;
+  const initData = { banners: banners, cards: cards };
+  const initScript = `<scr` + `ipt>window.__ASOBIVA_INIT__ = ${JSON.stringify(initData)};</scr` + `ipt>`;
+  const output = source.replace('</head>', initScript + '\n</head>');
+  const blob = new Blob([output], { type: 'text/html;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+  a.download = `edit_${ts}.html`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
 }
 
 // ── HTMLとして保存（静的スナップショット） ─────────
