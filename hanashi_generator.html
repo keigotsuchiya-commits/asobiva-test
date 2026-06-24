@@ -73,11 +73,7 @@
   }
 
   .upload-area:hover { border-color: #999; }
-
-  .upload-area input[type="file"] {
-    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
-  }
-
+  .upload-area input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
   .upload-area .upload-icon { font-size: 28px; margin-bottom: 6px; }
   .upload-area .upload-text { font-size: 12px; color: #888; }
   .upload-area .upload-filename { font-size: 12px; color: #555; margin-top: 6px; font-weight: 600; }
@@ -99,19 +95,15 @@
   .btn-primary { background: #222; color: #fff; }
   .btn-secondary { background: #e8e4de; color: #333; }
 
-  .template-link {
-    font-size: 11px; color: #888; text-align: center;
-    cursor: pointer; text-decoration: underline;
-  }
+  .template-link { font-size: 11px; color: #888; text-align: center; cursor: pointer; text-decoration: underline; }
   .template-link:hover { color: #333; }
 
-  /* ── カード ── */
-  .preview-label {
-    font-size: 11px; font-weight: 700; color: #888;
-    text-align: center; margin-bottom: 10px;
-  }
+  .preview-label { font-size: 11px; font-weight: 700; color: #888; text-align: center; margin-bottom: 10px; }
 
+  /* ── カード: container queryで自己参照 ── */
   #card {
+    container-type: inline-size;
+    container-name: card;
     width: 100vw;
     margin-left: calc(-50vw + 50%);
     aspect-ratio: 728 / 1030;
@@ -121,7 +113,6 @@
     overflow: hidden;
   }
 
-  /* アイコン: 幅28.8%、上8.7% */
   .card-icon,
   .card-icon-placeholder {
     position: absolute;
@@ -140,16 +131,16 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5vw;
     color: #aaa;
+    font-size: 2cqw;
   }
 
-  /* 見出し: 上35%、左右マージン6.9%、フォント5.2vw */
+  /* 見出し: 5.2cqw */
   .card-insight {
     position: absolute;
     top: 35%;
     left: 6.9%; right: 6.9%;
-    font-size: 5.2vw;
+    font-size: 5.2cqw;
     font-weight: 900;
     line-height: 1.55;
     text-align: center;
@@ -157,7 +148,7 @@
     letter-spacing: 0.01em;
   }
 
-  /* エビデンス: 上50.5%、左右マージン6.9%、フォント3.0vw */
+  /* エビデンス: 2.3cqw */
   .card-evidences {
     position: absolute;
     top: 50.5%;
@@ -168,7 +159,7 @@
   }
 
   .card-evidence {
-    font-size: 3.0vw;
+    font-size: 2.3cqw;
     line-height: 1.75;
     color: #333;
   }
@@ -176,7 +167,7 @@
   .card-credit {
     position: absolute;
     bottom: 2.5%; right: 4%;
-    font-size: 1.5vw;
+    font-size: 1.5cqw;
     color: #aaa;
     letter-spacing: 0.04em;
   }
@@ -347,6 +338,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #fff; }
   .card {
+    container-type: inline-size;
     width: 100vw;
     aspect-ratio: 728 / 1030;
     background: #fff;
@@ -359,18 +351,18 @@
     top: 8.7%; width: 28.8%; aspect-ratio: 1;
   }
   .card-icon { object-fit: contain; }
-  .card-icon-placeholder { background:#f0ede8; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.5vw; color:#aaa; }
+  .card-icon-placeholder { background:#f0ede8; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:2cqw; color:#aaa; }
   .card-insight {
     position: absolute; top: 35%; left: 6.9%; right: 6.9%;
-    font-size: 5.2vw; font-weight: 900; line-height: 1.55;
+    font-size: 5.2cqw; font-weight: 900; line-height: 1.55;
     text-align: center; color: #111; letter-spacing: 0.01em;
   }
   .card-evidences {
     position: absolute; top: 50.5%; left: 6.9%; right: 6.9%;
     display: flex; flex-direction: column; gap: 2.5%;
   }
-  .card-evidence { font-size: 3.0vw; line-height: 1.75; color: #333; }
-  .card-credit { position: absolute; bottom: 2.5%; right: 4%; font-size: 1.5vw; color: #aaa; letter-spacing: 0.04em; }
+  .card-evidence { font-size: 2.3cqw; line-height: 1.75; color: #333; }
+  .card-credit { position: absolute; bottom: 2.5%; right: 4%; font-size: 1.5cqw; color: #aaa; letter-spacing: 0.04em; }
 </style>
 </head>
 <body>
