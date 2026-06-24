@@ -633,10 +633,10 @@ body.admin-mode .intro-edit { display: flex; }
 
   <!-- タブバー -->
   <div class="tab-bar" id="tabBar">
-    <button class="tab-btn active" data-tab="chara" onclick="switchTab('chara')">キャラ</button>
-    <button class="tab-btn" data-tab="dougu" onclick="switchTab('dougu')">道具</button>
-    <button class="tab-btn" data-tab="haikei" onclick="switchTab('haikei')">背景</button>
-    <button class="tab-btn" data-tab="poster" onclick="switchTab('poster')">ポスター</button>
+    <button class="tab-btn active" data-tab="chara" onclick="switchTab('chara')">Characters</button>
+    <button class="tab-btn" data-tab="dougu" onclick="switchTab('dougu')">Vehicles&amp;Gear</button>
+    <button class="tab-btn" data-tab="haikei" onclick="switchTab('haikei')">Locations</button>
+    <button class="tab-btn" data-tab="poster" onclick="switchTab('poster')">Posters</button>
   </div>
 
   <div id="cardContainer"></div>
@@ -836,8 +836,13 @@ function applyIntro(html) {
   iframe.sandbox = 'allow-scripts allow-popups allow-forms allow-same-origin';
   iframe.scrolling = 'no';
   iframe.style.overflow = 'hidden';
-  iframe.style.height = '100px';
+  iframe.style.height = '200px';
   iframe.addEventListener('load', () => {
+    // ロード後に内容の高さに合わせる
+    try {
+      const h = iframe.contentDocument?.documentElement?.scrollHeight;
+      if (h && h > 0) iframe.style.height = h + 'px';
+    } catch {}
     iframe.contentWindow.postMessage({ type: 'asobiva-init' }, '*');
   });
   content.appendChild(iframe);
