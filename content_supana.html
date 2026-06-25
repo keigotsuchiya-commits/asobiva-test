@@ -31,44 +31,22 @@ body {
 
 /* ── ADMIN BUTTON ── */
 .admin-btn {
-  position: fixed;
-  top: 14px; right: 14px;
-  z-index: 100;
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.06em;
-  background: rgba(255,255,255,0.92);
+  background: none;
   border: 1px solid var(--border);
   padding: 6px 14px;
   border-radius: 20px;
   cursor: pointer;
   color: var(--ink-soft);
-  backdrop-filter: blur(4px);
   transition: all 0.15s;
 }
 .admin-btn:hover { border-color: var(--ink); color: var(--ink); }
 .admin-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
 
 /* ── DOWNLOAD BUTTON ── */
-.download-btn {
-  position: fixed;
-  top: 14px; right: 78px;
-  z-index: 100;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  background: rgba(255,255,255,0.92);
-  border: 1px solid var(--border);
-  padding: 6px 14px;
-  border-radius: 20px;
-  cursor: pointer;
-  color: var(--ink-soft);
-  backdrop-filter: blur(4px);
-  transition: all 0.15s;
-  display: none;
-}
-body.admin-mode .download-btn { display: inline-block; }
-.download-btn:hover { border-color: var(--ink); color: var(--ink); }
+.download-btn { display: none; }
 
 /* ── HEADER PAIR ── */
 .header-pair {
@@ -710,8 +688,6 @@ body.admin-mode .intro-edit { display: flex; }
   <div class="loading-bar-wrap"><div class="loading-bar" id="loadingBar"></div></div>
 </div>
 
-<button class="admin-btn" id="adminBtn" onclick="toggleAdmin()">管理</button>
-
 
 <div class="wrap">
   <div class="site-header">
@@ -1282,11 +1258,20 @@ function toggleAdmin() {
 
 // ── Tab ───────────────────────────────────────
 function switchTab(tab) {
+  const tabBar = document.getElementById('tabBar');
+  const tabBarTop = tabBar ? tabBar.getBoundingClientRect().top + window.scrollY : 0;
+  const scrollY = window.scrollY;
+
   activeTab = tab;
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.tab === tab);
   });
   render();
+
+  // タブバーより下を見ていた場合のみ、タブバー直下にスクロール位置を補正
+  if (scrollY > tabBarTop) {
+    window.scrollTo({ top: tabBarTop, behavior: 'instant' });
+  }
 }
 
 // ── Gap toggle ────────────────────────────────
