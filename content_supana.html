@@ -1287,11 +1287,6 @@ function switchTab(tab) {
     btn.classList.toggle('active', btn.dataset.tab === tab);
   });
   render();
-  // タブバーの位置にスクロール
-  const tabBar = document.getElementById('tabBar');
-  if (tabBar) {
-    tabBar.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
 }
 
 // ── Gap toggle ────────────────────────────────
