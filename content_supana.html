@@ -325,6 +325,7 @@ body.admin-mode .card:hover img { transform: none; }
   height: 100px;
   border: none;
   background: var(--white);
+  overflow: hidden;
 }
 .html-card-label {
   display: none;
@@ -846,14 +847,16 @@ function fileToText(file) {
 }
 
 // ── iframe高さ自動調整 ─────────────────────────
-function injectAutoResize(html) {
+function injectAutoResize(html, iframeId) {
   const resetCSS = `<style>html,body{margin:0 !important;}</style>`;
+  const idStr = iframeId ? JSON.stringify(iframeId) : 'null';
   const script = `
 <scr` + `ipt>
 (function(){
+  var iframeId = ${idStr};
   function reportHeight(){
     var h = document.body.scrollHeight;
-    parent.postMessage({ type: 'asobiva-resize', height: h }, '*');
+    parent.postMessage({ type: 'asobiva-resize', height: h, iframeId: iframeId }, '*');
   }
   window.addEventListener('message', function(e){
     if (e.data && e.data.type === 'asobiva-init') reportHeight();
@@ -879,18 +882,22 @@ function injectAutoResize(html) {
 }
 
 // ── iframeリサイズメッセージ受信 ───────────────
+let iframeCounter = 0;
 window.addEventListener('message', e => {
   if (e.data && e.data.type === 'asobiva-resize') {
-    // html-card iframes
-    document.querySelectorAll('.html-card iframe').forEach(f => {
-      if (f.contentWindow === e.source) {
-        f.style.height = Math.max(60, e.data.height) + 'px';
-      }
-    });
-    // intro iframe
-    const introIframe = document.querySelector('#introContent iframe');
-    if (introIframe && introIframe.contentWindow === e.source) {
-      introIframe.style.height = Math.max(60, e.data.height) + 'px';
+    const iframeId = e.data.iframeId;
+    if (iframeId) {
+      const f = document.getElementById(iframeId);
+      if (f) f.style.height = Math.max(60, e.data.height) + 'px';
+    } else {
+      // フォールバック：全iframeから一致するものを探す
+      document.querySelectorAll('iframe').forEach(f => {
+        try {
+          if (f.contentWindow === e.source) {
+            f.style.height = Math.max(60, e.data.height) + 'px';
+          }
+        } catch {}
+      });
     }
   }
 });
@@ -963,13 +970,14 @@ function applyIntro(html) {
   content.querySelector('.slot-label')?.remove();
   content.querySelector('iframe')?.remove();
   const iframe = document.createElement('iframe');
-  iframe.srcdoc = injectAutoResize(html);
+  const iframeId = 'iframe-intro-1';
+  iframe.id = iframeId;
+  iframe.srcdoc = injectAutoResize(html, iframeId);
   iframe.sandbox = 'allow-scripts allow-popups allow-forms allow-same-origin';
   iframe.scrolling = 'no';
   iframe.style.overflow = 'hidden';
   iframe.style.height = '50px';
   iframe.addEventListener('load', () => {
-    // ロード後に内容の高さに合わせる
     try {
       const h = iframe.contentDocument?.documentElement?.scrollHeight;
       if (h && h > 0) iframe.style.height = h + 'px';
@@ -1111,8 +1119,12 @@ function renderTab(tab) {
       label.textContent = c.name || '(無題)';
 
       const iframe = document.createElement('iframe');
-      iframe.srcdoc = injectAutoResize(c.html);
+      const iframeId = 'iframe-' + (++iframeCounter);
+      iframe.id = iframeId;
+      iframe.srcdoc = injectAutoResize(c.html, iframeId);
       iframe.loading = 'lazy';
+      iframe.scrolling = 'no';
+      iframe.style.overflow = 'hidden';
       iframe.sandbox = 'allow-scripts allow-popups allow-forms allow-same-origin';
       iframe.addEventListener('load', () => {
         iframe.contentWindow.postMessage({ type: 'asobiva-init' }, '*');
