@@ -845,11 +845,12 @@ function fileToText(file) {
 
 // ── iframe高さ自動調整 ─────────────────────────
 function injectAutoResize(html) {
+  const resetCSS = `<style>html,body{margin:0 !important;padding:0 !important;}</style>`;
   const script = `
 <scr` + `ipt>
 (function(){
   function reportHeight(){
-    var h = document.documentElement.scrollHeight;
+    var h = document.body.scrollHeight;
     parent.postMessage({ type: 'asobiva-resize', height: h }, '*');
   }
   window.addEventListener('message', function(e){
@@ -863,6 +864,12 @@ function injectAutoResize(html) {
   }
 })();
 </scr` + `ipt>`;
+  // headがあればCSSをheadに、なければ先頭に追加
+  if (/<\/head>/i.test(html)) {
+    html = html.replace(/<\/head>/i, resetCSS + '</head>');
+  } else {
+    html = resetCSS + html;
+  }
   if (/<\/body>/i.test(html)) {
     return html.replace(/<\/body>/i, script + '</body>');
   }
@@ -958,7 +965,7 @@ function applyIntro(html) {
   iframe.sandbox = 'allow-scripts allow-popups allow-forms allow-same-origin';
   iframe.scrolling = 'no';
   iframe.style.overflow = 'hidden';
-  iframe.style.height = '200px';
+  iframe.style.height = '50px';
   iframe.addEventListener('load', () => {
     // ロード後に内容の高さに合わせる
     try {
