@@ -847,16 +847,13 @@ function fileToText(file) {
 }
 
 // ── iframe高さ自動調整 ─────────────────────────
-function injectAutoResize(html, iframeId) {
-  const resetCSS = `<style>html,body{margin:0 !important;}</style>`;
-  const idStr = iframeId ? JSON.stringify(iframeId) : 'null';
+function injectAutoResize(html) {
   const script = `
 <scr` + `ipt>
 (function(){
-  var iframeId = ${idStr};
   function reportHeight(){
-    var h = document.body.scrollHeight;
-    parent.postMessage({ type: 'asobiva-resize', height: h, iframeId: iframeId }, '*');
+    var h = document.documentElement.scrollHeight;
+    parent.postMessage({ type: 'asobiva-resize', height: h }, '*');
   }
   window.addEventListener('message', function(e){
     if (e.data && e.data.type === 'asobiva-init') reportHeight();
@@ -869,12 +866,6 @@ function injectAutoResize(html, iframeId) {
   }
 })();
 </scr` + `ipt>`;
-  // headがあればCSSをheadに、なければ先頭に追加
-  if (/<\/head>/i.test(html)) {
-    html = html.replace(/<\/head>/i, resetCSS + '</head>');
-  } else {
-    html = resetCSS + html;
-  }
   if (/<\/body>/i.test(html)) {
     return html.replace(/<\/body>/i, script + '</body>');
   }
@@ -882,22 +873,16 @@ function injectAutoResize(html, iframeId) {
 }
 
 // ── iframeリサイズメッセージ受信 ───────────────
-let iframeCounter = 0;
 window.addEventListener('message', e => {
   if (e.data && e.data.type === 'asobiva-resize') {
-    const iframeId = e.data.iframeId;
-    if (iframeId) {
-      const f = document.getElementById(iframeId);
-      if (f) f.style.height = Math.max(60, e.data.height) + 'px';
-    } else {
-      // フォールバック：全iframeから一致するものを探す
-      document.querySelectorAll('iframe').forEach(f => {
-        try {
-          if (f.contentWindow === e.source) {
-            f.style.height = Math.max(60, e.data.height) + 'px';
-          }
-        } catch {}
-      });
+    document.querySelectorAll('.html-card iframe').forEach(f => {
+      if (f.contentWindow === e.source) {
+        f.style.height = Math.max(60, e.data.height) + 'px';
+      }
+    });
+    const introIframe = document.querySelector('#introContent iframe');
+    if (introIframe && introIframe.contentWindow === e.source) {
+      introIframe.style.height = Math.max(60, e.data.height) + 'px';
     }
   }
 });
@@ -970,9 +955,7 @@ function applyIntro(html) {
   content.querySelector('.slot-label')?.remove();
   content.querySelector('iframe')?.remove();
   const iframe = document.createElement('iframe');
-  const iframeId = 'iframe-intro-1';
-  iframe.id = iframeId;
-  iframe.srcdoc = injectAutoResize(html, iframeId);
+  iframe.srcdoc = injectAutoResize(html);
   iframe.sandbox = 'allow-scripts allow-popups allow-forms allow-same-origin';
   iframe.scrolling = 'no';
   iframe.style.overflow = 'hidden';
@@ -1119,9 +1102,7 @@ function renderTab(tab) {
       label.textContent = c.name || '(無題)';
 
       const iframe = document.createElement('iframe');
-      const iframeId = 'iframe-' + (++iframeCounter);
-      iframe.id = iframeId;
-      iframe.srcdoc = injectAutoResize(c.html, iframeId);
+      iframe.srcdoc = injectAutoResize(c.html);
       iframe.loading = 'lazy';
       iframe.scrolling = 'no';
       iframe.style.overflow = 'hidden';
