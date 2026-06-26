@@ -524,6 +524,22 @@ footer {
 }
 body.admin-mode .intro-edit { display: flex; }
 
+/* ── COMMON SECTION ── */
+.common-section-wrap {
+  margin-top: 10px;
+}
+.common-section-label {
+  display: none;
+  padding: 16px 16px 0;
+  background: var(--white);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--ink-soft);
+}
+.common-section-wrap.has-cards .common-section-label { display: block; }
+body.admin-mode .common-section-label { display: block; }
+
 /* ── TABS ── */
 .tab-bar {
   display: flex;
@@ -738,6 +754,12 @@ body.admin-mode .intro-edit { display: flex; }
   <div id="tabContent-dougu" class="tab-content" style="display:none;"></div>
   <div id="tabContent-haikei" class="tab-content" style="display:none;"></div>
   <div id="tabContent-poster" class="tab-content" style="display:none;"></div>
+
+  <!-- 独立カードエリア -->
+  <div class="common-section-wrap" id="commonSectionWrap">
+    <div class="common-section-label" id="commonSectionLabel"></div>
+    <div id="tabContent-common"></div>
+  </div>
 
   <div class="footer-section">
     <footer>ASOBIVA — i.roiro</footer>
@@ -986,10 +1008,19 @@ function applyBanner(slot, base64) {
 }
 
 // ── Render ────────────────────────────────────
-const TABS = ['chara', 'dougu', 'haikei', 'poster'];
+const TABS = ['chara', 'dougu', 'haikei', 'poster', 'common'];
 
 function render() {
   TABS.forEach(tab => renderTab(tab));
+
+  // 独立カードエリアの表示制御
+  const commonCards = cards.filter(c => (c.tab || 'chara') === 'common');
+  const wrap = document.getElementById('commonSectionWrap');
+  const label = document.getElementById('commonSectionLabel');
+  if (wrap) {
+    wrap.classList.toggle('has-cards', commonCards.length > 0);
+    if (label) label.textContent = commonCards.length > 0 || adminMode ? 'その他' : '';
+  }
 }
 
 function renderTab(tab) {
@@ -1138,7 +1169,7 @@ function renderTab(tab) {
     addSec.className = 'add-section';
     const btn = document.createElement('button');
     btn.className = 'add-card-btn';
-    btn.onclick = openPanel;
+    btn.onclick = () => { activeTab = tab; openPanel(); };
     btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> カードを追加`;
     addSec.appendChild(btn);
     container.appendChild(addSec);
