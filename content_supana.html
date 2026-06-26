@@ -840,7 +840,6 @@ function fileToText(file) {
 
 // ── iframe高さ自動調整 ─────────────────────────
 function injectAutoResize(html) {
-  const resetCSS = `<style>html,body{margin:0;padding:0;}</style>`;
   const script = `
 <scr` + `ipt>
 (function(){
@@ -859,11 +858,6 @@ function injectAutoResize(html) {
   }
 })();
 </scr` + `ipt>`;
-  if (/<\/head>/i.test(html)) {
-    html = html.replace(/<\/head>/i, resetCSS + '</head>');
-  } else {
-    html = resetCSS + html;
-  }
   if (/<\/body>/i.test(html)) {
     return html.replace(/<\/body>/i, script + '</body>');
   }
