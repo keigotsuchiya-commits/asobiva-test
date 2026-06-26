@@ -318,7 +318,7 @@ body.admin-mode .card:hover img { transform: none; }
   position: relative;
   background: var(--white);
   overflow: hidden;
-  padding: 10px 0;
+  padding-bottom: 10px;
 }
 .html-card iframe {
   display: block;
@@ -529,20 +529,11 @@ body.admin-mode .intro-edit { display: flex; }
 /* ── COMMON SECTION ── */
 .common-section-wrap {
   margin-top: 0;
-  padding-bottom: 10px;
   background: var(--bg);
 }
-.common-section-label {
-  display: none;
-  padding: 12px 16px 0;
-  background: var(--bg);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  color: var(--ink-soft);
-}
-.common-section-wrap.has-cards .common-section-label { display: block; }
-body.admin-mode .common-section-label { display: block; }
+.common-section-label { display: none; }
+.common-section-wrap.has-cards .common-section-label { display: none; }
+body.admin-mode .common-section-label { display: none; }
 
 /* ── TABS ── */
 .tab-bar {
@@ -849,6 +840,7 @@ function fileToText(file) {
 
 // ── iframe高さ自動調整 ─────────────────────────
 function injectAutoResize(html) {
+  const resetCSS = `<style>html,body{margin:0;padding:0;}</style>`;
   const script = `
 <scr` + `ipt>
 (function(){
@@ -867,6 +859,11 @@ function injectAutoResize(html) {
   }
 })();
 </scr` + `ipt>`;
+  if (/<\/head>/i.test(html)) {
+    html = html.replace(/<\/head>/i, resetCSS + '</head>');
+  } else {
+    html = resetCSS + html;
+  }
   if (/<\/body>/i.test(html)) {
     return html.replace(/<\/body>/i, script + '</body>');
   }
