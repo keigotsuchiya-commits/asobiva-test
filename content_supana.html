@@ -318,11 +318,12 @@ body.admin-mode .card:hover img { transform: none; }
   position: relative;
   background: var(--white);
   overflow: hidden;
+  padding: 10px 0;
 }
 .html-card iframe {
   display: block;
   width: 100%;
-  height: 100px;
+  height: 60px;
   border: none;
   background: var(--white);
   overflow: hidden;
@@ -1109,7 +1110,11 @@ function renderTab(tab) {
       iframe.scrolling = 'no';
       iframe.style.overflow = 'hidden';
       iframe.sandbox = 'allow-scripts allow-popups allow-forms allow-same-origin';
-      iframe.addEventListener('load', () => {
+      iframe.addEventListener('load', function() {
+        try {
+          const h = iframe.contentDocument.documentElement.scrollHeight || iframe.contentDocument.body.scrollHeight;
+          if (h > 0) iframe.style.height = h + 'px';
+        } catch(e) {}
         iframe.contentWindow.postMessage({ type: 'asobiva-init' }, '*');
       });
 
