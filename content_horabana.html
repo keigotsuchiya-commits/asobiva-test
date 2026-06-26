@@ -260,28 +260,51 @@ body.admin-mode .admin-only { display: block; }
   user-select: none;
 }
 
-.banner-edit {
+/* 管理モードのバナー操作エリア */
+.banner-edit-btns {
   display: none;
   position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.25);
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 2;
+  bottom: 10px;
+  right: 10px;
+  z-index: 5;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
 }
-.banner-edit span {
+body.admin-mode .banner-slot .banner-edit-btns { display: flex; }
+
+.banner-edit-btn {
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.06em;
   color: #fff;
-  background: rgba(0,0,0,0.45);
-  padding: 8px 18px;
+  background: rgba(0,0,0,0.5);
+  border: none;
+  padding: 7px 14px;
   border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.4);
-  pointer-events: none;
+  cursor: pointer;
+  white-space: nowrap;
 }
-body.admin-mode .banner-slot .banner-edit { display: flex; }
+.banner-edit-btn:hover { background: rgba(0,0,0,0.75); }
+.banner-edit-btn.del { background: rgba(192,57,43,0.7); }
+.banner-edit-btn.del:hover { background: rgba(192,57,43,0.95); }
+
+/* バナー枚数インジケーター */
+.banner-count {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 10px;
+  font-weight: 500;
+  color: #fff;
+  background: rgba(0,0,0,0.4);
+  padding: 3px 8px;
+  border-radius: 10px;
+  z-index: 3;
+  display: none;
+}
+body.admin-mode .banner-count { display: block; }
+
 .banner-file { display: none; }
 
 /* ── CARDS ── */
@@ -631,9 +654,11 @@ footer {
   </div>
   <div class="header-pair">
     <div class="banner-slot" id="banner1">
-      <span class="slot-label">HEADER</span>
-      <div class="banner-edit" onclick="triggerBanner(1)"><span>画像を設定</span></div>
-      <input type="file" class="banner-file" id="bannerFile1" accept="image/*" onchange="onBannerFile(1,this)">
+      <span class="slot-label" id="bannerPlaceholder1">HEADER</span>
+      <div class="banner-edit-btns" id="bannerEditBtns1">
+        <button class="banner-edit-btn" onclick="triggerBanner(1)">＋ 画像を追加</button>
+      </div>
+      <input type="file" class="banner-file" id="bannerFile1" accept="image/*" multiple onchange="onBannerFile(1,this)">
     </div>
   </div>
 
@@ -760,7 +785,7 @@ window.addEventListener('message', e => {
 
 // ── State ─────────────────────────────────────
 let cards = [];       // [{ id, type: 'image'|'html'|'carousel', html?, base64?, images?, name?, link }]
-let banners = { 1: null }; // base64 strings
+let banners = { 1: [] }; // base64配列
 let pendingFiles = [];
 let adminMode = false;
 
@@ -771,10 +796,16 @@ async function init() {
     await openDB();
     setLoadingBar(30);
 
-    // banner (single header)
+    // banner (複数枚対応)
     try {
       const row = await dbOp('banners', 'readonly', s => s.get(1));
-      if (row?.base64) { banners[1] = row.base64; applyBanner(1, row.base64); }
+      if (row?.images && row.images.length > 0) {
+        banners[1] = row.images;
+      } else if (row?.base64) {
+        // 旧形式（1枚）からの移行
+        banners[1] = [row.base64];
+      }
+      applyBannerRandom(1);
     } catch {}
     setLoadingBar(60);
 
@@ -811,22 +842,84 @@ function triggerBanner(slot) {
 }
 
 async function onBannerFile(slot, input) {
-  const f = input.files[0];
-  if (!f) return;
-  const base64 = await fileToBase64(f);
-  await dbOp('banners', 'readwrite', s => s.put({ slot, base64 }));
-  banners[slot] = base64;
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  for (const f of files) {
+    const base64 = await fileToBase64(f);
+    banners[slot].push(base64);
+  }
+  await dbOp('banners', 'readwrite', s => s.put({ slot, images: banners[slot] }));
+  applyBannerRandom(slot);
+  updateBannerUI(slot);
+  input.value = '';
+}
+
+function applyBannerRandom(slot) {
+  const imgs = banners[slot] || [];
+  if (imgs.length === 0) return;
+  const base64 = imgs.length === 1 ? imgs[0] : imgs[Math.floor(Math.random() * imgs.length)];
   applyBanner(slot, base64);
 }
 
 function applyBanner(slot, base64) {
   const el = document.getElementById('banner' + slot);
-  el.querySelector('.slot-label')?.remove();
+  document.getElementById('bannerPlaceholder' + slot)?.remove();
   el.querySelector('img')?.remove();
   const img = document.createElement('img');
   img.src = base64;
   img.alt = '';
-  el.insertBefore(img, el.querySelector('.banner-edit'));
+  el.insertBefore(img, el.querySelector('.banner-edit-btns'));
+  updateBannerUI(slot);
+}
+
+async function deleteBannerImage(slot, idx) {
+  banners[slot].splice(idx, 1);
+  await dbOp('banners', 'readwrite', s => s.put({ slot, images: banners[slot] }));
+  if (banners[slot].length === 0) {
+    const el = document.getElementById('banner' + slot);
+    el.querySelector('img')?.remove();
+    const lbl = document.createElement('span');
+    lbl.className = 'slot-label';
+    lbl.id = 'bannerPlaceholder' + slot;
+    lbl.textContent = 'HEADER';
+    el.insertBefore(lbl, el.querySelector('.banner-edit-btns'));
+  } else {
+    applyBannerRandom(slot);
+  }
+  updateBannerUI(slot);
+}
+
+function updateBannerUI(slot) {
+  const btns = document.getElementById('bannerEditBtns' + slot);
+  if (!btns) return;
+  // 削除ボタンを再描画
+  btns.querySelectorAll('.banner-edit-btn.del').forEach(b => b.remove());
+  const count = banners[slot]?.length || 0;
+  // カウント表示
+  let countEl = document.getElementById('bannerCount' + slot);
+  if (!countEl) {
+    countEl = document.createElement('span');
+    countEl.className = 'banner-count';
+    countEl.id = 'bannerCount' + slot;
+    document.getElementById('banner' + slot).appendChild(countEl);
+  }
+  countEl.textContent = count + '枚';
+  // 削除ボタン（複数枚の時のみ）
+  if (count > 1) {
+    (banners[slot] || []).forEach((_, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'banner-edit-btn del';
+      btn.textContent = `${i+1}枚目を削除`;
+      btn.onclick = () => deleteBannerImage(slot, i);
+      btns.insertBefore(btn, btns.querySelector('.banner-edit-btn:not(.del)'));
+    });
+  } else if (count === 1) {
+    const btn = document.createElement('button');
+    btn.className = 'banner-edit-btn del';
+    btn.textContent = '画像を削除';
+    btn.onclick = () => deleteBannerImage(slot, 0);
+    btns.insertBefore(btn, btns.querySelector('.banner-edit-btn:not(.del)'));
+  }
 }
 
 // ── Render ────────────────────────────────────
@@ -1252,8 +1345,9 @@ function downloadEditHTML() {
 function downloadHTML() {
   // banner block (single header)
   let headerHTML;
-  if (banners[1]) {
-    headerHTML = `    <div class="banner-slot"><img src="${banners[1]}" alt=""></div>\n`;
+  if (banners[1] && banners[1].length > 0) {
+    const b64 = banners[1].length === 1 ? banners[1][0] : banners[1][Math.floor(Math.random() * banners[1].length)];
+    headerHTML = `    <div class="banner-slot"><img src="${b64}" alt=""></div>\n`;
   } else {
     headerHTML = `    <div class="banner-slot"><span class="slot-label">HEADER</span></div>\n`;
   }
