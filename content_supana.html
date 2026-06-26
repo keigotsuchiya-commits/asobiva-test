@@ -527,6 +527,8 @@ body.admin-mode .intro-edit { display: flex; }
 /* ── COMMON SECTION ── */
 .common-section-wrap {
   margin-top: 0;
+  padding-bottom: 10px;
+  background: var(--bg);
 }
 .common-section-label {
   display: none;
@@ -845,7 +847,7 @@ function fileToText(file) {
 
 // ── iframe高さ自動調整 ─────────────────────────
 function injectAutoResize(html) {
-  const resetCSS = `<style>html,body{margin:0 !important;padding:0 !important;}</style>`;
+  const resetCSS = `<style>html,body{margin:0 !important;}</style>`;
   const script = `
 <scr` + `ipt>
 (function(){
