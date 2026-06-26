@@ -1303,7 +1303,8 @@ function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.tab === tab);
   });
-  TABS.forEach(t => {
+  // commonは常に表示を維持し、タブ切り替えの対象外
+  TABS.filter(t => t !== 'common').forEach(t => {
     const el = document.getElementById('tabContent-' + t);
     if (el) el.style.display = t === tab ? '' : 'none';
   });
