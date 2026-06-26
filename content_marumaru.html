@@ -289,6 +289,32 @@ body.admin-mode .banner-slot .banner-edit { display: flex; }
   background: var(--bg);
   padding-top: 10px;
 }
+.card-section.no-gap {
+  background: var(--white);
+  padding-top: 0;
+}
+.card-gap-btn {
+  display: none;
+  position: absolute;
+  bottom: 10px; left: 10px;
+  height: 28px;
+  padding: 0 10px;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.card-gap-btn:hover { background: rgba(0,0,0,0.75); }
+body.admin-mode .card-gap-btn { display: flex; }
 .card {
   width: 100%;
   position: relative;
@@ -787,7 +813,8 @@ async function init() {
       base64: r.base64,
       images: r.images,
       name: r.name || '',
-      link: r.link || ''
+      link: r.link || '',
+      gap: r.gap !== false
     }));
     setLoadingBar(100);
   } catch (err) {
@@ -843,7 +870,7 @@ function render() {
 
   cards.forEach(c => {
     const sec = document.createElement('div');
-    sec.className = 'card-section';
+    sec.className = 'card-section' + (c.gap === false ? ' no-gap' : '');
 
     let wrap, replaceAccept, supportsReplace = true;
 
@@ -950,11 +977,19 @@ function render() {
       deleteCard(c.id);
     });
 
+    const gapBtn = document.createElement('button');
+    gapBtn.className = 'card-gap-btn';
+    gapBtn.textContent = c.gap === false ? '隙間なし' : '隙間あり';
+    gapBtn.addEventListener('click', e => {
+      e.preventDefault(); e.stopPropagation();
+      toggleGap(c.id);
+    });
     if (supportsReplace) {
       wrap.appendChild(replaceBtn);
       wrap.appendChild(replaceInput);
     }
     wrap.appendChild(delBtn);
+    wrap.appendChild(gapBtn);
     sec.appendChild(wrap);
     container.appendChild(sec);
   });
@@ -1221,6 +1256,18 @@ async function replaceCard(id, file) {
     await dbOp('cards', 'readwrite', s => s.put({ id, type: 'image', base64, link }));
     if (i !== -1) { cards[i] = { id, type: 'image', base64, link }; }
   }
+  render();
+}
+
+// ── Gap toggle ────────────────────────────────
+async function toggleGap(id) {
+  const c = cards.find(c => c.id === id);
+  if (!c) return;
+  c.gap = c.gap === false ? true : false;
+  await dbOp('cards', 'readwrite', s => s.put({
+    id: c.id, type: c.type, html: c.html, base64: c.base64,
+    images: c.images, name: c.name, link: c.link, gap: c.gap
+  }));
   render();
 }
 
