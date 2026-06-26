@@ -1018,8 +1018,10 @@ function render() {
   const wrap = document.getElementById('commonSectionWrap');
   const label = document.getElementById('commonSectionLabel');
   if (wrap) {
+    const show = commonCards.length > 0 || adminMode;
+    wrap.style.display = show ? '' : 'none';
     wrap.classList.toggle('has-cards', commonCards.length > 0);
-    if (label) label.textContent = commonCards.length > 0 || adminMode ? 'その他' : '';
+    if (label) label.textContent = show ? 'その他' : '';
   }
 }
 
