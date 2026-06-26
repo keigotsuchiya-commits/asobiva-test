@@ -8,7 +8,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg: #f3f3f3;
+  --bg: #e0e0e0;
   --white: #ffffff;
   --ink: #1a1a1a;
   --ink-soft: #888;
@@ -734,7 +734,10 @@ body.admin-mode .intro-edit { display: flex; }
     <button class="tab-btn" data-tab="poster" onclick="switchTab('poster')">Posters</button>
   </div>
 
-  <div id="cardContainer"></div>
+  <div id="tabContent-chara" class="tab-content"></div>
+  <div id="tabContent-dougu" class="tab-content" style="display:none;"></div>
+  <div id="tabContent-haikei" class="tab-content" style="display:none;"></div>
+  <div id="tabContent-poster" class="tab-content" style="display:none;"></div>
 
   <div class="footer-section">
     <footer>ASOBIVA — i.roiro</footer>
@@ -983,11 +986,18 @@ function applyBanner(slot, base64) {
 }
 
 // ── Render ────────────────────────────────────
+const TABS = ['chara', 'dougu', 'haikei', 'poster'];
+
 function render() {
-  const container = document.getElementById('cardContainer');
+  TABS.forEach(tab => renderTab(tab));
+}
+
+function renderTab(tab) {
+  const container = document.getElementById('tabContent-' + tab);
+  if (!container) return;
   container.innerHTML = '';
 
-  const filtered = cards.filter(c => (c.tab || 'chara') === activeTab);
+  const filtered = cards.filter(c => (c.tab || 'chara') === tab);
 
   if (filtered.length === 0 && !adminMode) {
     const sec = document.createElement('div');
@@ -1258,20 +1268,14 @@ function toggleAdmin() {
 
 // ── Tab ───────────────────────────────────────
 function switchTab(tab) {
-  const tabBar = document.getElementById('tabBar');
-  const tabBarTop = tabBar ? tabBar.getBoundingClientRect().top + window.scrollY : 0;
-  const scrollY = window.scrollY;
-
   activeTab = tab;
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.tab === tab);
   });
-  render();
-
-  // タブバーより下を見ていた場合のみ、タブバー直下にスクロール位置を補正
-  if (scrollY > tabBarTop) {
-    window.scrollTo({ top: tabBarTop, behavior: 'instant' });
-  }
+  TABS.forEach(t => {
+    const el = document.getElementById('tabContent-' + t);
+    if (el) el.style.display = t === tab ? '' : 'none';
+  });
 }
 
 // ── Gap toggle ────────────────────────────────
@@ -1476,7 +1480,7 @@ function downloadHTML() {
 
   const staticCSS = `
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-:root { --bg:#f3f3f3; --white:#ffffff; --ink:#1a1a1a; --ink-soft:#888; --border:#e0e0e0; }
+:root { --bg:#e0e0e0; --white:#ffffff; --ink:#1a1a1a; --ink-soft:#888; --border:#e0e0e0; }
 body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; }
 .wrap { max-width: 480px; margin: 0 auto; background: var(--bg); min-height: 100vh; }
 .site-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:var(--white); border-bottom:1px solid var(--border); position:sticky; top:0; }
