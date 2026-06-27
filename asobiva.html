@@ -257,6 +257,32 @@ body.admin-mode .banner-slot .banner-edit { display: flex; }
   background: var(--bg);
   padding-top: 10px;
 }
+.card-section.no-gap {
+  background: var(--white);
+  padding-top: 0;
+}
+.card-gap-btn {
+  display: none;
+  position: absolute;
+  bottom: 10px; left: 10px;
+  height: 28px;
+  padding: 0 10px;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.card-gap-btn:hover { background: rgba(0,0,0,0.75); }
+body.admin-mode .card-gap-btn { display: flex; }
 .card {
   width: 100%;
   position: relative;
@@ -525,6 +551,36 @@ footer {
 @media (prefers-reduced-motion: reduce) {
   .card img, .panel { transition: none; }
 }
+
+/* ── FOOTER EDIT ── */
+.footer-edit-btn {
+  display: none;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--ink-soft);
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-decoration: underline;
+}
+body.admin-mode .footer-edit-btn { display: inline-block; }
+
+/* ── FOOTER EDITOR PANEL ── */
+.footer-editor-panel {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--white);
+  border-radius: 16px 16px 0 0;
+  padding: 28px 20px 48px;
+  z-index: 300;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.34,1.2,0.64,1);
+  max-width: 480px;
+  margin: 0 auto;
+}
+.footer-editor-panel.open { transform: translateY(0); }
 </style>
 </head>
 <body>
@@ -565,10 +621,23 @@ footer {
   <div id="cardContainer"></div>
 
   <div class="footer-section">
-    <footer>ASOBIVA — i.roiro</footer>
+    <footer>
+      <span id="footerText">ASOBIVA — i.roiro</span>
+      <button class="footer-edit-btn" onclick="openFooterEditor()">編集</button>
+    </footer>
   </div>
 </div>
 
+
+<!-- フッター編集パネル -->
+<div class="overlay" id="footerEditorOverlay" onclick="closeFooterEditor()"></div>
+<div class="footer-editor-panel" id="footerEditorPanel">
+  <div class="panel-handle"></div>
+  <div class="panel-title">フッターを編集</div>
+  <label class="field-label">フッターテキスト</label>
+  <input class="field-input" id="footerTextInput" type="text" placeholder="例: © 2025 i.roiro">
+  <button class="btn-add" onclick="saveFooterText()">保存する</button>
+</div>
 <div class="overlay" id="overlay" onclick="closePanel()"></div>
 <div class="panel" id="panel">
   <div class="panel-handle"></div>
@@ -701,7 +770,7 @@ async function init() {
     setLoadingBar(60);
 
     const rows = await dbOp('cards', 'readonly', s => s.getAll());
-    cards = rows.map(r => ({ id: r.id, base64: r.base64, link: r.link || '', order: (r.order ?? r.id) }));
+    cards = rows.map(r => ({ id: r.id, base64: r.base64, link: r.link || '', order: (r.order ?? r.id), gap: r.gap !== false }));
     cards.sort((a, b) => a.order - b.order);
   }
 
@@ -710,6 +779,7 @@ async function init() {
     document.getElementById('loading').style.display = 'none';
     render();
     renderNavLinks();
+    loadFooterText();
   }, 200);
 }
 
@@ -755,7 +825,7 @@ function render() {
 
   cards.forEach((c, idx) => {
     const sec = document.createElement('div');
-    sec.className = 'card-section';
+    sec.className = 'card-section' + (c.gap === false ? ' no-gap' : '');
 
     const a = document.createElement('a');
     a.className = 'card';
@@ -830,12 +900,20 @@ function render() {
     moveWrap.appendChild(upBtn);
     moveWrap.appendChild(downBtn);
 
+    const gapBtn = document.createElement('button');
+    gapBtn.className = 'card-gap-btn';
+    gapBtn.textContent = c.gap === false ? '隙間なし' : '隙間あり';
+    gapBtn.addEventListener('click', e => {
+      e.preventDefault(); e.stopPropagation();
+      toggleGap(c.id);
+    });
     a.appendChild(img);
     a.appendChild(replaceBtn);
     a.appendChild(replaceInput);
     a.appendChild(linkBtn);
     a.appendChild(delBtn);
     a.appendChild(moveWrap);
+    a.appendChild(gapBtn);
     sec.appendChild(a);
     container.appendChild(sec);
   });
@@ -966,6 +1044,37 @@ document.addEventListener('click', e => {
 });
 
 // ── Admin ─────────────────────────────────────
+
+// ── Footer editor ─────────────────────────────
+async function loadFooterText() {
+  try {
+    const row = await dbOp('banners', 'readonly', s => s.get(99));
+    if (row?.footerText) {
+      document.getElementById('footerText').textContent = row.footerText;
+    }
+  } catch {}
+}
+
+function openFooterEditor() {
+  const current = document.getElementById('footerText').textContent;
+  document.getElementById('footerTextInput').value = current;
+  document.getElementById('footerEditorOverlay').classList.add('open');
+  document.getElementById('footerEditorPanel').classList.add('open');
+}
+
+function closeFooterEditor() {
+  document.getElementById('footerEditorOverlay').classList.remove('open');
+  document.getElementById('footerEditorPanel').classList.remove('open');
+}
+
+async function saveFooterText() {
+  const text = document.getElementById('footerTextInput').value.trim();
+  if (!text) return;
+  await dbOp('banners', 'readwrite', s => s.put({ slot: 99, footerText: text }));
+  document.getElementById('footerText').textContent = text;
+  closeFooterEditor();
+}
+
 function toggleAdmin() {
   adminMode = !adminMode;
   document.body.classList.toggle('admin-mode', adminMode);
@@ -1045,6 +1154,15 @@ async function addCards() {
 
   btn.textContent = '追加する';
   closePanel();
+  render();
+}
+
+// ── Gap toggle ────────────────────────────────
+async function toggleGap(id) {
+  const c = cards.find(c => c.id === id);
+  if (!c) return;
+  c.gap = c.gap === false ? true : false;
+  await dbOp('cards', 'readwrite', s => s.put({ id: c.id, base64: c.base64, link: c.link, order: c.order, gap: c.gap }));
   render();
 }
 
@@ -1200,7 +1318,10 @@ footer { padding:28px 16px; text-align:center; font-size:10px; letter-spacing:0.
   <div class="header-pair">
 ${headerHTML}  </div>
 ${cardsHTML}  <div class="footer-section">
-    <footer>ASOBIVA — i.roiro</footer>
+    <footer>
+      <span id="footerText">ASOBIVA — i.roiro</span>
+      <button class="footer-edit-btn" onclick="openFooterEditor()">編集</button>
+    </footer>
   </div>
 </div>
 </body>
