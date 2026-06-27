@@ -289,6 +289,58 @@ body.admin-mode .banner-slot .banner-edit { display: flex; }
   background: var(--bg);
   padding-top: 10px;
 }
+.card-section.no-gap {
+  background: var(--white);
+  padding-top: 0;
+}
+.card-gap-btn {
+  display: none;
+  position: absolute;
+  bottom: 10px; left: 10px;
+  height: 28px;
+  padding: 0 10px;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.card-gap-btn:hover { background: rgba(0,0,0,0.75); }
+body.admin-mode .card-gap-btn { display: flex; }
+
+/* ── MOVE BUTTONS ── */
+.card-move {
+  display: none;
+  position: absolute;
+  bottom: 10px; left: 10px;
+  flex-direction: row;
+  gap: 6px;
+  z-index: 5;
+}
+.card-move button {
+  width: 30px; height: 30px;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.card-move button:hover { background: #444; }
+.card-move button:disabled { opacity: 0.3; cursor: default; }
+body.admin-mode .card-move { display: flex; }
 .card {
   width: 100%;
   position: relative;
@@ -510,6 +562,36 @@ footer {
 @media (prefers-reduced-motion: reduce) {
   .card img, .panel { transition: none; }
 }
+
+/* ── FOOTER EDIT ── */
+.footer-edit-btn {
+  display: none;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--ink-soft);
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-decoration: underline;
+}
+body.admin-mode .footer-edit-btn { display: inline-block; }
+
+/* ── FOOTER EDITOR PANEL ── */
+.footer-editor-panel {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--white);
+  border-radius: 16px 16px 0 0;
+  padding: 28px 20px 48px;
+  z-index: 300;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.34,1.2,0.64,1);
+  max-width: 480px;
+  margin: 0 auto;
+}
+.footer-editor-panel.open { transform: translateY(0); }
 </style>
 </head>
 <body>
@@ -551,10 +633,23 @@ footer {
   <div id="cardContainer"></div>
 
   <div class="footer-section">
-    <footer>ASOBIVA — i.roiro</footer>
+    <footer>
+      <span id="footerText">ASOBIVA — i.roiro</span>
+      <button class="footer-edit-btn" onclick="openFooterEditor()">編集</button>
+    </footer>
   </div>
 </div>
 
+
+<!-- フッター編集パネル -->
+<div class="overlay" id="footerEditorOverlay" onclick="closeFooterEditor()"></div>
+<div class="footer-editor-panel" id="footerEditorPanel">
+  <div class="panel-handle"></div>
+  <div class="panel-title">フッターを編集</div>
+  <label class="field-label">フッターテキスト</label>
+  <input class="field-input" id="footerTextInput" type="text" placeholder="例: © 2025 i.roiro">
+  <button class="btn-add" onclick="saveFooterText()">保存する</button>
+</div>
 <div class="overlay" id="overlay" onclick="closePanel()"></div>
 <div class="panel" id="panel">
   <div class="panel-handle"></div>
@@ -630,13 +725,15 @@ async function init() {
 
   // cards
   const rows = await dbOp('cards', 'readonly', s => s.getAll());
-  cards = rows.map(r => ({ id: r.id, base64: r.base64, link: r.link || '' }));
+  cards = rows.map(r => ({ id: r.id, base64: r.base64, link: r.link || '', order: (r.order ?? r.id), gap: r.gap !== false }));
+  cards.sort((a, b) => a.order - b.order);
   setLoadingBar(100);
 
   setTimeout(() => {
     document.getElementById('loading').style.display = 'none';
     render();
     renderNavLinks();
+    loadFooterText();
   }, 200);
 }
 
@@ -680,9 +777,9 @@ function render() {
     container.appendChild(sec);
   }
 
-  cards.forEach(c => {
+  cards.forEach((c, idx) => {
     const sec = document.createElement('div');
-    sec.className = 'card-section';
+    sec.className = 'card-section' + (c.gap === false ? ' no-gap' : '');
 
     const a = document.createElement('a');
     a.className = 'card';
@@ -724,10 +821,35 @@ function render() {
       deleteCard(c.id);
     });
 
+    const gapBtn = document.createElement('button');
+    gapBtn.className = 'card-gap-btn';
+    gapBtn.textContent = c.gap === false ? '隙間なし' : '隙間あり';
+    gapBtn.addEventListener('click', e => {
+      e.preventDefault(); e.stopPropagation();
+      toggleGap(c.id);
+    });
+
+    const moveWrap = document.createElement('div');
+    moveWrap.className = 'card-move';
+    const upBtn = document.createElement('button');
+    upBtn.textContent = '↑';
+    upBtn.title = '上へ移動';
+    upBtn.disabled = idx === 0;
+    upBtn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); moveCard(idx, idx - 1); });
+    const downBtn = document.createElement('button');
+    downBtn.textContent = '↓';
+    downBtn.title = '下へ移動';
+    downBtn.disabled = idx === cards.length - 1;
+    downBtn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); moveCard(idx, idx + 1); });
+    moveWrap.appendChild(upBtn);
+    moveWrap.appendChild(downBtn);
+
     a.appendChild(img);
     a.appendChild(replaceBtn);
     a.appendChild(replaceInput);
     a.appendChild(delBtn);
+    a.appendChild(gapBtn);
+    a.appendChild(moveWrap);
     sec.appendChild(a);
     container.appendChild(sec);
   });
@@ -856,6 +978,37 @@ function moveNavItem(i, dir) {
   renderNavLinks();
 }
 
+
+// ── Footer editor ─────────────────────────────
+async function loadFooterText() {
+  try {
+    const row = await dbOp('banners', 'readonly', s => s.get(99));
+    if (row?.footerText) {
+      document.getElementById('footerText').textContent = row.footerText;
+    }
+  } catch {}
+}
+
+function openFooterEditor() {
+  const current = document.getElementById('footerText').textContent;
+  document.getElementById('footerTextInput').value = current;
+  document.getElementById('footerEditorOverlay').classList.add('open');
+  document.getElementById('footerEditorPanel').classList.add('open');
+}
+
+function closeFooterEditor() {
+  document.getElementById('footerEditorOverlay').classList.remove('open');
+  document.getElementById('footerEditorPanel').classList.remove('open');
+}
+
+async function saveFooterText() {
+  const text = document.getElementById('footerTextInput').value.trim();
+  if (!text) return;
+  await dbOp('banners', 'readwrite', s => s.put({ slot: 99, footerText: text }));
+  document.getElementById('footerText').textContent = text;
+  closeFooterEditor();
+}
+
 function toggleAdmin() {
   adminMode = !adminMode;
   document.body.classList.toggle('admin-mode', adminMode);
@@ -924,10 +1077,12 @@ async function addCards() {
   btn.disabled = true;
   btn.textContent = '保存中…';
 
+  let nextOrder = cards.length ? Math.max(...cards.map(c => c.order)) + 1 : 1;
   for (const f of pendingFiles) {
     const base64 = await fileToBase64(f);
-    const id = await dbOp('cards', 'readwrite', s => s.add({ base64, link }));
-    cards.push({ id, base64, link });
+    const order = nextOrder++;
+    const id = await dbOp('cards', 'readwrite', s => s.add({ base64, link, order }));
+    cards.push({ id, base64, link, order, gap: true });
   }
 
   btn.textContent = '追加する';
@@ -935,13 +1090,41 @@ async function addCards() {
   render();
 }
 
+// ── Move ─────────────────────────────────────
+async function moveCard(fromIdx, toIdx) {
+  if (toIdx < 0 || toIdx >= cards.length) return;
+  const tmp = cards[fromIdx];
+  cards[fromIdx] = cards[toIdx];
+  cards[toIdx] = tmp;
+  cards.forEach((c, i) => { c.order = i + 1; });
+  for (const c of cards) {
+    await dbOp('cards', 'readwrite', s => s.put({ id: c.id, base64: c.base64, link: c.link, order: c.order, gap: c.gap }));
+  }
+  render();
+}
+
 // ── Replace ───────────────────────────────────
 async function replaceCard(id, file) {
   const base64 = await fileToBase64(file);
-  const link = cards.find(c => c.id === id)?.link || '';
-  await dbOp('cards', 'readwrite', s => s.put({ id, base64, link }));
+  const existing = cards.find(c => c.id === id);
+  const link = existing?.link || '';
+  const order = existing?.order ?? id;
+  const gap = existing?.gap !== false;
+  await dbOp('cards', 'readwrite', s => s.put({ id, base64, link, order, gap }));
   const i = cards.findIndex(c => c.id === id);
   if (i !== -1) cards[i].base64 = base64;
+  render();
+}
+
+// ── Gap toggle ────────────────────────────────
+async function toggleGap(id) {
+  const c = cards.find(c => c.id === id);
+  if (!c) return;
+  c.gap = c.gap === false ? true : false;
+  await dbOp('cards', 'readwrite', s => s.put({
+    id: c.id, type: c.type, html: c.html, base64: c.base64,
+    images: c.images, name: c.name, link: c.link, gap: c.gap
+  }));
   render();
 }
 
@@ -984,7 +1167,7 @@ function downloadHTML() {
   if (cards.length === 0) {
     cardsHTML = `  <div class="empty-section"><div class="empty-state"><strong>まだカードがありません</strong></div></div>\n`;
   } else {
-    cards.forEach(c => {
+    cards.forEach((c, idx) => {
       const tag = c.link
         ? `<a class="card" href="${c.link}" target="_blank" rel="noopener"><img src="${c.base64}" alt=""></a>`
         : `<div class="card"><img src="${c.base64}" alt=""></div>`;
@@ -1027,7 +1210,10 @@ footer { padding:28px 16px; text-align:center; font-size:10px; letter-spacing:0.
   <div class="header-pair">
 ${headerHTML}  </div>
 ${cardsHTML}  <div class="footer-section">
-    <footer>ASOBIVA — i.roiro</footer>
+    <footer>
+      <span id="footerText">ASOBIVA — i.roiro</span>
+      <button class="footer-edit-btn" onclick="openFooterEditor()">編集</button>
+    </footer>
   </div>
 </div>
 </body>
