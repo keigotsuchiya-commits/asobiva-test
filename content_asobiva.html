@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ASOBIVA — サンプルコンテンツ</title>
+<title>ASOBIVA — HTMLコンテンツ</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -315,32 +315,6 @@ body.admin-mode .banner-slot .banner-edit { display: flex; }
 }
 .card-gap-btn:hover { background: rgba(0,0,0,0.75); }
 body.admin-mode .card-gap-btn { display: flex; }
-
-/* ── MOVE BUTTONS ── */
-.card-move {
-  display: none;
-  position: absolute;
-  bottom: 10px; right: 50px;
-  flex-direction: row;
-  gap: 6px;
-  z-index: 5;
-}
-.card-move button {
-  width: 30px; height: 30px;
-  background: rgba(0,0,0,0.5);
-  color: #fff;
-  border: none;
-  border-radius: 50%;
-  font-size: 14px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s;
-}
-.card-move button:hover { background: #444; }
-.card-move button:disabled { opacity: 0.3; cursor: default; }
-body.admin-mode .card-move { display: flex; }
 .card {
   width: 100%;
   position: relative;
@@ -357,6 +331,76 @@ body.admin-mode .card-move { display: flex; }
 }
 .card:hover img { transform: scale(1.015); }
 body.admin-mode .card:hover img { transform: none; }
+
+/* ── HTML CARD ── */
+.html-card {
+  width: 100%;
+  position: relative;
+  background: var(--white);
+  overflow: hidden;
+  padding: 10px 0;
+}
+.html-card iframe {
+  display: block;
+  width: 100%;
+  height: 60px;
+  border: none;
+  background: var(--white);
+}
+.html-card-label {
+  display: none;
+  padding: 8px 16px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── CAROUSEL CARD ── */
+.carousel-card {
+  width: 100%;
+  position: relative;
+  background: var(--white);
+  overflow: hidden;
+  cursor: pointer;
+}
+.carousel-card img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.carousel-dots {
+  position: absolute;
+  bottom: 10px;
+  left: 0; right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  pointer-events: none;
+}
+.carousel-dots span {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.55);
+  transition: background 0.2s, transform 0.2s;
+}
+.carousel-dots span.active {
+  background: #fff;
+  transform: scale(1.25);
+}
+.carousel-count {
+  position: absolute;
+  top: 10px; right: 10px;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  color: #fff;
+  background: rgba(0,0,0,0.45);
+  padding: 3px 8px;
+  border-radius: 20px;
+  pointer-events: none;
+}
+body.admin-mode .html-card-label { display: block; }
 
 .card-del {
   display: none;
@@ -505,10 +549,22 @@ footer {
 .dz-hint { font-size: 11px; color: var(--ink-soft); }
 
 .preview-grid {
-  display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; margin-bottom: 14px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 6px; margin-bottom: 14px;
 }
 .p-thumb { aspect-ratio: 1; border-radius: 6px; overflow: hidden; position: relative; background: var(--border); }
 .p-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.p-thumb-file {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  padding: 8px 22px 8px 8px;
+  font-size: 9px;
+  color: var(--ink);
+  word-break: break-all;
+  line-height: 1.4;
+  background: #f0ede6;
+}
+.p-thumb-name { display: block; }
 .p-del {
   position: absolute; top: 3px; right: 3px;
   width: 18px; height: 18px; background: rgba(0,0,0,0.5); color: #fff;
@@ -528,6 +584,14 @@ footer {
 }
 .field-input:focus { border-color: var(--ink); }
 .field-input::placeholder { color: var(--ink-soft); font-size: 13px; }
+
+.carousel-toggle {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--ink);
+  padding: 10px 4px; margin-bottom: 6px;
+  cursor: pointer;
+}
+.carousel-toggle input { width: 16px; height: 16px; flex-shrink: 0; }
 
 .btn-add {
   width: 100%; padding: 15px;
@@ -592,6 +656,32 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
   margin: 0 auto;
 }
 .footer-editor-panel.open { transform: translateY(0); }
+
+/* ── MOVE BUTTONS ── */
+.card-move {
+  display: none;
+  position: absolute;
+  bottom: 10px; right: 50px;
+  flex-direction: row;
+  gap: 6px;
+  z-index: 5;
+}
+.card-move button {
+  width: 30px; height: 30px;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.card-move button:hover { background: #444; }
+.card-move button:disabled { opacity: 0.3; cursor: default; }
+body.admin-mode .card-move { display: flex; }
 </style>
 </head>
 <body>
@@ -655,12 +745,16 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
   <div class="panel-handle"></div>
   <div class="panel-title">カードを追加</div>
   <div class="drop-zone" id="dropZone">
-    <input type="file" id="fileInput" accept="image/*" multiple onchange="onFileSelect(this.files)">
-    <div class="dz-icon">🖼️</div>
-    <span class="dz-label">画像を選択 または ドロップ</span>
-    <span class="dz-hint">JPG · PNG · GIF · WEBP　複数選択可</span>
+    <input type="file" id="fileInput" accept="image/*,text/html,.html" multiple onchange="onFileSelect(this.files)">
+    <div class="dz-icon">📄🖼️</div>
+    <span class="dz-label">画像 または HTMLファイルを選択 / ドロップ</span>
+    <span class="dz-hint">JPG · PNG · GIF · WEBP · HTML　複数選択可</span>
   </div>
   <div class="preview-grid" id="previewGrid"></div>
+  <label class="carousel-toggle" id="carouselToggleWrap" style="display:none;">
+    <input type="checkbox" id="carouselToggle">
+    <span>選んだ画像を1枚のカードにまとめる（カルーセル）</span>
+  </label>
   <label class="field-label" for="linkUrl">リンク先URL（任意）</label>
   <input class="field-input" id="linkUrl" type="url" placeholder="https://note.com/...">
   <button class="btn-add" id="addBtn" onclick="addCards()" disabled>追加する</button>
@@ -672,21 +766,30 @@ const DB_NAME = 'asobiva_content_asobiva_b64';
 let db;
 
 function openDB() {
-  return new Promise((res, rej) => {
-    const req = indexedDB.open(DB_NAME, 1);
-    req.onupgradeneeded = e => {
-      const d = e.target.result;
-      if (!d.objectStoreNames.contains('cards'))
-        d.createObjectStore('cards', { keyPath: 'id', autoIncrement: true });
-      if (!d.objectStoreNames.contains('banners'))
-        d.createObjectStore('banners', { keyPath: 'slot' });
-    };
-    req.onsuccess = e => { db = e.target.result; res(); };
-    req.onerror = e => rej(e);
+  return new Promise((res) => {
+    try {
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = e => {
+        const d = e.target.result;
+        if (!d.objectStoreNames.contains('cards'))
+          d.createObjectStore('cards', { keyPath: 'id', autoIncrement: true });
+        if (!d.objectStoreNames.contains('banners'))
+          d.createObjectStore('banners', { keyPath: 'slot' });
+      };
+      req.onsuccess = e => { db = e.target.result; res(); };
+      req.onerror = () => { db = null; res(); };
+    } catch (err) {
+      db = null;
+      res();
+    }
   });
 }
 
 function dbOp(store, mode, fn) {
+  if (!db) {
+    // IndexedDB unavailable (e.g. sandboxed preview) — no-op storage
+    return Promise.resolve(mode === 'readonly' && store === 'cards' ? [] : undefined);
+  }
   return new Promise((res, rej) => {
     const req = fn(db.transaction(store, mode).objectStore(store));
     req.onsuccess = e => res(e.target.result);
@@ -704,30 +807,91 @@ function fileToBase64(file) {
   });
 }
 
+// ── ファイル → テキスト変換（HTML用） ──────────
+function fileToText(file) {
+  return new Promise((res, rej) => {
+    const reader = new FileReader();
+    reader.onload = e => res(e.target.result);
+    reader.onerror = rej;
+    reader.readAsText(file, 'UTF-8');
+  });
+}
+
+// ── iframe高さ自動調整 ─────────────────────────
+function injectAutoResize(html) {
+  const script = `
+<scr` + `ipt>
+(function(){
+  function reportHeight(){
+    var h = document.documentElement.scrollHeight;
+    parent.postMessage({ type: 'asobiva-resize', height: h }, '*');
+  }
+  window.addEventListener('message', function(e){
+    if (e.data && e.data.type === 'asobiva-init') reportHeight();
+  });
+  window.addEventListener('load', reportHeight);
+  if (document.readyState === 'complete') reportHeight();
+  window.addEventListener('resize', reportHeight);
+  if (window.ResizeObserver) {
+    new ResizeObserver(reportHeight).observe(document.body);
+  }
+})();
+</scr` + `ipt>`;
+  if (/<\/body>/i.test(html)) {
+    return html.replace(/<\/body>/i, script + '</body>');
+  }
+  return html + script;
+}
+
+// ── iframeリサイズメッセージ受信 ───────────────
+window.addEventListener('message', e => {
+  if (e.data && e.data.type === 'asobiva-resize') {
+    document.querySelectorAll('.html-card iframe').forEach(f => {
+      if (f.contentWindow === e.source) {
+        f.style.height = Math.max(60, e.data.height) + 'px';
+      }
+    });
+  }
+});
+
 // ── State ─────────────────────────────────────
-let cards = [];       // [{ id, base64, link }]
+let cards = [];       // [{ id, type: 'image'|'html'|'carousel', html?, base64?, images?, name?, link }]
 let banners = { 1: null }; // base64 strings
 let pendingFiles = [];
 let adminMode = false;
 
 // ── Init ──────────────────────────────────────
 async function init() {
-  setLoadingBar(10);
-  await openDB();
-  setLoadingBar(30);
-
-  // banner (single header)
   try {
-    const row = await dbOp('banners', 'readonly', s => s.get(1));
-    if (row?.base64) { banners[1] = row.base64; applyBanner(1, row.base64); }
-  } catch {}
-  setLoadingBar(60);
+    setLoadingBar(10);
+    await openDB();
+    setLoadingBar(30);
 
-  // cards
-  const rows = await dbOp('cards', 'readonly', s => s.getAll());
-  cards = rows.map(r => ({ id: r.id, base64: r.base64, link: r.link || '', order: (r.order ?? r.id), gap: r.gap !== false }));
-  cards.sort((a, b) => a.order - b.order);
-  setLoadingBar(100);
+    // banner (single header)
+    try {
+      const row = await dbOp('banners', 'readonly', s => s.get(1));
+      if (row?.base64) { banners[1] = row.base64; applyBanner(1, row.base64); }
+    } catch {}
+    setLoadingBar(60);
+
+    // cards
+    const rows = await dbOp('cards', 'readonly', s => s.getAll());
+    cards = (rows || []).map(r => ({
+      id: r.id,
+      type: r.type || 'html',
+      html: r.html,
+      base64: r.base64,
+      images: r.images,
+      name: r.name || '',
+      link: r.link || '',
+      gap: r.gap !== false,
+      order: (r.order ?? r.id)
+    }));
+    cards.sort((a, b) => a.order - b.order);
+    setLoadingBar(100);
+  } catch (err) {
+    console.error('init error:', err);
+  }
 
   setTimeout(() => {
     document.getElementById('loading').style.display = 'none';
@@ -781,36 +945,106 @@ function render() {
     const sec = document.createElement('div');
     sec.className = 'card-section' + (c.gap === false ? ' no-gap' : '');
 
-    const a = document.createElement('a');
-    a.className = 'card';
-    a.href = adminMode ? '#' : (c.link || '#');
-    if (!adminMode && c.link) a.target = '_blank';
-    a.rel = 'noopener';
+    let wrap, replaceAccept, supportsReplace = true;
 
-    const img = document.createElement('img');
-    img.src = c.base64;
-    img.alt = '';
-    img.loading = 'lazy';
+    if (c.type === 'image') {
+      wrap = document.createElement('a');
+      wrap.className = 'card';
+      wrap.href = adminMode ? '#' : (c.link || '#');
+      if (!adminMode && c.link) wrap.target = '_blank';
+      wrap.rel = 'noopener';
 
-    const replaceBtn = document.createElement('button');
-    replaceBtn.className = 'card-replace';
-    replaceBtn.title = '差し替え';
-    replaceBtn.textContent = '⇄';
+      const img = document.createElement('img');
+      img.src = c.base64;
+      img.alt = '';
+      img.loading = 'lazy';
+      wrap.appendChild(img);
+      replaceAccept = 'image/*,text/html,.html';
+    } else if (c.type === 'carousel') {
+      wrap = document.createElement('div');
+      wrap.className = 'carousel-card';
+      wrap.dataset.index = '0';
 
-    const replaceInput = document.createElement('input');
-    replaceInput.type = 'file';
-    replaceInput.accept = 'image/*';
-    replaceInput.className = 'card-replace-input';
-    replaceInput.addEventListener('change', e => {
-      e.preventDefault(); e.stopPropagation();
-      const f = e.target.files[0];
-      if (f) replaceCard(c.id, f);
-    });
+      const img = document.createElement('img');
+      img.src = c.images[0];
+      img.alt = '';
+      img.loading = 'lazy';
+      wrap.appendChild(img);
 
-    replaceBtn.addEventListener('click', e => {
-      e.preventDefault(); e.stopPropagation();
-      replaceInput.click();
-    });
+      if (c.images.length > 1) {
+        const dots = document.createElement('div');
+        dots.className = 'carousel-dots';
+        c.images.forEach((_, idx) => {
+          const dot = document.createElement('span');
+          if (idx === 0) dot.classList.add('active');
+          dots.appendChild(dot);
+        });
+        wrap.appendChild(dots);
+
+        const count = document.createElement('div');
+        count.className = 'carousel-count';
+        count.textContent = `1 / ${c.images.length}`;
+        wrap.appendChild(count);
+
+        wrap.addEventListener('click', e => {
+          if (adminMode) return; // avoid conflicting with admin controls
+          e.preventDefault();
+          let idx = (parseInt(wrap.dataset.index, 10) + 1) % c.images.length;
+          wrap.dataset.index = String(idx);
+          img.src = c.images[idx];
+          dots.querySelectorAll('span').forEach((d, i) => d.classList.toggle('active', i === idx));
+          count.textContent = `${idx + 1} / ${c.images.length}`;
+        });
+      }
+      supportsReplace = false;
+    } else {
+      wrap = document.createElement('div');
+      wrap.className = 'html-card';
+
+      const label = document.createElement('div');
+      label.className = 'html-card-label';
+      label.textContent = c.name || '(無題)';
+
+      const iframe = document.createElement('iframe');
+      iframe.srcdoc = injectAutoResize(c.html);
+      iframe.loading = 'lazy';
+      iframe.scrolling = 'no';
+      iframe.sandbox = 'allow-scripts allow-popups allow-forms allow-same-origin';
+      iframe.addEventListener('load', function() {
+        try {
+          const h = iframe.contentDocument.documentElement.scrollHeight || iframe.contentDocument.body.scrollHeight;
+          if (h > 0) iframe.style.height = h + 'px';
+        } catch(e) {}
+        iframe.contentWindow.postMessage({ type: 'asobiva-init' }, '*');
+      });
+
+      wrap.appendChild(label);
+      wrap.appendChild(iframe);
+      replaceAccept = 'image/*,text/html,.html';
+    }
+
+    let replaceBtn, replaceInput;
+    if (supportsReplace) {
+      replaceBtn = document.createElement('button');
+      replaceBtn.className = 'card-replace';
+      replaceBtn.title = '差し替え';
+      replaceBtn.textContent = '⇄';
+
+      replaceInput = document.createElement('input');
+      replaceInput.type = 'file';
+      replaceInput.accept = replaceAccept;
+      replaceInput.className = 'card-replace-input';
+      replaceInput.addEventListener('change', e => {
+        e.preventDefault(); e.stopPropagation();
+        const f = e.target.files[0];
+        if (f) replaceCard(c.id, f);
+      });
+
+      replaceBtn.addEventListener('click', e => {
+        e.preventDefault(); e.stopPropagation();
+        replaceInput.click();
+      });
+    }
 
     const delBtn = document.createElement('button');
     delBtn.className = 'card-del';
@@ -828,29 +1062,27 @@ function render() {
       e.preventDefault(); e.stopPropagation();
       toggleGap(c.id);
     });
-
     const moveWrap = document.createElement('div');
     moveWrap.className = 'card-move';
     const upBtn = document.createElement('button');
-    upBtn.textContent = '↑';
-    upBtn.title = '上へ移動';
+    upBtn.textContent = '↑'; upBtn.title = '上へ移動';
     upBtn.disabled = idx === 0;
     upBtn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); moveCard(idx, idx - 1); });
     const downBtn = document.createElement('button');
-    downBtn.textContent = '↓';
-    downBtn.title = '下へ移動';
+    downBtn.textContent = '↓'; downBtn.title = '下へ移動';
     downBtn.disabled = idx === cards.length - 1;
     downBtn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); moveCard(idx, idx + 1); });
     moveWrap.appendChild(upBtn);
     moveWrap.appendChild(downBtn);
 
-    a.appendChild(img);
-    a.appendChild(replaceBtn);
-    a.appendChild(replaceInput);
-    a.appendChild(delBtn);
-    a.appendChild(gapBtn);
-    a.appendChild(moveWrap);
-    sec.appendChild(a);
+    if (supportsReplace) {
+      wrap.appendChild(replaceBtn);
+      wrap.appendChild(replaceInput);
+    }
+    wrap.appendChild(delBtn);
+    wrap.appendChild(gapBtn);
+    wrap.appendChild(moveWrap);
+    sec.appendChild(wrap);
     container.appendChild(sec);
   });
 
@@ -1036,12 +1268,18 @@ function resetForm() {
   document.getElementById('linkUrl').value = '';
   document.getElementById('previewGrid').innerHTML = '';
   document.getElementById('addBtn').disabled = true;
+  document.getElementById('carouselToggleWrap').style.display = 'none';
+  document.getElementById('carouselToggle').checked = false;
 }
 
 // ── File select ───────────────────────────────
+function isHtmlFile(f) {
+  return f.type === 'text/html' || f.name.toLowerCase().endsWith('.html') || f.name.toLowerCase().endsWith('.htm');
+}
+
 function onFileSelect(files) {
   for (const f of files) {
-    if (f.type.startsWith('image/')) pendingFiles.push(f);
+    if (isHtmlFile(f) || f.type.startsWith('image/')) pendingFiles.push(f);
   }
   renderPreviews();
 }
@@ -1050,18 +1288,40 @@ function renderPreviews() {
   const grid = document.getElementById('previewGrid');
   grid.innerHTML = '';
   pendingFiles.forEach((f, i) => {
-    const url = URL.createObjectURL(f);
     const div = document.createElement('div');
-    div.className = 'p-thumb';
-    const img = document.createElement('img');
-    img.src = url; img.alt = '';
     const del = document.createElement('button');
     del.className = 'p-del'; del.textContent = '✕';
     del.onclick = () => { pendingFiles.splice(i, 1); renderPreviews(); };
-    div.appendChild(img); div.appendChild(del);
+
+    if (isHtmlFile(f)) {
+      div.className = 'p-thumb p-thumb-file';
+      const name = document.createElement('span');
+      name.className = 'p-thumb-name';
+      name.textContent = f.name;
+      div.appendChild(name);
+    } else {
+      div.className = 'p-thumb';
+      const url = URL.createObjectURL(f);
+      const img = document.createElement('img');
+      img.src = url; img.alt = '';
+      div.appendChild(img);
+    }
+
+    div.appendChild(del);
     grid.appendChild(div);
   });
   document.getElementById('addBtn').disabled = pendingFiles.length === 0;
+
+  // carousel toggle visibility: only when 2+ images and no HTML files mixed in
+  const imgCount = pendingFiles.filter(f => !isHtmlFile(f)).length;
+  const htmlCount = pendingFiles.filter(isHtmlFile).length;
+  const toggleWrap = document.getElementById('carouselToggleWrap');
+  if (imgCount >= 2 && htmlCount === 0) {
+    toggleWrap.style.display = 'flex';
+  } else {
+    toggleWrap.style.display = 'none';
+    document.getElementById('carouselToggle').checked = false;
+  }
 }
 
 // drag & drop
@@ -1073,16 +1333,30 @@ dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag
 // ── Add cards ─────────────────────────────────
 async function addCards() {
   const link = document.getElementById('linkUrl').value.trim();
+  const isCarousel = document.getElementById('carouselToggle').checked;
   const btn = document.getElementById('addBtn');
   btn.disabled = true;
   btn.textContent = '保存中…';
 
-  let nextOrder = cards.length ? Math.max(...cards.map(c => c.order)) + 1 : 1;
-  for (const f of pendingFiles) {
-    const base64 = await fileToBase64(f);
-    const order = nextOrder++;
-    const id = await dbOp('cards', 'readwrite', s => s.add({ base64, link, order }));
-    cards.push({ id, base64, link, order, gap: true });
+  if (isCarousel) {
+    const images = pendingFiles.filter(f => !isHtmlFile(f));
+    const images64 = [];
+    for (const f of images) images64.push(await fileToBase64(f));
+    const id = await dbOp('cards', 'readwrite', s => s.add({ type: 'carousel', images: images64, link: '' }));
+    cards.push({ id, type: 'carousel', images: images64, link: '' });
+  } else {
+    for (const f of pendingFiles) {
+      if (isHtmlFile(f)) {
+        const html = await fileToText(f);
+        const name = f.name;
+        const id = await dbOp('cards', 'readwrite', s => s.add({ type: 'html', html, name, link }));
+        cards.push({ id, type: 'html', html, name, link });
+      } else {
+        const base64 = await fileToBase64(f);
+        const id = await dbOp('cards', 'readwrite', s => s.add({ type: 'image', base64, link }));
+        cards.push({ id, type: 'image', base64, link });
+      }
+    }
   }
 
   btn.textContent = '追加する';
@@ -1090,29 +1364,21 @@ async function addCards() {
   render();
 }
 
-// ── Move ─────────────────────────────────────
-async function moveCard(fromIdx, toIdx) {
-  if (toIdx < 0 || toIdx >= cards.length) return;
-  const tmp = cards[fromIdx];
-  cards[fromIdx] = cards[toIdx];
-  cards[toIdx] = tmp;
-  cards.forEach((c, i) => { c.order = i + 1; });
-  for (const c of cards) {
-    await dbOp('cards', 'readwrite', s => s.put({ id: c.id, base64: c.base64, link: c.link, order: c.order, gap: c.gap }));
-  }
-  render();
-}
-
 // ── Replace ───────────────────────────────────
 async function replaceCard(id, file) {
-  const base64 = await fileToBase64(file);
-  const existing = cards.find(c => c.id === id);
-  const link = existing?.link || '';
-  const order = existing?.order ?? id;
-  const gap = existing?.gap !== false;
-  await dbOp('cards', 'readwrite', s => s.put({ id, base64, link, order, gap }));
+  const link = cards.find(c => c.id === id)?.link || '';
   const i = cards.findIndex(c => c.id === id);
-  if (i !== -1) cards[i].base64 = base64;
+
+  if (isHtmlFile(file)) {
+    const html = await fileToText(file);
+    const name = file.name;
+    await dbOp('cards', 'readwrite', s => s.put({ id, type: 'html', html, name, link }));
+    if (i !== -1) { cards[i] = { id, type: 'html', html, name, link }; }
+  } else {
+    const base64 = await fileToBase64(file);
+    await dbOp('cards', 'readwrite', s => s.put({ id, type: 'image', base64, link }));
+    if (i !== -1) { cards[i] = { id, type: 'image', base64, link }; }
+  }
   render();
 }
 
@@ -1167,11 +1433,20 @@ function downloadHTML() {
   if (cards.length === 0) {
     cardsHTML = `  <div class="empty-section"><div class="empty-state"><strong>まだカードがありません</strong></div></div>\n`;
   } else {
-    cards.forEach((c, idx) => {
-      const tag = c.link
-        ? `<a class="card" href="${c.link}" target="_blank" rel="noopener"><img src="${c.base64}" alt=""></a>`
-        : `<div class="card"><img src="${c.base64}" alt=""></div>`;
-      cardsHTML += `  <div class="card-section">${tag}</div>\n`;
+    cards.forEach((c, ci) => {
+      if (c.type === 'image') {
+        const tag = c.link
+          ? `<a class="card" href="${c.link}" target="_blank" rel="noopener"><img src="${c.base64}" alt=""></a>`
+          : `<div class="card"><img src="${c.base64}" alt=""></div>`;
+        cardsHTML += `  <div class="card-section">${tag}</div>\n`;
+      } else if (c.type === 'carousel') {
+        const dots = c.images.map((_, idx) => `<span class="${idx===0?'active':''}"></span>`).join('');
+        const imgsJson = JSON.stringify(c.images).replace(/"/g, '&quot;');
+        cardsHTML += `  <div class="card-section"><div class="carousel-card" data-images="${imgsJson}" data-index="0" onclick="cyclerCarousel(this)"><img src="${c.images[0]}" alt="">${c.images.length > 1 ? `<div class="carousel-dots">${dots}</div><div class="carousel-count">1 / ${c.images.length}</div>` : ''}</div></div>\n`;
+      } else {
+        const escaped = injectAutoResize(c.html).replace(/"/g, '&quot;');
+        cardsHTML += `  <div class="card-section"><div class="html-card"><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:60px" scrolling="no" onload="try{var h=this.contentDocument.documentElement.scrollHeight||this.contentDocument.body.scrollHeight;if(h>0)this.style.height=h+'px';}catch(e){}"></iframe></div></div>\n`;
+      }
     });
   }
 
@@ -1189,6 +1464,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .card-section { background: var(--bg); padding-top:10px; }
 .card { width:100%; display:block; text-decoration:none; background:var(--white); overflow:hidden; }
 .card img { width:100%; height:auto; display:block; }
+.html-card { width:100%; position:relative; background:var(--white); overflow:hidden; }
+.html-card iframe { display:block; width:100%; height:480px; border:none; background:var(--white); }
+.carousel-card { width:100%; position:relative; background:var(--white); overflow:hidden; cursor:pointer; }
+.carousel-card img { width:100%; height:auto; display:block; }
+.carousel-dots { position:absolute; bottom:10px; left:0; right:0; display:flex; justify-content:center; gap:6px; pointer-events:none; }
+.carousel-dots span { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.55); }
+.carousel-dots span.active { background:#fff; transform:scale(1.25); }
+.carousel-count { position:absolute; top:10px; right:10px; font-size:10px; letter-spacing:0.05em; color:#fff; background:rgba(0,0,0,0.45); padding:3px 8px; border-radius:20px; pointer-events:none; }
 .empty-section { background: var(--bg); padding-top:10px; }
 .empty-state { padding:60px 24px; text-align:center; color:var(--ink-soft); font-size:13px; line-height:2; background:var(--white); }
 .empty-state strong { display:block; font-size:14px; font-weight:600; color:var(--ink); margin-bottom:6px; }
@@ -1201,7 +1484,7 @@ footer { padding:28px 16px; text-align:center; font-size:10px; letter-spacing:0.
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ASOBIVA — サンプルコンテンツ</title>
+<title>ASOBIVA — HTMLコンテンツ</title>
 <style>${staticCSS}</style>
 </head>
 <body>
@@ -1216,6 +1499,25 @@ ${cardsHTML}  <div class="footer-section">
     </footer>
   </div>
 </div>
+<scr` + `ipt>
+window.addEventListener('message', function(e){
+  if (e.data && e.data.type === 'asobiva-resize') {
+    document.querySelectorAll('.html-card iframe').forEach(function(f){
+      if (f.contentWindow === e.source) f.style.height = Math.max(60, e.data.height) + 'px';
+    });
+  }
+});
+function cyclerCarousel(el){
+  var images = JSON.parse(el.dataset.images);
+  var idx = (parseInt(el.dataset.index, 10) + 1) % images.length;
+  el.dataset.index = String(idx);
+  el.querySelector('img').src = images[idx];
+  var dots = el.querySelectorAll('.carousel-dots span');
+  dots.forEach(function(d, i){ d.classList.toggle('active', i === idx); });
+  var count = el.querySelector('.carousel-count');
+  if (count) count.textContent = (idx + 1) + ' / ' + images.length;
+}
+</scr` + `ipt>
 </body>
 </html>
 `;
