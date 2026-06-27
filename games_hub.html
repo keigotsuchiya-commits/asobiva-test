@@ -218,6 +218,32 @@ body.admin-mode .banner-slot .banner-edit { display: flex; }
   background: var(--bg);
   padding-top: 10px;
 }
+.card-section.no-gap {
+  background: var(--white);
+  padding-top: 0;
+}
+.card-gap-btn {
+  display: none;
+  position: absolute;
+  bottom: 10px; left: 10px;
+  height: 28px;
+  padding: 0 10px;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.card-gap-btn:hover { background: rgba(0,0,0,0.75); }
+body.admin-mode .card-gap-btn { display: flex; }
 .card {
   width: 100%;
   position: relative;
@@ -241,11 +267,12 @@ body.admin-mode .card:hover img { transform: none; }
   position: relative;
   background: var(--white);
   overflow: hidden;
+  padding: 10px 0;
 }
 .html-card iframe {
   display: block;
   width: 100%;
-  height: 100px;
+  height: 60px;
   border: none;
   background: var(--white);
 }
@@ -656,6 +683,36 @@ footer {
 @media (prefers-reduced-motion: reduce) {
   .card img, .panel { transition: none; }
 }
+
+/* ── FOOTER EDIT ── */
+.footer-edit-btn {
+  display: none;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--ink-soft);
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-decoration: underline;
+}
+body.admin-mode .footer-edit-btn { display: inline-block; }
+
+/* ── FOOTER EDITOR PANEL ── */
+.footer-editor-panel {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--white);
+  border-radius: 16px 16px 0 0;
+  padding: 28px 20px 48px;
+  z-index: 300;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.34,1.2,0.64,1);
+  max-width: 480px;
+  margin: 0 auto;
+}
+.footer-editor-panel.open { transform: translateY(0); }
 </style>
 </head>
 <body>
@@ -692,10 +749,23 @@ footer {
   <div id="cardContainer"></div>
 
   <div class="footer-section">
-    <footer>ASOBIVA — i.roiro</footer>
+    <footer>
+      <span id="footerText">ASOBIVA — i.roiro</span>
+      <button class="footer-edit-btn" onclick="openFooterEditor()">編集</button>
+    </footer>
   </div>
 </div>
 
+
+<!-- フッター編集パネル -->
+<div class="overlay" id="footerEditorOverlay" onclick="closeFooterEditor()"></div>
+<div class="footer-editor-panel" id="footerEditorPanel">
+  <div class="panel-handle"></div>
+  <div class="panel-title">フッターを編集</div>
+  <label class="field-label">フッターテキスト</label>
+  <input class="field-input" id="footerTextInput" type="text" placeholder="例: © 2025 i.roiro">
+  <button class="btn-add" onclick="saveFooterText()">保存する</button>
+</div>
 <div class="overlay" id="overlay" onclick="closePanel()"></div>
 <div class="panel" id="panel">
   <div class="panel-handle"></div>
@@ -858,7 +928,8 @@ async function init() {
       base64: r.base64,
       images: r.images,
       name: r.name || '',
-      link: r.link || ''
+      link: r.link || '',
+      gap: r.gap !== false
     }));
     setLoadingBar(100);
   } catch (err) {
@@ -914,7 +985,7 @@ function render() {
 
   cards.forEach(c => {
     const sec = document.createElement('div');
-    sec.className = 'card-section';
+    sec.className = 'card-section' + (c.gap === false ? ' no-gap' : '');
 
     let wrap, replaceAccept, supportsReplace = true;
 
@@ -1011,8 +1082,13 @@ function render() {
       const iframe = document.createElement('iframe');
       iframe.srcdoc = injectAutoResize(c.html);
       iframe.loading = 'lazy';
+      iframe.scrolling = 'no';
       iframe.sandbox = 'allow-scripts allow-popups allow-forms allow-same-origin';
-      iframe.addEventListener('load', () => {
+      iframe.addEventListener('load', function() {
+        try {
+          const h = iframe.contentDocument.documentElement.scrollHeight || iframe.contentDocument.body.scrollHeight;
+          if (h > 0) iframe.style.height = h + 'px';
+        } catch(e) {}
         iframe.contentWindow.postMessage({ type: 'asobiva-init' }, '*');
       });
 
@@ -1053,11 +1129,19 @@ function render() {
       deleteCard(c.id);
     });
 
+    const gapBtn = document.createElement('button');
+    gapBtn.className = 'card-gap-btn';
+    gapBtn.textContent = c.gap === false ? '隙間なし' : '隙間あり';
+    gapBtn.addEventListener('click', e => {
+      e.preventDefault(); e.stopPropagation();
+      toggleGap(c.id);
+    });
     if (supportsReplace) {
       wrap.appendChild(replaceBtn);
       wrap.appendChild(replaceInput);
     }
     wrap.appendChild(delBtn);
+    wrap.appendChild(gapBtn);
     sec.appendChild(wrap);
     container.appendChild(sec);
   });
@@ -1266,6 +1350,37 @@ function moveNavItem(i, dir) {
   renderNavLinks();
 }
 
+
+// ── Footer editor ─────────────────────────────
+async function loadFooterText() {
+  try {
+    const row = await dbOp('banners', 'readonly', s => s.get(99));
+    if (row?.footerText) {
+      document.getElementById('footerText').textContent = row.footerText;
+    }
+  } catch {}
+}
+
+function openFooterEditor() {
+  const current = document.getElementById('footerText').textContent;
+  document.getElementById('footerTextInput').value = current;
+  document.getElementById('footerEditorOverlay').classList.add('open');
+  document.getElementById('footerEditorPanel').classList.add('open');
+}
+
+function closeFooterEditor() {
+  document.getElementById('footerEditorOverlay').classList.remove('open');
+  document.getElementById('footerEditorPanel').classList.remove('open');
+}
+
+async function saveFooterText() {
+  const text = document.getElementById('footerTextInput').value.trim();
+  if (!text) return;
+  await dbOp('banners', 'readwrite', s => s.put({ slot: 99, footerText: text }));
+  document.getElementById('footerText').textContent = text;
+  closeFooterEditor();
+}
+
 function toggleAdmin() {
   adminMode = !adminMode;
   document.body.classList.toggle('admin-mode', adminMode);
@@ -1412,6 +1527,18 @@ async function replaceCard(id, file) {
   render();
 }
 
+// ── Gap toggle ────────────────────────────────
+async function toggleGap(id) {
+  const c = cards.find(c => c.id === id);
+  if (!c) return;
+  c.gap = c.gap === false ? true : false;
+  await dbOp('cards', 'readwrite', s => s.put({
+    id: c.id, type: c.type, html: c.html, base64: c.base64,
+    images: c.images, name: c.name, link: c.link, gap: c.gap
+  }));
+  render();
+}
+
 // ── Delete ────────────────────────────────────
 async function deleteCard(id) {
   await dbOp('cards', 'readwrite', s => s.delete(id));
@@ -1448,7 +1575,7 @@ function downloadHTML() {
         cardsHTML += `  <div class="card-section"><div class="carousel-card" data-images="${imgsJson}" data-index="0" onclick="cyclerCarousel(this)"><img src="${c.images[0]}" alt="">${c.images.length > 1 ? `<div class="carousel-dots">${dots}</div><div class="carousel-count">1 / ${c.images.length}</div>` : ''}</div></div>\n`;
       } else {
         const escaped = injectAutoResize(c.html).replace(/"/g, '&quot;');
-        cardsHTML += `  <div class="card-section"><div class="html-card"><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:100px" onload="this.contentWindow.postMessage({type:'asobiva-init'},'*')"></iframe></div></div>\n`;
+        cardsHTML += `  <div class="card-section"><div class="html-card"><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:60px" scrolling="no" onload="try{var h=this.contentDocument.documentElement.scrollHeight||this.contentDocument.body.scrollHeight;if(h>0)this.style.height=h+'px';}catch(e){}"></iframe></div></div>\n`;
       }
     });
   }
@@ -1510,7 +1637,10 @@ footer { padding:28px 16px; text-align:center; font-size:10px; letter-spacing:0.
   <div class="header-pair">
 ${headerHTML}  </div>
 ${cardsHTML}  <div class="footer-section">
-    <footer>ASOBIVA — i.roiro</footer>
+    <footer>
+      <span id="footerText">ASOBIVA — i.roiro</span>
+      <button class="footer-edit-btn" onclick="openFooterEditor()">編集</button>
+    </footer>
   </div>
 </div>
 
