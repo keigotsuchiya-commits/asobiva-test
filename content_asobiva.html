@@ -1394,6 +1394,22 @@ async function toggleGap(id) {
   render();
 }
 
+// ── Move ─────────────────────────────────────
+async function moveCard(fromIdx, toIdx) {
+  if (toIdx < 0 || toIdx >= cards.length) return;
+  const tmp = cards[fromIdx];
+  cards[fromIdx] = cards[toIdx];
+  cards[toIdx] = tmp;
+  cards.forEach((c, i) => { c.order = i + 1; });
+  for (const c of cards) {
+    await dbOp('cards', 'readwrite', s => s.put({
+      id: c.id, type: c.type, html: c.html, base64: c.base64,
+      images: c.images, name: c.name, link: c.link, gap: c.gap, order: c.order
+    }));
+  }
+  render();
+}
+
 // ── Delete ────────────────────────────────────
 async function deleteCard(id) {
   await dbOp('cards', 'readwrite', s => s.delete(id));
