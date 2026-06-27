@@ -974,9 +974,9 @@ function render() {
       if (c.images.length > 1) {
         const dots = document.createElement('div');
         dots.className = 'carousel-dots';
-        c.images.forEach((_, idx) => {
+        c.images.forEach((_, i) => {
           const dot = document.createElement('span');
-          if (idx === 0) dot.classList.add('active');
+          if (i === 0) dot.classList.add('active');
           dots.appendChild(dot);
         });
         wrap.appendChild(dots);
