@@ -491,6 +491,21 @@ body.admin-mode .card-replace { display: flex; }
   background: var(--bg);
   padding-top: 10px;
 }
+.footer-section.no-gap {
+  padding-top: 0;
+}
+.footer-gap-btn {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 10px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  text-decoration: underline;
+  letter-spacing: 0.06em;
+  margin-left: 8px;
+}
+body.admin-mode .footer-gap-btn { display: inline-block; }
 footer {
   padding: 28px 16px;
   text-align: center;
@@ -722,10 +737,11 @@ body.admin-mode .card-move { display: flex; }
 
   <div id="cardContainer"></div>
 
-  <div class="footer-section">
+  <div class="footer-section" id="footerSection">
     <footer>
       <span id="footerText">ASOBIVA — i.roiro</span>
       <button class="footer-edit-btn" onclick="openFooterEditor()">編集</button>
+      <button class="footer-gap-btn" id="footerGapBtn" onclick="toggleFooterGap()">隙間あり</button>
     </footer>
   </div>
 </div>
@@ -898,6 +914,7 @@ async function init() {
     render();
     renderNavLinks();
     loadFooterText();
+    loadFooterGap();
   }, 200);
 }
 
@@ -1211,6 +1228,27 @@ function moveNavItem(i, dir) {
 }
 
 
+// ── Footer gap toggle ─────────────────────────
+async function loadFooterGap() {
+  try {
+    const row = await dbOp('banners', 'readonly', s => s.get(98));
+    const noGap = row?.footerNoGap === true;
+    const sec = document.getElementById('footerSection');
+    const btn = document.getElementById('footerGapBtn');
+    if (sec) sec.classList.toggle('no-gap', noGap);
+    if (btn) btn.textContent = noGap ? '隙間なし' : '隙間あり';
+  } catch {}
+}
+
+async function toggleFooterGap() {
+  const sec = document.getElementById('footerSection');
+  const btn = document.getElementById('footerGapBtn');
+  const noGap = !sec.classList.contains('no-gap');
+  sec.classList.toggle('no-gap', noGap);
+  btn.textContent = noGap ? '隙間なし' : '隙間あり';
+  await dbOp('banners', 'readwrite', s => s.put({ slot: 98, footerNoGap: noGap }));
+}
+
 // ── Footer editor ─────────────────────────────
 async function loadFooterText() {
   try {
@@ -1508,10 +1546,11 @@ footer { padding:28px 16px; text-align:center; font-size:10px; letter-spacing:0.
   <div class="site-header"><a href="asobiva.html" class="back-link">← トップへ戻る</a></div>
   <div class="header-pair">
 ${headerHTML}  </div>
-${cardsHTML}  <div class="footer-section">
+${cardsHTML}  <div class="footer-section" id="footerSection">
     <footer>
       <span id="footerText">ASOBIVA — i.roiro</span>
       <button class="footer-edit-btn" onclick="openFooterEditor()">編集</button>
+      <button class="footer-gap-btn" id="footerGapBtn" onclick="toggleFooterGap()">隙間あり</button>
     </footer>
   </div>
 </div>
