@@ -427,7 +427,7 @@
   const articleCSS = `
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif; background: #fff; color: #333; }
-.p-header-img { width: 100%; aspect-ratio: 2 / 1; object-fit: cover; display: block; }
+.p-header-img { width: 100%; height: auto; display: block; }
 .p-body { padding: 24px 20px 56px; max-width: 680px; margin: 0 auto; }
 .p-title { font-size: 17px; font-weight: bold; line-height: 1.6; color: #1a1a1a; margin-bottom: 16px; letter-spacing: 0.02em; }
 .p-author { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
@@ -460,7 +460,7 @@ body { font-family: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif; backgr
       else if (b.type === 'bold') html += `<p class="p-bold-block">${esc(b.content)}</p>`;
       else html += `<p class="p-text-block">${esc(b.content)}</p>`;
     });
-    if (nextTitle) html += `<hr class="p-divider"><div class="p-next"><span>◆</span> 次回：${esc(nextTitle)}</div>`;
+    if (nextTitle) html += `<hr class="p-divider"><div class="p-next"><span>◆</span> 次回：${esc(nextTitle)}</div><hr class="p-divider">`;
     html += `</div>`;
     return html;
   }
