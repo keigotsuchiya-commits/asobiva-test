@@ -293,6 +293,11 @@ body.admin-mode .banner-slot .banner-edit { display: flex; }
   background: var(--white);
   padding-top: 0;
 }
+.card-section.line-gap {
+  background: var(--white);
+  padding-top: 0;
+  border-top: 1px solid var(--ink);
+}
 .card-gap-btn {
   display: none;
   position: absolute;
@@ -900,7 +905,7 @@ async function init() {
       images: r.images,
       name: r.name || '',
       link: r.link || '',
-      gap: r.gap !== false,
+      gap: r.gap !== undefined ? r.gap : true,
       order: (r.order ?? r.id)
     }));
     cards.sort((a, b) => a.order - b.order);
@@ -960,7 +965,8 @@ function render() {
 
   cards.forEach((c, idx) => {
     const sec = document.createElement('div');
-    sec.className = 'card-section' + (c.gap === false ? ' no-gap' : '');
+    const gapClass = c.gap === false || c.gap === 'nogap' ? ' no-gap' : c.gap === 'line' ? ' line-gap' : '';
+    sec.className = 'card-section' + gapClass;
 
     let wrap, replaceAccept, supportsReplace = true;
 
@@ -1074,7 +1080,8 @@ function render() {
 
     const gapBtn = document.createElement('button');
     gapBtn.className = 'card-gap-btn';
-    gapBtn.textContent = c.gap === false ? '隙間なし' : '隙間あり';
+    const gapLabels = { true: '隙間あり', false: '隙間なし', nogap: '隙間なし', line: 'ライン' };
+    gapBtn.textContent = gapLabels[c.gap] ?? '隙間あり';
     gapBtn.addEventListener('click', e => {
       e.preventDefault(); e.stopPropagation();
       toggleGap(c.id);
@@ -1424,10 +1431,12 @@ async function replaceCard(id, file) {
 async function toggleGap(id) {
   const c = cards.find(c => c.id === id);
   if (!c) return;
-  c.gap = c.gap === false ? true : false;
+  if (c.gap === true || c.gap === undefined) c.gap = 'line';
+  else if (c.gap === 'line') c.gap = false;
+  else c.gap = true;
   await dbOp('cards', 'readwrite', s => s.put({
     id: c.id, type: c.type, html: c.html, base64: c.base64,
-    images: c.images, name: c.name, link: c.link, gap: c.gap
+    images: c.images, name: c.name, link: c.link, gap: c.gap, order: c.order
   }));
   render();
 }
