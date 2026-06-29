@@ -228,28 +228,49 @@ body.admin-mode .admin-only { display: block; }
   user-select: none;
 }
 
-.banner-edit {
+.banner-edit-btns {
   display: none;
   position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.25);
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 2;
+  bottom: 10px;
+  right: 10px;
+  z-index: 5;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
 }
-.banner-edit span {
+body.admin-mode .banner-slot .banner-edit-btns { display: flex; }
+
+.banner-edit-btn {
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.06em;
   color: #fff;
-  background: rgba(0,0,0,0.45);
-  padding: 8px 18px;
+  background: rgba(0,0,0,0.5);
+  border: none;
+  padding: 7px 14px;
   border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.4);
-  pointer-events: none;
+  cursor: pointer;
+  white-space: nowrap;
 }
-body.admin-mode .banner-slot .banner-edit { display: flex; }
+.banner-edit-btn:hover { background: rgba(0,0,0,0.75); }
+.banner-edit-btn.del { background: rgba(192,57,43,0.7); }
+.banner-edit-btn.del:hover { background: rgba(192,57,43,0.95); }
+
+.banner-count {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 10px;
+  font-weight: 500;
+  color: #fff;
+  background: rgba(0,0,0,0.4);
+  padding: 3px 8px;
+  border-radius: 10px;
+  z-index: 3;
+  display: none;
+}
+body.admin-mode .banner-count { display: block; }
+
 .banner-file { display: none; }
 
 /* ── CARDS ── */
@@ -622,14 +643,18 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
   </div>
   <div class="header-pair">
     <div class="banner-slot" id="banner1">
-      <span class="slot-label">HEADER 1</span>
-      <div class="banner-edit" onclick="triggerBanner(1)"><span>画像を設定</span></div>
-      <input type="file" class="banner-file" id="bannerFile1" accept="image/*" onchange="onBannerFile(1,this)">
+      <span class="slot-label" id="bannerPlaceholder1">HEADER 1</span>
+      <div class="banner-edit-btns" id="bannerEditBtns1">
+        <button class="banner-edit-btn" onclick="triggerBanner(1)">＋ 画像を追加</button>
+      </div>
+      <input type="file" class="banner-file" id="bannerFile1" accept="image/*" multiple onchange="onBannerFile(1,this)">
     </div>
     <div class="banner-slot" id="banner2">
-      <span class="slot-label">HEADER 2</span>
-      <div class="banner-edit" onclick="triggerBanner(2)"><span>画像を設定</span></div>
-      <input type="file" class="banner-file" id="bannerFile2" accept="image/*" onchange="onBannerFile(2,this)">
+      <span class="slot-label" id="bannerPlaceholder2">HEADER 2</span>
+      <div class="banner-edit-btns" id="bannerEditBtns2">
+        <button class="banner-edit-btn" onclick="triggerBanner(2)">＋ 画像を追加</button>
+      </div>
+      <input type="file" class="banner-file" id="bannerFile2" accept="image/*" multiple onchange="onBannerFile(2,this)">
     </div>
   </div>
 
@@ -733,7 +758,7 @@ function fileToBase64(file) {
 
 // ── State ─────────────────────────────────────
 let cards = [];       // [{ id, base64, link }]
-let banners = { 1: null, 2: null }; // base64 strings
+let banners = { 1: [], 2: [] }; // base64配列
 let pendingFiles = [];
 let adminMode = false;
 
@@ -743,26 +768,20 @@ async function init() {
   await openDB();
   setLoadingBar(30);
 
-  // 埋め込み初期データがあれば優先して使い、IndexedDBに書き込む
+  // 埋め込み初期データがあれば優先
   if (window.__ASOBIVA_INIT__) {
     const data = window.__ASOBIVA_INIT__;
-
-    // banners
     for (const slot of [1, 2]) {
       const b64 = data.banners?.[slot];
       if (b64) {
-        await dbOp('banners', 'readwrite', s => s.put({ slot, base64: b64 }));
-        banners[slot] = b64;
-        applyBanner(slot, b64);
+        banners[slot] = Array.isArray(b64) ? b64 : [b64];
+        await dbOp('banners', 'readwrite', s => s.put({ slot, images: banners[slot] }));
+        applyBannerRandom(slot);
       }
     }
     setLoadingBar(60);
-
-    // cards - IndexedDBをクリアして埋め込みデータで上書き
     const existing = await dbOp('cards', 'readonly', s => s.getAll());
-    for (const r of existing) {
-      await dbOp('cards', 'readwrite', s => s.delete(r.id));
-    }
+    for (const r of existing) await dbOp('cards', 'readwrite', s => s.delete(r.id));
     cards = [];
     let order = 1;
     for (const c of (data.cards || [])) {
@@ -771,20 +790,20 @@ async function init() {
       cards.push({ id, base64: c.base64, link: c.link || '', order: record.order });
     }
     cards.sort((a, b) => a.order - b.order);
-
-    // 一度使ったら初期データを削除（次回はIndexedDBから読む）
     window.__ASOBIVA_INIT__ = null;
-
   } else {
-    // 通常起動: IndexedDBから読む
     for (const slot of [1, 2]) {
       try {
         const row = await dbOp('banners', 'readonly', s => s.get(slot));
-        if (row?.base64) { banners[slot] = row.base64; applyBanner(slot, row.base64); }
+        if (row?.images && row.images.length > 0) {
+          banners[slot] = row.images;
+        } else if (row?.base64) {
+          banners[slot] = [row.base64];
+        }
+        applyBannerRandom(slot);
       } catch {}
     }
     setLoadingBar(60);
-
     const rows = await dbOp('cards', 'readonly', s => s.getAll());
     cards = rows.map(r => ({ id: r.id, base64: r.base64, link: r.link || '', order: (r.order ?? r.id), gap: r.gap !== false }));
     cards.sort((a, b) => a.order - b.order);
@@ -810,22 +829,75 @@ function triggerBanner(slot) {
 }
 
 async function onBannerFile(slot, input) {
-  const f = input.files[0];
-  if (!f) return;
-  const base64 = await fileToBase64(f);
-  await dbOp('banners', 'readwrite', s => s.put({ slot, base64 }));
-  banners[slot] = base64;
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  for (const f of files) {
+    const base64 = await fileToBase64(f);
+    banners[slot].push(base64);
+  }
+  await dbOp('banners', 'readwrite', s => s.put({ slot, images: banners[slot] }));
+  applyBannerRandom(slot);
+  updateBannerUI(slot);
+  input.value = '';
+}
+
+function applyBannerRandom(slot) {
+  const imgs = banners[slot] || [];
+  if (imgs.length === 0) return;
+  const base64 = imgs.length === 1 ? imgs[0] : imgs[Math.floor(Math.random() * imgs.length)];
   applyBanner(slot, base64);
 }
 
 function applyBanner(slot, base64) {
   const el = document.getElementById('banner' + slot);
-  el.querySelector('.slot-label')?.remove();
+  document.getElementById('bannerPlaceholder' + slot)?.remove();
   el.querySelector('img')?.remove();
   const img = document.createElement('img');
   img.src = base64;
   img.alt = '';
-  el.insertBefore(img, el.querySelector('.banner-edit'));
+  el.insertBefore(img, el.querySelector('.banner-edit-btns'));
+  updateBannerUI(slot);
+}
+
+async function deleteBannerImage(slot, idx) {
+  banners[slot].splice(idx, 1);
+  await dbOp('banners', 'readwrite', s => s.put({ slot, images: banners[slot] }));
+  if (banners[slot].length === 0) {
+    const el = document.getElementById('banner' + slot);
+    el.querySelector('img')?.remove();
+    const lbl = document.createElement('span');
+    lbl.className = 'slot-label';
+    lbl.id = 'bannerPlaceholder' + slot;
+    lbl.textContent = 'HEADER ' + slot;
+    el.insertBefore(lbl, el.querySelector('.banner-edit-btns'));
+  } else {
+    applyBannerRandom(slot);
+  }
+  updateBannerUI(slot);
+}
+
+function updateBannerUI(slot) {
+  const btns = document.getElementById('bannerEditBtns' + slot);
+  if (!btns) return;
+  btns.querySelectorAll('.banner-edit-btn.del').forEach(b => b.remove());
+  const count = banners[slot]?.length || 0;
+  let countEl = document.getElementById('bannerCount' + slot);
+  if (!countEl) {
+    countEl = document.createElement('span');
+    countEl.className = 'banner-count';
+    countEl.id = 'bannerCount' + slot;
+    document.getElementById('banner' + slot).appendChild(countEl);
+  }
+  countEl.textContent = count + '枚';
+  if (count >= 1) {
+    (banners[slot] || []).forEach((_, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'banner-edit-btn del';
+      btn.textContent = count > 1 ? `${i+1}枚目を削除` : '画像を削除';
+      btn.onclick = () => deleteBannerImage(slot, i);
+      btns.insertBefore(btn, btns.querySelector('.banner-edit-btn:not(.del)'));
+    });
+  }
 }
 
 // ── Render ────────────────────────────────────
