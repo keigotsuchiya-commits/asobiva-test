@@ -1476,18 +1476,19 @@ function downloadHTML() {
     cardsHTML = `  <div class="empty-section"><div class="empty-state"><strong>まだカードがありません</strong></div></div>\n`;
   } else {
     cards.forEach((c, ci) => {
+      const gapClass = c.gap === false || c.gap === 'nogap' ? ' no-gap' : c.gap === 'line' ? ' line-gap' : '';
       if (c.type === 'image') {
         const tag = c.link
           ? `<a class="card" href="${c.link}" target="_blank" rel="noopener"><img src="${c.base64}" alt=""></a>`
           : `<div class="card"><img src="${c.base64}" alt=""></div>`;
-        cardsHTML += `  <div class="card-section">${tag}</div>\n`;
+        cardsHTML += `  <div class="card-section${gapClass}">${tag}</div>\n`;
       } else if (c.type === 'carousel') {
         const dots = c.images.map((_, idx) => `<span class="${idx===0?'active':''}"></span>`).join('');
         const imgsJson = JSON.stringify(c.images).replace(/"/g, '&quot;');
-        cardsHTML += `  <div class="card-section"><div class="carousel-card" data-images="${imgsJson}" data-index="0" onclick="cyclerCarousel(this)"><img src="${c.images[0]}" alt="">${c.images.length > 1 ? `<div class="carousel-dots">${dots}</div><div class="carousel-count">1 / ${c.images.length}</div>` : ''}</div></div>\n`;
+        cardsHTML += `  <div class="card-section${gapClass}"><div class="carousel-card" data-images="${imgsJson}" data-index="0" onclick="cyclerCarousel(this)"><img src="${c.images[0]}" alt="">${c.images.length > 1 ? `<div class="carousel-dots">${dots}</div><div class="carousel-count">1 / ${c.images.length}</div>` : ''}</div></div>\n`;
       } else {
         const escaped = injectAutoResize(c.html).replace(/"/g, '&quot;');
-        cardsHTML += `  <div class="card-section"><div class="html-card"><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:60px" scrolling="no" onload="try{var h=this.contentDocument.documentElement.scrollHeight||this.contentDocument.body.scrollHeight;if(h>0)this.style.height=h+'px';}catch(e){}"></iframe></div></div>\n`;
+        cardsHTML += `  <div class="card-section${gapClass}"><div class="html-card"><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:60px" scrolling="no" onload="try{var h=this.contentDocument.documentElement.scrollHeight||this.contentDocument.body.scrollHeight;if(h>0)this.style.height=h+'px';}catch(e){}"></iframe></div></div>\n`;
       }
     });
   }
@@ -1504,6 +1505,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .banner-slot img { width:100%; height:auto; display:block; }
 .slot-label { font-size:10px; letter-spacing:0.12em; color:#ccc; }
 .card-section { background: var(--bg); padding-top:10px; }
+.card-section.no-gap { background: var(--white); padding-top:0; }
+.card-section.line-gap { background: var(--white); padding-top:0; border-top:1px solid var(--ink); }
 .card { width:100%; display:block; text-decoration:none; background:var(--white); overflow:hidden; }
 .card img { width:100%; height:auto; display:block; }
 .html-card { width:100%; position:relative; background:var(--white); overflow:hidden; }
@@ -1518,8 +1521,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .empty-state { padding:60px 24px; text-align:center; color:var(--ink-soft); font-size:13px; line-height:2; background:var(--white); }
 .empty-state strong { display:block; font-size:14px; font-weight:600; color:var(--ink); margin-bottom:6px; }
 .footer-section { background: var(--bg); padding-top:10px; }
+.footer-section.no-gap { padding-top:0; }
 footer { padding:28px 16px; text-align:center; font-size:10px; letter-spacing:0.1em; color:var(--ink-soft); background:var(--white); }
 `;
+
+  const footerText = document.getElementById('footerText')?.textContent || 'ASOBIVA — i.roiro';
+  const footerNoGap = document.getElementById('footerSection')?.classList.contains('no-gap');
+  const footerGapClass = footerNoGap ? ' no-gap' : '';
 
   const html = `<!DOCTYPE html>
 <html lang="ja">
@@ -1534,12 +1542,8 @@ footer { padding:28px 16px; text-align:center; font-size:10px; letter-spacing:0.
   <div class="site-header"><a href="asobiva.html" class="back-link">← トップへ戻る</a></div>
   <div class="header-pair">
 ${headerHTML}  </div>
-${cardsHTML}  <div class="footer-section" id="footerSection">
-    <footer>
-      <span id="footerText">ASOBIVA — i.roiro</span>
-      <button class="footer-edit-btn" onclick="openFooterEditor()">編集</button>
-      <button class="footer-gap-btn" id="footerGapBtn" onclick="toggleFooterGap()">隙間あり</button>
-    </footer>
+${cardsHTML}  <div class="footer-section${footerGapClass}">
+    <footer>${footerText}</footer>
   </div>
 </div>
 <scr` + `ipt>
