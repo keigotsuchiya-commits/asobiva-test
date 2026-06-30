@@ -316,6 +316,37 @@ body.admin-mode .banner-count { display: block; }
   background: var(--white);
   padding-top: 0;
 }
+.card-section.line-gap {
+  background: var(--white);
+  padding-top: 0;
+  border-top: 1px solid var(--ink);
+}
+.card-gap-btn {
+  display: none;
+  position: absolute;
+  bottom: 10px; left: 10px;
+  height: 28px;
+  padding: 0 10px;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.card-gap-btn:hover { background: rgba(0,0,0,0.75); }
+body.admin-mode .card-gap-btn { display: flex; }
+.card-section.no-gap {
+  background: var(--white);
+  padding-top: 0;
+}
 .card-gap-btn {
   display: none;
   position: absolute;
@@ -1476,6 +1507,20 @@ async function toggleGap(id) {
   const c = cards.find(c => c.id === id);
   if (!c) return;
   c.gap = c.gap === false ? true : false;
+  await dbOp('cards', 'readwrite', s => s.put({
+    id: c.id, type: c.type, html: c.html, base64: c.base64,
+    images: c.images, name: c.name, link: c.link, gap: c.gap
+  }));
+  render();
+}
+
+// ── Gap toggle ────────────────────────────────
+async function toggleGap(id) {
+  const c = cards.find(c => c.id === id);
+  if (!c) return;
+  if (c.gap === true || c.gap === undefined) c.gap = 'line';
+  else if (c.gap === 'line') c.gap = false;
+  else c.gap = true;
   await dbOp('cards', 'readwrite', s => s.put({
     id: c.id, type: c.type, html: c.html, base64: c.base64,
     images: c.images, name: c.name, link: c.link, gap: c.gap
