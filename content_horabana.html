@@ -1503,17 +1503,6 @@ async function replaceCard(id, file) {
 }
 
 // ── Gap toggle ────────────────────────────────
-async function toggleGap(id) {
-  const c = cards.find(c => c.id === id);
-  if (!c) return;
-  c.gap = c.gap === false ? true : false;
-  await dbOp('cards', 'readwrite', s => s.put({
-    id: c.id, type: c.type, html: c.html, base64: c.base64,
-    images: c.images, name: c.name, link: c.link, gap: c.gap
-  }));
-  render();
-}
-
 // ── Gap toggle ────────────────────────────────
 async function toggleGap(id) {
   const c = cards.find(c => c.id === id);
