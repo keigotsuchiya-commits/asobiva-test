@@ -1056,7 +1056,8 @@ function render() {
 
   cards.forEach(c => {
     const sec = document.createElement('div');
-    sec.className = 'card-section' + (c.gap === false ? ' no-gap' : '');
+    const gapClass = c.gap === false || c.gap === 'nogap' ? ' no-gap' : c.gap === 'line' ? ' line-gap' : '';
+    sec.className = 'card-section' + gapClass;
 
     let wrap, replaceAccept, supportsReplace = true;
 
