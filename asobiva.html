@@ -1376,8 +1376,10 @@ function downloadHTML() {
   // banner blocks
   let headerHTML = '';
   [1, 2].forEach(slot => {
-    if (banners[slot]) {
-      headerHTML += `    <div class="banner-slot"><img src="${banners[slot]}" alt=""></div>\n`;
+    const imgs = banners[slot];
+    if (imgs && imgs.length > 0) {
+      const b64 = imgs.length === 1 ? imgs[0] : imgs[Math.floor(Math.random() * imgs.length)];
+      headerHTML += `    <div class="banner-slot"><img src="${b64}" alt=""></div>\n`;
     } else {
       headerHTML += `    <div class="banner-slot"><span class="slot-label">HEADER ${slot}</span></div>\n`;
     }
