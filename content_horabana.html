@@ -1170,7 +1170,8 @@ function render() {
 
     const gapBtn = document.createElement('button');
     gapBtn.className = 'card-gap-btn';
-    gapBtn.textContent = c.gap === false ? '隙間なし' : '隙間あり';
+    const gapLabels = { true: '隙間あり', false: '隙間なし', nogap: '隙間なし', line: 'ライン' };
+    gapBtn.textContent = gapLabels[c.gap] ?? '隙間あり';
     gapBtn.addEventListener('click', e => {
       e.preventDefault(); e.stopPropagation();
       toggleGap(c.id);
