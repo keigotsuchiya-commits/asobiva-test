@@ -20,6 +20,9 @@
     color:var(--ink);
     padding:16px;
   }
+  @media (max-width: 899px){
+    body{ padding:16px 0 0; }
+  }
   h1{
     font-size:16px;
     margin:0 0 4px;
@@ -119,6 +122,17 @@
     width:100%;
     max-width:520px;
     margin:0 auto;
+  }
+  @media (max-width: 899px){
+    .preview-pane{
+      padding:0;
+      border:none;
+      border-radius:0;
+      background:transparent;
+    }
+    .preview-frame{
+      max-width:100%;
+    }
   }
   /* ラッパー：コンテナ幅の基準点 */
   .zukan-card-wrap{
@@ -340,7 +354,7 @@
     }
     .zukan-card .zc-image{
       width:100%;
-      aspect-ratio:4/3;
+      aspect-ratio:1/1;
       border-width:1px;
     }
     .zukan-card .zc-image .zc-fig{ font-size:9px; bottom:6px; }
@@ -656,7 +670,7 @@ const CARD_CSS = `
 .zukan-card .zc-badge{font-size:10px;padding:4px 8px;border-width:1px;}
 .zukan-card .zc-badge b{font-size:12px;}
 .zukan-card .zc-body{flex-direction:column;gap:14px;}
-.zukan-card .zc-image{width:100%;aspect-ratio:4/3;border-width:1px;}
+.zukan-card .zc-image{width:100%;aspect-ratio:1/1;border-width:1px;}
 .zukan-card .zc-image .zc-fig{font-size:9px;bottom:6px;}
 .zukan-card .zc-info{font-size:13px;line-height:1.8;grid-template-columns:5.5em 1fr;column-gap:10px;}
 .zukan-card .zc-info dt{font-size:11px;white-space:normal;}
