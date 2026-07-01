@@ -749,7 +749,7 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
         <div class="burger-menu-divider"></div>
         <button class="burger-menu-item" id="adminBtn" onclick="toggleAdmin()">管理</button>
         <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
-        <button class="burger-menu-item admin-only" onclick="downloadHTML(); closeBurgerMenu()">公開用保存</button>
+        <button class="burger-menu-item admin-only" id="downloadHtmlBtn" onclick="handleDownloadClick()">公開用保存</button>
       </div>
     </div>
   </div>
@@ -1585,10 +1585,48 @@ async function deleteCard(id) {
 }
 
 // ── HTMLとして保存（静的スナップショット） ─────────
-function downloadHTML() {
+// ── 画像圧縮（公開用保存時のみ使用） ─────────────
+function compressImage(base64) {
+  return new Promise((res) => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX_W = 1200;
+      let w = img.width, h = img.height;
+      if (w > MAX_W) { h = Math.round(h * (MAX_W / w)); w = MAX_W; }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      const isPng = base64.startsWith('data:image/png');
+      const mime = isPng ? 'image/png' : 'image/jpeg';
+      const quality = isPng ? undefined : 0.8;
+      res(canvas.toDataURL(mime, quality));
+    };
+    img.onerror = () => res(base64);
+    img.src = base64;
+  });
+}
+
+async function handleDownloadClick() {
+  const btn = document.getElementById('downloadHtmlBtn');
+  if (btn) {
+    const original = btn.textContent;
+    btn.textContent = '圧縮中…';
+    btn.style.pointerEvents = 'none';
+    await downloadHTML();
+    btn.textContent = original;
+    btn.style.pointerEvents = '';
+  } else {
+    await downloadHTML();
+  }
+  closeBurgerMenu();
+}
+
+async function downloadHTML() {
   let headerHTML;
   if (banners[1]) {
-    headerHTML = `    <div class="banner-slot"><img src="${banners[1]}" alt=""></div>\n`;
+    const b64 = await compressImage(banners[1]);
+    headerHTML = `    <div class="banner-slot"><img src="${b64}" alt=""></div>\n`;
   } else {
     headerHTML = `    <div class="banner-slot"><span class="slot-label">HEADER</span></div>\n`;
   }
@@ -1597,25 +1635,28 @@ function downloadHTML() {
   if (cards.length === 0) {
     cardsHTML = `  <div class="empty-section"><div class="empty-state"><strong>まだゲーム／カードがありません</strong></div></div>\n`;
   } else {
-    cards.forEach((c) => {
+    for (const c of cards) {
       const gapClass = c.gap === false ? ' no-gap' : '';
       if (c.type === 'game') {
         const escaped = c.html.replace(/"/g, '&quot;');
         cardsHTML += `  <div class="card-section${gapClass}"><div class="game-card"><div class="game-card-frame-wrap"><iframe srcdoc="${escaped}" sandbox="allow-scripts allow-same-origin" width="${CARD_ASPECT_W}" height="${CARD_ASPECT_H}"></iframe><div class="game-card-tap" onclick="openFullscreenGameStatic(this)" data-html="${escaped}"></div></div></div></div>\n`;
       } else if (c.type === 'image') {
+        const compressedB64 = await compressImage(c.base64);
         const tag = c.link
-          ? `<a class="card" href="${c.link}" target="_blank" rel="noopener"><img src="${c.base64}" alt=""></a>`
-          : `<div class="card"><img src="${c.base64}" alt=""></div>`;
+          ? `<a class="card" href="${c.link}" target="_blank" rel="noopener"><img src="${compressedB64}" alt=""></a>`
+          : `<div class="card"><img src="${compressedB64}" alt=""></div>`;
         cardsHTML += `  <div class="card-section${gapClass}">${tag}</div>\n`;
       } else if (c.type === 'carousel') {
-        const dots = c.images.map((_, idx) => `<span class="${idx===0?'active':''}"></span>`).join('');
-        const imgsJson = JSON.stringify(c.images).replace(/"/g, '&quot;');
-        cardsHTML += `  <div class="card-section${gapClass}"><div class="carousel-card" data-images="${imgsJson}" data-index="0" onclick="cyclerCarousel(this)"><img src="${c.images[0]}" alt="">${c.images.length > 1 ? `<div class="carousel-dots">${dots}</div><div class="carousel-count">1 / ${c.images.length}</div>` : ''}</div></div>\n`;
+        const compressedImgs = [];
+        for (const im of c.images) compressedImgs.push(await compressImage(im));
+        const dots = compressedImgs.map((_, idx) => `<span class="${idx===0?'active':''}"></span>`).join('');
+        const imgsJson = JSON.stringify(compressedImgs).replace(/"/g, '&quot;');
+        cardsHTML += `  <div class="card-section${gapClass}"><div class="carousel-card" data-images="${imgsJson}" data-index="0" onclick="cyclerCarousel(this)"><img src="${compressedImgs[0]}" alt="">${compressedImgs.length > 1 ? `<div class="carousel-dots">${dots}</div><div class="carousel-count">1 / ${compressedImgs.length}</div>` : ''}</div></div>\n`;
       } else {
         const escaped = injectAutoResize(c.html).replace(/"/g, '&quot;');
         cardsHTML += `  <div class="card-section${gapClass}"><div class="html-card"><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:60px" scrolling="no" onload="try{var h=this.contentDocument.documentElement.scrollHeight||this.contentDocument.body.scrollHeight;if(h>0)this.style.height=h+'px';}catch(e){}"></iframe></div></div>\n`;
       }
-    });
+    }
   }
 
   const staticCSS = `
