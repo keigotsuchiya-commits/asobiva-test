@@ -366,7 +366,7 @@ function onImageFile(key, input) {
     const thumb = document.getElementById('thumb-' + key);
     thumb.innerHTML = `<img src="${reader.result}">`;
     document.getElementById('clear-' + key).classList.remove('hidden');
-    updatePreview();
+    updatePreview(true);
   };
   reader.readAsDataURL(file);
 }
@@ -382,7 +382,7 @@ function clearImage(key) {
     thumb.innerHTML = `<div class="dot-fallback" style="background-image:repeating-conic-gradient(${colors[key]} 0% 25%, transparent 0% 50%)"></div>`;
   }
   document.getElementById('clear-' + key).classList.add('hidden');
-  updatePreview();
+  updatePreview(true);
 }
 
 // ── Color presets ──────────────────────────────
@@ -446,23 +446,54 @@ function buildConfig() {
   };
 }
 
-// ── Live preview: send config into the iframe via postMessage ──
-function updatePreview() {
+// ── ステータス表示 ──────────────────────────────
+function showStatus(msg, duration = 2500) {
+  const el = document.getElementById('saveStatus');
+  el.textContent = msg;
+  setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, duration);
+}
+
+// ── Live preview ──────────────────────────────
+// 色・フォント: postMessageでリアルタイム反映
+// 画像: IndexedDBに保存 → iframe を作り直してリロード
+async function updatePreview(reloadForImages = false) {
   const iframe = document.getElementById('previewFrame');
   const cfg = buildConfig();
-  try {
-    iframe.contentWindow.postMessage({ type: 'asobiva-visual-config', config: cfg }, '*');
-  } catch (e) {
-    // ignore — preview will catch up once IndexedDB is saved and reloaded
+  if (reloadForImages) {
+    showStatus('画像を保存中...', 10000);
+    try {
+      await saveToDB(cfg);
+    } catch(e) {
+      showStatus('保存に失敗しました');
+      return;
+    }
+    showStatus('プレビューを更新中...');
+    // 絶対URLを事前計算してからsrcを直接書き換える
+    const absoluteSrc = new URL('invader_demo.html', window.location.href).href
+      .split('?')[0];  // 既存のクエリパラメータを除去
+    iframe.src = absoluteSrc + '?v=' + Date.now();
+  } else {
+    try {
+      iframe.contentWindow.postMessage({ type: 'asobiva-visual-config', config: cfg }, '*');
+    } catch (e) {}
   }
 }
 
 document.getElementById('previewFrame').addEventListener('load', () => {
-  setTimeout(updatePreview, 200);
+  // iframeがリロードされた後、DBから設定を読み込むまで少し待ってからpostMessage
+  setTimeout(() => {
+    const cfg = buildConfig();
+    try {
+      document.getElementById('previewFrame').contentWindow.postMessage(
+        { type: 'asobiva-visual-config', config: cfg }, '*'
+      );
+    } catch(e) {}
+    showStatus('');
+  }, 600);
 });
 
 document.querySelectorAll('[data-key]').forEach(el => {
-  el.addEventListener('input', updatePreview);
+  el.addEventListener('input', () => updatePreview(false));
 });
 
 // ── Save / Reset ──────────────────────────────

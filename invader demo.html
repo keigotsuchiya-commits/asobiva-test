@@ -298,19 +298,20 @@ async function applyVisualConfig(cfg) {
     Object.assign(PAL, cfg.palette);
   }
 
-  // フォント上書き（HUD/ボタン/オーバーレイ全体に適用）
+  // フォント上書き
   if (cfg.fontFamily) {
     document.documentElement.style.setProperty('--game-font', cfg.fontFamily);
     document.body.style.fontFamily = cfg.fontFamily;
   }
 
-  // 画像読み込み
+  // 画像読み込み（imagesフィールドが存在しない場合も安全に処理）
+  const imgs = cfg.images || {};
   const [playerImg, e0Img, e1Img, e2Img, bgImg] = await Promise.all([
-    loadImage(cfg.images?.player),
-    loadImage(cfg.images?.e0),
-    loadImage(cfg.images?.e1),
-    loadImage(cfg.images?.e2),
-    loadImage(cfg.images?.bg),
+    loadImage(imgs.player || null),
+    loadImage(imgs.e0 || null),
+    loadImage(imgs.e1 || null),
+    loadImage(imgs.e2 || null),
+    loadImage(imgs.bg || null),
   ]);
   visualImages.player = playerImg;
   visualImages.e0 = e0Img;
