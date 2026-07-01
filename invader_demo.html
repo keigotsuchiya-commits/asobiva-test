@@ -16,9 +16,9 @@
 
   html, body {
     height: 100%;
-    background: #1a1a2e;
+    background: #000018;
     overflow: hidden;
-    font-family: 'Press Start 2P', monospace;
+    font-family: var(--game-font, 'Press Start 2P'), monospace;
   }
 
   #wrap {
@@ -28,7 +28,7 @@
     width: 100%;
     align-items: center;
     justify-content: center;
-    background: #1a1a2e;
+    background: #000018;
   }
 
   #hud {
@@ -45,15 +45,15 @@
   }
 
   #hud .lives {
-    color: #fc5c5c;
+    color: #d82800;
   }
 
   canvas {
-    background: #1a1a2e;
+    background: #000018;
     display: block;
     image-rendering: pixelated;
-    border-top: 3px solid #3a3a5c;
-    border-bottom: 3px solid #3a3a5c;
+    border-top: 3px solid #18183a;
+    border-bottom: 3px solid #18183a;
     max-width: 100%;
   }
 
@@ -72,10 +72,10 @@
     height: 74px;
     border-radius: 6px;
     border: 3px solid #f8f8f8;
-    background: #2a2a4a;
+    background: #181830;
     color: #f8f8f8;
     font-size: 22px;
-    font-family: 'Press Start 2P', monospace;
+    font-family: var(--game-font, 'Press Start 2P'), monospace;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -84,7 +84,7 @@
 
   .btn:active, .btn.active {
     background: #f8f8f8;
-    color: #1a1a2e;
+    color: #000018;
     transform: scale(0.95);
   }
 
@@ -92,11 +92,11 @@
     width: 74px;
     height: 74px;
     border-radius: 50%;
-    border: 3px solid #fc5c5c;
-    background: #3a1a2a;
-    color: #fc5c5c;
+    border: 3px solid #d82800;
+    background: #200010;
+    color: #d82800;
     font-size: 9px;
-    font-family: 'Press Start 2P', monospace;
+    font-family: var(--game-font, 'Press Start 2P'), monospace;
     font-weight: bold;
     display: flex;
     align-items: center;
@@ -104,8 +104,8 @@
   }
 
   #fireBtn:active, #fireBtn.active {
-    background: #fc5c5c;
-    color: #1a1a2e;
+    background: #d82800;
+    color: #000018;
     transform: scale(0.95);
   }
 
@@ -117,7 +117,7 @@
   #overlay {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(10,10,30,0.94);
+    background: rgba(0,0,20,0.94);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -131,13 +131,13 @@
   #overlay h1 {
     font-size: 22px;
     letter-spacing: 3px;
-    color: #fcfc54;
+    color: #d8a800;
     margin-bottom: 10px;
-    text-shadow: 3px 3px 0 #8c8c00;
+    text-shadow: 3px 3px 0 #5a4400;
   }
 
   #overlay .sub {
-    color: #aaaacc;
+    color: #686880;
     font-size: 8px;
     letter-spacing: 2px;
     margin-bottom: 32px;
@@ -150,26 +150,26 @@
   }
 
   #overlay .score {
-    color: #fcfc54;
+    color: #d8a800;
     font-size: 11px;
     margin-bottom: 28px;
   }
 
   #startBtn {
     border: 3px solid #f8f8f8;
-    color: #1a1a2e;
+    color: #000018;
     background: #f8f8f8;
     padding: 12px 28px;
     font-size: 11px;
     letter-spacing: 2px;
-    font-family: 'Press Start 2P', monospace;
+    font-family: var(--game-font, 'Press Start 2P'), monospace;
     border-radius: 4px;
   }
 
   #startBtn:active {
-    background: #fcfc54;
-    border-color: #fcfc54;
-    color: #1a1a2e;
+    background: #d8a800;
+    border-color: #d8a800;
+    color: #000018;
   }
 
   /* Demo strip */
@@ -185,23 +185,23 @@
   }
 
   #demoBadge {
-    color: #fcfc54;
+    color: #d8a800;
     font-size: 9px;
     letter-spacing: 2px;
-    border: 2px solid #fcfc54;
+    border: 2px solid #d8a800;
     padding: 4px 12px;
     border-radius: 3px;
-    background: rgba(10,10,30,0.8);
+    background: rgba(0,0,20,0.8);
     animation: blink 1.4s infinite;
-    font-family: 'Press Start 2P', monospace;
+    font-family: var(--game-font, 'Press Start 2P'), monospace;
   }
 
   #tapHint {
-    color: #aaaacc;
+    color: #686880;
     font-size: 8px;
     letter-spacing: 1px;
     animation: blink 1.4s infinite;
-    font-family: 'Press Start 2P', monospace;
+    font-family: var(--game-font, 'Press Start 2P'), monospace;
   }
 
   @keyframes blink {
@@ -246,6 +246,80 @@
 <script>
 window.ASOBIVA_GAME = true;
 
+// ══════════════════════════════════════════════════════════════════
+// ビジュアル設定の読み込み（invader_generator.html で作成・保存した設定）
+// ══════════════════════════════════════════════════════════════════
+const VISUAL_DB_NAME = 'asobiva_invader_visual_v1';
+const VISUAL_STORE = 'config';
+let visualConfig = null; // ロード後にここへ入る
+
+function openVisualDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(VISUAL_DB_NAME, 1);
+    req.onupgradeneeded = () => {
+      req.result.createObjectStore(VISUAL_STORE);
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function loadVisualConfig() {
+  return new Promise((resolve) => {
+    openVisualDB().then(db => {
+      const tx = db.transaction(VISUAL_STORE, 'readonly');
+      const store = tx.objectStore(VISUAL_STORE);
+      const req = store.get('current');
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => resolve(null);
+    }).catch(() => resolve(null));
+  });
+}
+
+// 画像はロード後に Image オブジェクトとして使う
+const visualImages = { player: null, e0: null, e1: null, e2: null, bg: null };
+
+function loadImage(base64) {
+  return new Promise((resolve) => {
+    if (!base64) { resolve(null); return; }
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = base64;
+  });
+}
+
+async function applyVisualConfig(cfg) {
+  if (!cfg) return;
+  visualConfig = cfg;
+
+  // パレット上書き
+  if (cfg.palette) {
+    Object.assign(PAL, cfg.palette);
+  }
+
+  // フォント上書き
+  if (cfg.fontFamily) {
+    document.documentElement.style.setProperty('--game-font', cfg.fontFamily);
+    document.body.style.fontFamily = cfg.fontFamily;
+  }
+
+  // 画像読み込み（imagesフィールドが存在しない場合も安全に処理）
+  const imgs = cfg.images || {};
+  const [playerImg, e0Img, e1Img, e2Img, bgImg] = await Promise.all([
+    loadImage(imgs.player || null),
+    loadImage(imgs.e0 || null),
+    loadImage(imgs.e1 || null),
+    loadImage(imgs.e2 || null),
+    loadImage(imgs.bg || null),
+  ]);
+  visualImages.player = playerImg;
+  visualImages.e0 = e0Img;
+  visualImages.e1 = e1Img;
+  visualImages.e2 = e2Img;
+  visualImages.bg = bgImg;
+}
+
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 ctx.imageSmoothingEnabled = false;
@@ -258,21 +332,21 @@ const PX = 2;
 
 // ── Famicom-inspired palette
 const PAL = {
-  bg:       '#1a1a2e',
-  star:     '#3a3a6a',
-  starBr:   '#8888cc',
-  ground:   '#3a3a5c',
-  player:   '#54fc54',    // green
-  playerOut:'#006600',
+  bg:       '#000018',
+  star:     '#181828',
+  starBr:   '#5858a8',
+  ground:   '#18183a',
+  player:   '#56b400',    // green
+  playerOut:'#2c5a00',
   bullet:   '#f8f8f8',
-  eBullet:  '#fc5c5c',
-  e0:       '#fc5c5c',    // red — top row
-  e0Out:    '#800000',
-  e1:       '#fcfc54',    // yellow — mid rows
-  e1Out:    '#808000',
-  e2:       '#54bcfc',    // light blue — bottom rows
+  eBullet:  '#d82800',
+  e0:       '#d82800',    // red — top row
+  e0Out:    '#5a1000',
+  e1:       '#d8a800',    // yellow — mid rows
+  e1Out:    '#5a4400',
+  e2:       '#0078f8',    // light blue — bottom rows
   e2Out:    '#005080',
-  explode:  ['#fcfc54','#fc5c5c','#f8f8f8'],
+  explode:  ['#d8a800','#d82800','#f8f8f8'],
   hudTxt:   '#f8f8f8',
 };
 
@@ -339,6 +413,11 @@ const PLAYER_SPRITE = [
 ];
 
 function drawPlayer() {
+  // 画像が設定されていればそれを優先描画
+  if (visualImages.player) {
+    ctx.drawImage(visualImages.player, Math.round(player.x), Math.round(player.y), player.w, player.h);
+    return;
+  }
   const s = PLAYER_SPRITE;
   for (let r = 0; r < s.length; r++) {
     for (let c = 0; c < s[r].length; c++) {
@@ -425,8 +504,15 @@ const ENEMY2B = [
 
 const ENEMY_SPRITES = [[ENEMY0A,ENEMY0B],[ENEMY1A,ENEMY1B],[ENEMY2A,ENEMY2B]];
 const ENEMY_COLS_W =  [9, 8, 8];
-const ENEMY_COLORS = [PAL.e0, PAL.e1, PAL.e2];
-const ENEMY_OUTLINES= [PAL.e0Out, PAL.e1Out, PAL.e2Out];
+// 注意: PAL は後からビジュアル設定で書き換わるため、配列に値をスナップショット
+// せず、毎回 PAL から直接読む関数にしている（スナップショットだと設定変更が
+// 反映されないバグになるため）
+function enemyColor(type) {
+  return [PAL.e0, PAL.e1, PAL.e2][type];
+}
+function enemyOutline(type) {
+  return [PAL.e0Out, PAL.e1Out, PAL.e2Out][type];
+}
 
 function drawSprite(sprite, x, y, color, outline) {
   const rows = sprite.length;
@@ -451,10 +537,15 @@ function drawSprite(sprite, x, y, color, outline) {
 
 function drawEnemy(e) {
   if (!e.alive) return;
+  const imgKey = 'e' + e.type;
+  if (visualImages[imgKey]) {
+    ctx.drawImage(visualImages[imgKey], Math.round(e.x), Math.round(e.y), e.w, e.h);
+    return;
+  }
   const animFrame = Math.floor(frame / 16) % 2;
   const sprites = ENEMY_SPRITES[e.type];
   const sprite = sprites[animFrame];
-  drawSprite(sprite, e.x, e.y, ENEMY_COLORS[e.type], ENEMY_OUTLINES[e.type]);
+  drawSprite(sprite, e.x, e.y, enemyColor(e.type), enemyOutline(e.type));
 }
 
 function drawBullet(b, color) {
@@ -635,7 +726,11 @@ function update() {
 function render() {
   ctx.fillStyle = PAL.bg;
   ctx.fillRect(0, 0, W, H);
-  drawStars();
+  if (visualImages.bg) {
+    ctx.drawImage(visualImages.bg, 0, 0, W, H);
+  } else {
+    drawStars();
+  }
   drawGround();
   drawPlayer();
   enemies.forEach(drawEnemy);
@@ -660,7 +755,7 @@ function endGame(won) {
   const msg = document.getElementById('overlayMsg');
   const finalScore = document.getElementById('finalScore');
   msg.textContent = won ? 'YOU WIN!' : 'GAME OVER';
-  msg.style.color = won ? '#54fc54' : '#fc5c5c';
+  msg.style.color = won ? '#56b400' : '#d82800';
   finalScore.textContent = 'SCORE: ' + String(score).padStart(4,'0');
   finalScore.classList.remove('hidden');
   document.getElementById('startBtn').textContent = 'RETRY';
@@ -705,6 +800,7 @@ function exitDemoIfActive() {
 window.exitDemoIfActive = exitDemoIfActive;
 window.addEventListener('message', e => {
   if (e.data && e.data.type === 'asobiva-start-play') exitDemoIfActive();
+  if (e.data && e.data.type === 'asobiva-visual-config') applyVisualConfig(e.data.config);
 });
 
 bindHold(leftBtn, () => { exitDemoIfActive(); player.movingLeft = true; }, () => player.movingLeft = false);
@@ -726,12 +822,16 @@ document.addEventListener('keyup', e => {
 });
 
 // ── Init
-initEnemies();
-updateHUD();
-resetGame();
-gameRunning = true;
-document.getElementById('demoStrip').classList.remove('hidden');
-loop();
+(async function init() {
+  const cfg = await loadVisualConfig();
+  if (cfg) await applyVisualConfig(cfg);
+  initEnemies();
+  updateHUD();
+  resetGame();
+  gameRunning = true;
+  document.getElementById('demoStrip').classList.remove('hidden');
+  loop();
+})();
 </script>
 </body>
 </html>
