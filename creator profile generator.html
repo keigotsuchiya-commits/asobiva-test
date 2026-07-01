@@ -6,8 +6,10 @@
 <title>クリエイタープロフィールカード ジェネレーター（HTML出力版）</title>
 <style>
   * { box-sizing: border-box; }
+  html { overflow-x: hidden; }
   body {
     margin: 0;
+    overflow-x: hidden;
     font-family: "Hiragino Sans", "Noto Sans JP", sans-serif;
     background: #f4f4f2;
     color: #111;
@@ -22,14 +24,13 @@
   header p { margin: 6px 0 0; font-size: 12px; color: #bbb; line-height: 1.6; }
 
   .preview-wrap {
-    padding: 16px;
+    padding: 16px 0;
     background: #e5e5e2;
   }
   .preview-frame {
     background: #fff;
-    border: 1px solid #ccc;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
   }
 
   .panel { padding: 16px; }
@@ -92,15 +93,18 @@
   #copyStatus { font-size: 12px; color: #2a7a2a; margin-top: 6px; display:none; }
 
   /* ---- card template (scoped, safe to paste into any page) ----
-     Full-width card whose proportions match the reference design
-     (photo:text ratio, spacing) using container query units (cqw,
-     relative to the card's own rendered width), each wrapped in
-     clamp() so text never shrinks below a readable floor on narrow
-     phones. This keeps the layout proportionally identical to the
-     sample images at any width, without wrapping or oversized gaps. */
+     Proportions measured directly from the reference sample images
+     (960px-wide originals) and converted to cqw so the layout stays
+     visually identical to those samples at any card width, with a
+     clamp() floor so nothing becomes unreadably small on phones. */
   .cc-wrap {
     container-type: inline-size;
-    width: 100%;
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
   }
   .cc-card {
     width: 100%;
@@ -108,41 +112,44 @@
     font-family: "Hiragino Sans", "Noto Sans JP", sans-serif;
     color: #111;
     box-sizing: border-box;
-    padding: clamp(16px, 2.887cqw, 36px) clamp(16px, 3.093cqw, 38px);
+    padding: clamp(16px, 2.9cqw, 34px) clamp(14px, 1.8cqw, 30px);
   }
   .cc-head {
     display: flex; align-items: center;
-    gap: clamp(8px, 1.443cqw, 18px);
-    padding-bottom: clamp(8px, 1.443cqw, 18px);
-    border-bottom: 3px dotted #999;
-    margin-bottom: clamp(14px, 2.268cqw, 28px);
+    gap: clamp(10px, 3.44cqw, 30px);
+    padding-bottom: clamp(8px, 1.67cqw, 16px);
+    background-image: repeating-linear-gradient(to right, #888 0px, #888 3px, transparent 3px, transparent 9px);
+    background-repeat: repeat-x;
+    background-position: left bottom;
+    background-size: 100% 3px;
+    margin-bottom: clamp(9px, 1.56cqw, 15px);
   }
   .cc-bar {
-    width: clamp(6px, 0.825cqw, 10px);
-    height: clamp(24px, 3.093cqw, 40px);
+    width: clamp(6px, 1.46cqw, 15px);
+    height: clamp(26px, 5.63cqw, 56px);
     flex-shrink: 0; background: #111;
   }
-  .cc-category { font-size: clamp(17px, 2.268cqw, 32px); font-weight: 900; letter-spacing: 0.02em; }
-  .cc-body { display: flex; gap: clamp(14px, 2.887cqw, 34px); align-items: flex-start; }
+  .cc-category { font-size: clamp(19px, 3.75cqw, 38px); font-weight: 900; letter-spacing: 0.02em; }
+  .cc-body { display: flex; gap: clamp(12px, 2.19cqw, 24px); align-items: flex-start; }
   .cc-photo {
-    width: clamp(78px, 20.619cqw, 260px);
-    height: clamp(78px, 20.619cqw, 260px);
+    width: clamp(90px, 27.19cqw, 280px);
+    height: clamp(90px, 27.19cqw, 280px);
     aspect-ratio: 1 / 1;
     flex-shrink: 0; background: #eee no-repeat center/cover;
     border: 1px solid #ddd;
     display: flex; align-items: center; justify-content: center;
-    color: #bbb; font-size: clamp(10px, 1.34cqw, 14px);
+    color: #bbb; font-size: clamp(10px, 1.5cqw, 15px);
   }
   .cc-photo.cc-round { border-radius: 14px; overflow: hidden; }
-  .cc-info { flex: 1; min-width: 0; padding-top: clamp(2px, 0.619cqw, 10px); }
+  .cc-info { flex: 1; min-width: 0; padding-top: clamp(2px, 1.0cqw, 10px); }
   .cc-name {
-    font-size: clamp(16px, 2.268cqw, 30px); font-weight: 700;
-    padding-bottom: clamp(6px, 1.031cqw, 14px);
+    font-size: clamp(17px, 3.13cqw, 34px); font-weight: 700;
+    padding-bottom: clamp(3px, 0.5cqw, 7px);
     border-bottom: 2px solid #111;
-    margin-bottom: clamp(10px, 1.649cqw, 22px);
+    margin-bottom: clamp(6px, 1.1cqw, 12px);
   }
-  .cc-name .cc-sep { margin: 0 clamp(6px, 1.031cqw, 14px); font-weight: 400; color: #999; }
-  .cc-comment { font-size: clamp(14px, 1.649cqw, 20px); line-height: 1.7; margin: 0; white-space: pre-wrap; }
+  .cc-name .cc-sep { margin: 0 clamp(6px, 1.04cqw, 14px); font-weight: 400; color: #999; }
+  .cc-comment { font-size: clamp(15px, 3.02cqw, 30px); line-height: 1.65; margin: 0; white-space: pre-wrap; }
 </style>
 </head>
 <body>
@@ -233,7 +240,7 @@
     <h2>出力コード</h2>
     <textarea id="codeOut" readonly></textarea>
     <div id="copyStatus">コピーしました。</div>
-    <div class="hint">「コードを更新」を押すと最新の内容が反映されます。このコードをそのままページのHTMLに貼り付けてください（同じページに複数枚貼る場合はクラス名の重複に注意してください）。</div>
+    <div class="hint">「HTMLで保存」は単体プレビュー確認用です。実際のサイトへの組み込みは「コピー」で出力したコードを、既存ページのHTMLに直接貼り付けてください（同じページに複数枚貼る場合はクラス名の重複に注意してください）。カードは親要素の余白を無視して画面幅いっぱいに広がる仕様です。貼り付け先のページに横スクロールが出る場合は、ページの&lt;body&gt;に overflow-x:hidden を指定してください。</div>
   </div>
 
 </div>
@@ -376,18 +383,18 @@ function buildSnippet() {
 
   const style = `
 <style>
-.${id}.cc-wrap{container-type:inline-size;width:100%;}
-.${id} .cc-card{width:100%;background:#fff;font-family:"Hiragino Sans","Noto Sans JP",sans-serif;color:#111;box-sizing:border-box;padding:clamp(16px,2.887cqw,36px) clamp(16px,3.093cqw,38px);}
-.${id} .cc-head{display:flex;align-items:center;gap:clamp(8px,1.443cqw,18px);padding-bottom:clamp(8px,1.443cqw,18px);border-bottom:3px dotted #999;margin-bottom:clamp(14px,2.268cqw,28px);}
-.${id} .cc-bar{width:clamp(6px,0.825cqw,10px);height:clamp(24px,3.093cqw,40px);flex-shrink:0;background:${accent};}
-.${id} .cc-category{font-size:clamp(17px,2.268cqw,32px);font-weight:900;letter-spacing:0.02em;}
-.${id} .cc-body{display:flex;gap:clamp(14px,2.887cqw,34px);align-items:flex-start;}
-.${id} .cc-photo{width:clamp(78px,20.619cqw,260px);height:clamp(78px,20.619cqw,260px);aspect-ratio:1/1;flex-shrink:0;border:1px solid #ddd;${photoStyle}}
+.${id}.cc-wrap{container-type:inline-size;width:100vw;position:relative;left:50%;right:50%;margin-left:-50vw;margin-right:-50vw;}
+.${id} .cc-card{width:100%;background:#fff;font-family:"Hiragino Sans","Noto Sans JP",sans-serif;color:#111;box-sizing:border-box;padding:clamp(16px,2.9cqw,34px) clamp(14px,1.8cqw,30px);}
+.${id} .cc-head{display:flex;align-items:center;gap:clamp(10px,3.44cqw,30px);padding-bottom:clamp(8px,1.67cqw,16px);background-image:repeating-linear-gradient(to right,#888 0px,#888 3px,transparent 3px,transparent 9px);background-repeat:repeat-x;background-position:left bottom;background-size:100% 3px;margin-bottom:clamp(9px,1.56cqw,15px);}
+.${id} .cc-bar{width:clamp(6px,1.46cqw,15px);height:clamp(26px,5.63cqw,56px);flex-shrink:0;background:${accent};}
+.${id} .cc-category{font-size:clamp(19px,3.75cqw,38px);font-weight:900;letter-spacing:0.02em;}
+.${id} .cc-body{display:flex;gap:clamp(12px,2.19cqw,24px);align-items:flex-start;}
+.${id} .cc-photo{width:clamp(90px,27.19cqw,280px);height:clamp(90px,27.19cqw,280px);aspect-ratio:1/1;flex-shrink:0;border:1px solid #ddd;${photoStyle}}
 .${id} .cc-photo.cc-round{border-radius:14px;overflow:hidden;}
-.${id} .cc-info{flex:1;min-width:0;padding-top:clamp(2px,0.619cqw,10px);}
-.${id} .cc-name{font-size:clamp(16px,2.268cqw,30px);font-weight:700;padding-bottom:clamp(6px,1.031cqw,14px);border-bottom:2px solid ${accent};margin-bottom:clamp(10px,1.649cqw,22px);}
-.${id} .cc-name .cc-sep{margin:0 clamp(6px,1.031cqw,14px);font-weight:400;color:#999;}
-.${id} .cc-comment{font-size:clamp(14px,1.649cqw,20px);line-height:1.7;margin:0;white-space:pre-wrap;}
+.${id} .cc-info{flex:1;min-width:0;padding-top:clamp(2px,1.0cqw,10px);}
+.${id} .cc-name{font-size:clamp(17px,3.13cqw,34px);font-weight:700;padding-bottom:clamp(3px,0.5cqw,7px);border-bottom:2px solid ${accent};margin-bottom:clamp(6px,1.1cqw,12px);}
+.${id} .cc-name .cc-sep{margin:0 clamp(6px,1.04cqw,14px);font-weight:400;color:#999;}
+.${id} .cc-comment{font-size:clamp(15px,3.02cqw,30px);line-height:1.65;margin:0;white-space:pre-wrap;}
 </style>`.trim();
 
   const html = `
@@ -445,7 +452,7 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${escapeHtml(els.nameJp.value)}</title>
 </head>
-<body style="margin:0;padding:24px;background:#f4f4f2;">
+<body style="margin:0;padding:0;background:#fff;">
 ${snippet}
 </body>
 </html>`;
