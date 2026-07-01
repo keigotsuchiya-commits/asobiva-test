@@ -234,25 +234,46 @@
       <input type="file" id="file-player" accept="image/*" onchange="onImageFile('player', this)">
     </div>
     <div class="upload-row">
-      <div class="upload-thumb" id="thumb-e0"><div class="dot-fallback" style="background-image:repeating-conic-gradient(#d82800 0% 25%, transparent 0% 50%)"></div></div>
-      <div class="upload-label">敵キャラ（1列目・赤）</div>
-      <button class="clear-btn hidden" id="clear-e0" onclick="clearImage('e0')">解除</button>
-      <button class="upload-btn" onclick="document.getElementById('file-e0').click()">画像を選ぶ</button>
-      <input type="file" id="file-e0" accept="image/*" onchange="onImageFile('e0', this)">
+      <div class="upload-thumb" id="thumb-e0_0"><div class="dot-fallback" style="background-image:repeating-conic-gradient(#d82800 0% 25%, transparent 0% 50%)"></div></div>
+      <div class="upload-label">敵1列目・フレーム1<div class="desc">赤・必須</div></div>
+      <button class="clear-btn hidden" id="clear-e0_0" onclick="clearImage('e0_0')">解除</button>
+      <button class="upload-btn" onclick="document.getElementById('file-e0_0').click()">選ぶ</button>
+      <input type="file" id="file-e0_0" accept="image/*" onchange="onImageFile('e0_0', this)">
     </div>
     <div class="upload-row">
-      <div class="upload-thumb" id="thumb-e1"><div class="dot-fallback" style="background-image:repeating-conic-gradient(#d8a800 0% 25%, transparent 0% 50%)"></div></div>
-      <div class="upload-label">敵キャラ（2列目・黄）</div>
-      <button class="clear-btn hidden" id="clear-e1" onclick="clearImage('e1')">解除</button>
-      <button class="upload-btn" onclick="document.getElementById('file-e1').click()">画像を選ぶ</button>
-      <input type="file" id="file-e1" accept="image/*" onchange="onImageFile('e1', this)">
+      <div class="upload-thumb" id="thumb-e0_1"><div class="dot-fallback" style="background-image:repeating-conic-gradient(#d82800 0% 25%, transparent 0% 50%)"></div></div>
+      <div class="upload-label">敵1列目・フレーム2<div class="desc">省略時はフレーム1で固定</div></div>
+      <button class="clear-btn hidden" id="clear-e0_1" onclick="clearImage('e0_1')">解除</button>
+      <button class="upload-btn" onclick="document.getElementById('file-e0_1').click()">選ぶ</button>
+      <input type="file" id="file-e0_1" accept="image/*" onchange="onImageFile('e0_1', this)">
     </div>
     <div class="upload-row">
-      <div class="upload-thumb" id="thumb-e2"><div class="dot-fallback" style="background-image:repeating-conic-gradient(#0078f8 0% 25%, transparent 0% 50%)"></div></div>
-      <div class="upload-label">敵キャラ（3〜4列目・青）</div>
-      <button class="clear-btn hidden" id="clear-e2" onclick="clearImage('e2')">解除</button>
-      <button class="upload-btn" onclick="document.getElementById('file-e2').click()">画像を選ぶ</button>
-      <input type="file" id="file-e2" accept="image/*" onchange="onImageFile('e2', this)">
+      <div class="upload-thumb" id="thumb-e1_0"><div class="dot-fallback" style="background-image:repeating-conic-gradient(#d8a800 0% 25%, transparent 0% 50%)"></div></div>
+      <div class="upload-label">敵2列目・フレーム1<div class="desc">黄・必須</div></div>
+      <button class="clear-btn hidden" id="clear-e1_0" onclick="clearImage('e1_0')">解除</button>
+      <button class="upload-btn" onclick="document.getElementById('file-e1_0').click()">選ぶ</button>
+      <input type="file" id="file-e1_0" accept="image/*" onchange="onImageFile('e1_0', this)">
+    </div>
+    <div class="upload-row">
+      <div class="upload-thumb" id="thumb-e1_1"><div class="dot-fallback" style="background-image:repeating-conic-gradient(#d8a800 0% 25%, transparent 0% 50%)"></div></div>
+      <div class="upload-label">敵2列目・フレーム2<div class="desc">省略時はフレーム1で固定</div></div>
+      <button class="clear-btn hidden" id="clear-e1_1" onclick="clearImage('e1_1')">解除</button>
+      <button class="upload-btn" onclick="document.getElementById('file-e1_1').click()">選ぶ</button>
+      <input type="file" id="file-e1_1" accept="image/*" onchange="onImageFile('e1_1', this)">
+    </div>
+    <div class="upload-row">
+      <div class="upload-thumb" id="thumb-e2_0"><div class="dot-fallback" style="background-image:repeating-conic-gradient(#0078f8 0% 25%, transparent 0% 50%)"></div></div>
+      <div class="upload-label">敵3〜4列目・フレーム1<div class="desc">青・必須</div></div>
+      <button class="clear-btn hidden" id="clear-e2_0" onclick="clearImage('e2_0')">解除</button>
+      <button class="upload-btn" onclick="document.getElementById('file-e2_0').click()">選ぶ</button>
+      <input type="file" id="file-e2_0" accept="image/*" onchange="onImageFile('e2_0', this)">
+    </div>
+    <div class="upload-row">
+      <div class="upload-thumb" id="thumb-e2_1"><div class="dot-fallback" style="background-image:repeating-conic-gradient(#0078f8 0% 25%, transparent 0% 50%)"></div></div>
+      <div class="upload-label">敵3〜4列目・フレーム2<div class="desc">省略時はフレーム1で固定</div></div>
+      <button class="clear-btn hidden" id="clear-e2_1" onclick="clearImage('e2_1')">解除</button>
+      <button class="upload-btn" onclick="document.getElementById('file-e2_1').click()">選ぶ</button>
+      <input type="file" id="file-e2_1" accept="image/*" onchange="onImageFile('e2_1', this)">
     </div>
   </div>
 
@@ -314,7 +335,7 @@ const PRESETS = [
   { name: 'サンセット', colors: { bg:'#1a0a2e', ground:'#3a1a4a', player:'#ff8c42', playerOut:'#a04a00', e0:'#ff3864', e1:'#ffba08', e2:'#9d4edd', bullet:'#fff3b0', eBullet:'#ff3864' } },
 ];
 
-let images = { player: null, e0: null, e1: null, e2: null, bg: null };
+let images = { player: null, e0_0: null, e0_1: null, e1_0: null, e1_1: null, e2_0: null, e2_1: null, bg: null };
 let selectedFont = FONTS[0];
 
 function openDB() {
@@ -378,7 +399,7 @@ function clearImage(key) {
     thumb.innerHTML = '';
     thumb.style.background = '#000018';
   } else {
-    const colors = { player: '#56b400', e0: '#d82800', e1: '#d8a800', e2: '#0078f8' };
+    const colors = { player:'#56b400', e0_0:'#d82800', e0_1:'#d82800', e1_0:'#d8a800', e1_1:'#d8a800', e2_0:'#0078f8', e2_1:'#0078f8' };
     thumb.innerHTML = `<div class="dot-fallback" style="background-image:repeating-conic-gradient(${colors[key]} 0% 25%, transparent 0% 50%)"></div>`;
   }
   document.getElementById('clear-' + key).classList.add('hidden');
@@ -450,44 +471,56 @@ function buildConfig() {
 function showStatus(msg, duration = 2500) {
   const el = document.getElementById('saveStatus');
   el.textContent = msg;
-  setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, duration);
+  if (duration > 0) setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, duration);
+}
+
+// ── デバッグログ（画面に直接表示）──────────────────────────────
+function dbg(msg) {
+  const el = document.getElementById('debugLog');
+  if (!el) return;
+  const line = document.createElement('div');
+  line.textContent = new Date().toLocaleTimeString() + ' ' + msg;
+  el.prepend(line);
+  if (el.children.length > 10) el.lastChild.remove();
 }
 
 // ── Live preview ──────────────────────────────
-// 色・フォント: postMessageでリアルタイム反映
-// 画像: IndexedDBに保存 → iframe を作り直してリロード
 async function updatePreview(reloadForImages = false) {
   const iframe = document.getElementById('previewFrame');
   const cfg = buildConfig();
   if (reloadForImages) {
+    dbg('画像保存開始...');
     showStatus('画像を保存中...', 10000);
     try {
       await saveToDB(cfg);
+      dbg('DB保存完了');
     } catch(e) {
+      dbg('DB保存エラー: ' + e);
       showStatus('保存に失敗しました');
       return;
     }
-    showStatus('プレビューを更新中...');
-    // 絶対URLを事前計算してからsrcを直接書き換える
-    const absoluteSrc = new URL('invader_demo.html', window.location.href).href
-      .split('?')[0];  // 既存のクエリパラメータを除去
-    iframe.src = absoluteSrc + '?v=' + Date.now();
+    const absoluteSrc = new URL('invader_demo.html', window.location.href).href.split('?')[0];
+    const newSrc = absoluteSrc + '?v=' + Date.now();
+    dbg('iframe src → ' + newSrc.slice(-40));
+    showStatus('プレビューを更新中...', 0);
+    iframe.src = newSrc;
   } else {
     try {
       iframe.contentWindow.postMessage({ type: 'asobiva-visual-config', config: cfg }, '*');
-    } catch (e) {}
+    } catch (e) { dbg('postMessage error: ' + e); }
   }
 }
 
 document.getElementById('previewFrame').addEventListener('load', () => {
-  // iframeがリロードされた後、DBから設定を読み込むまで少し待ってからpostMessage
+  dbg('iframe load fired, src=' + document.getElementById('previewFrame').src.slice(-30));
   setTimeout(() => {
     const cfg = buildConfig();
     try {
       document.getElementById('previewFrame').contentWindow.postMessage(
         { type: 'asobiva-visual-config', config: cfg }, '*'
       );
-    } catch(e) {}
+      dbg('postMessage sent after reload');
+    } catch(e) { dbg('postMessage failed: ' + e); }
     showStatus('');
   }, 600);
 });

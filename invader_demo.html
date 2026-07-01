@@ -277,7 +277,7 @@ function loadVisualConfig() {
 }
 
 // 画像はロード後に Image オブジェクトとして使う
-const visualImages = { player: null, e0: null, e1: null, e2: null, bg: null };
+const visualImages = { player: null, e0_0: null, e0_1: null, e1_0: null, e1_1: null, e2_0: null, e2_1: null, bg: null };
 
 function loadImage(base64) {
   return new Promise((resolve) => {
@@ -306,17 +306,23 @@ async function applyVisualConfig(cfg) {
 
   // 画像読み込み（imagesフィールドが存在しない場合も安全に処理）
   const imgs = cfg.images || {};
-  const [playerImg, e0Img, e1Img, e2Img, bgImg] = await Promise.all([
+  const [playerImg, e0_0, e0_1, e1_0, e1_1, e2_0, e2_1, bgImg] = await Promise.all([
     loadImage(imgs.player || null),
-    loadImage(imgs.e0 || null),
-    loadImage(imgs.e1 || null),
-    loadImage(imgs.e2 || null),
+    loadImage(imgs.e0_0 || null),
+    loadImage(imgs.e0_1 || null),
+    loadImage(imgs.e1_0 || null),
+    loadImage(imgs.e1_1 || null),
+    loadImage(imgs.e2_0 || null),
+    loadImage(imgs.e2_1 || null),
     loadImage(imgs.bg || null),
   ]);
   visualImages.player = playerImg;
-  visualImages.e0 = e0Img;
-  visualImages.e1 = e1Img;
-  visualImages.e2 = e2Img;
+  visualImages.e0_0 = e0_0;
+  visualImages.e0_1 = e0_1;
+  visualImages.e1_0 = e1_0;
+  visualImages.e1_1 = e1_1;
+  visualImages.e2_0 = e2_0;
+  visualImages.e2_1 = e2_1;
   visualImages.bg = bgImg;
 }
 
@@ -537,12 +543,15 @@ function drawSprite(sprite, x, y, color, outline) {
 
 function drawEnemy(e) {
   if (!e.alive) return;
-  const imgKey = 'e' + e.type;
-  if (visualImages[imgKey]) {
-    ctx.drawImage(visualImages[imgKey], Math.round(e.x), Math.round(e.y), e.w, e.h);
+  const animFrame = Math.floor(frame / 16) % 2;
+  const imgKey = 'e' + e.type + '_' + animFrame;
+  const imgKeyF0 = 'e' + e.type + '_0';
+  // フレーム2がなければフレーム1にフォールバック
+  const img = visualImages[imgKey] || visualImages[imgKeyF0];
+  if (img) {
+    ctx.drawImage(img, Math.round(e.x), Math.round(e.y), e.w, e.h);
     return;
   }
-  const animFrame = Math.floor(frame / 16) % 2;
   const sprites = ENEMY_SPRITES[e.type];
   const sprite = sprites[animFrame];
   drawSprite(sprite, e.x, e.y, enemyColor(e.type), enemyOutline(e.type));
