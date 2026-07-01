@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INVADER ビジュアルジェネレーター</title>
+<style>
+  :root {
+    --ink: #1a1a1a;
+    --ink-soft: #8a8a8a;
+    --border: #e4e4e4;
+    --bg: #fafafa;
+    --white: #ffffff;
+    --accent: #2a6df5;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+  .wrap { max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+
+  header {
+    padding: 16px 18px;
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  header h1 { font-size: 15px; font-weight: 700; letter-spacing: 0.02em; }
+  header .sub { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+
+  /* ── Preview ── */
+  .preview-area {
+    background: #000018;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  #previewFrame {
+    width: 100%;
+    max-width: 320px;
+    aspect-ratio: 320 / 587;
+    border: none;
+    background: #000018;
+  }
+
+  /* ── Sections ── */
+  .section {
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--border);
+    background: var(--white);
+  }
+  .section h2 {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+
+  .upload-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+  }
+  .upload-row:not(:last-child) { border-bottom: 1px solid var(--border); }
+  .upload-thumb {
+    width: 44px; height: 44px;
+    border-radius: 8px;
+    background: #000018;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .upload-thumb img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+  .upload-thumb .dot-fallback {
+    width: 20px; height: 14px;
+    background: repeating-conic-gradient(#56b400 0% 25%, transparent 0% 50%) 0 0/6px 6px;
+  }
+  .upload-label { flex: 1; font-size: 13px; font-weight: 500; }
+  .upload-label .desc { font-size: 11px; color: var(--ink-soft); margin-top: 1px; }
+  .upload-btn {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 7px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--ink);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .upload-btn:active { background: var(--ink); color: var(--white); }
+  .clear-btn {
+    font-size: 10px;
+    color: var(--ink-soft);
+    background: none;
+    border: none;
+    text-decoration: underline;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  input[type=file] { display: none; }
+
+  /* ── Color swatches ── */
+  .color-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .color-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .color-item label { font-size: 11px; color: var(--ink-soft); flex: 1; }
+  .color-item input[type=color] {
+    width: 28px; height: 28px;
+    border: none;
+    border-radius: 6px;
+    overflow: hidden;
+    padding: 0;
+    background: none;
+    cursor: pointer;
+  }
+
+  /* ── Palette presets ── */
+  .preset-row {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    margin-bottom: 14px;
+  }
+  .preset-chip {
+    flex-shrink: 0;
+    padding: 8px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .preset-chip.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+
+  /* ── Font select ── */
+  .font-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .font-option {
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  .font-option.active { border-color: var(--ink); border-width: 2px; background: var(--bg); }
+  .font-option .label { font-size: 10px; color: var(--ink-soft); margin-top: 4px; font-family: -apple-system, sans-serif; }
+
+  /* ── Footer actions ── */
+  footer {
+    padding: 16px 18px 32px;
+    background: var(--white);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .btn-primary {
+    width: 100%;
+    padding: 14px;
+    border-radius: 10px;
+    border: none;
+    background: var(--ink);
+    color: var(--white);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-primary:active { opacity: 0.8; }
+  .btn-secondary {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--white);
+    color: var(--ink-soft);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .save-status {
+    text-align: center;
+    font-size: 12px;
+    color: var(--accent);
+    min-height: 16px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>INVADER ビジュアルジェネレーター</h1>
+    <div class="sub">画像・色・フォントを調整してプレビューで確認できます</div>
+  </header>
+
+  <div class="preview-area">
+    <iframe id="previewFrame" src="invader_demo.html"></iframe>
+  </div>
+
+  <div class="section">
+    <h2>キャラクター画像</h2>
+    <div class="upload-row">
+      <div class="upload-thumb" id="thumb-player"><div class="dot-fallback"></div></div>
+      <div class="upload-label">自機<div class="desc">推奨: 透過PNG・正方形</div></div>
+      <button class="clear-btn hidden" id="clear-player" onclick="clearImage('player')">解除</button>
+      <button class="upload-btn" onclick="document.getElementById('file-player').click()">画像を選ぶ</button>
+      <input type="file" id="file-player" accept="image/*" onchange="onImageFile('player', this)">
+    </div>
+    <div class="upload-row">
+      <div class="upload-thumb" id="thumb-e0"><div class="dot-fallback" style="background-image:repeating-conic-gradient(#d82800 0% 25%, transparent 0% 50%)"></div></div>
+      <div class="upload-label">敵キャラ（1列目・赤）</div>
+      <button class="clear-btn hidden" id="clear-e0" onclick="clearImage('e0')">解除</button>
+      <button class="upload-btn" onclick="document.getElementById('file-e0').click()">画像を選ぶ</button>
+      <input type="file" id="file-e0" accept="image/*" onchange="onImageFile('e0', this)">
+    </div>
+    <div class="upload-row">
+      <div class="upload-thumb" id="thumb-e1"><div class="dot-fallback" style="background-image:repeating-conic-gradient(#d8a800 0% 25%, transparent 0% 50%)"></div></div>
+      <div class="upload-label">敵キャラ（2列目・黄）</div>
+      <button class="clear-btn hidden" id="clear-e1" onclick="clearImage('e1')">解除</button>
+      <button class="upload-btn" onclick="document.getElementById('file-e1').click()">画像を選ぶ</button>
+      <input type="file" id="file-e1" accept="image/*" onchange="onImageFile('e1', this)">
+    </div>
+    <div class="upload-row">
+      <div class="upload-thumb" id="thumb-e2"><div class="dot-fallback" style="background-image:repeating-conic-gradient(#0078f8 0% 25%, transparent 0% 50%)"></div></div>
+      <div class="upload-label">敵キャラ（3〜4列目・青）</div>
+      <button class="clear-btn hidden" id="clear-e2" onclick="clearImage('e2')">解除</button>
+      <button class="upload-btn" onclick="document.getElementById('file-e2').click()">画像を選ぶ</button>
+      <input type="file" id="file-e2" accept="image/*" onchange="onImageFile('e2', this)">
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>背景画像</h2>
+    <div class="upload-row">
+      <div class="upload-thumb" id="thumb-bg" style="background:#000018"></div>
+      <div class="upload-label">背景<div class="desc">未設定の場合は星空パターン</div></div>
+      <button class="clear-btn hidden" id="clear-bg" onclick="clearImage('bg')">解除</button>
+      <button class="upload-btn" onclick="document.getElementById('file-bg').click()">画像を選ぶ</button>
+      <input type="file" id="file-bg" accept="image/*" onchange="onImageFile('bg', this)">
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>カラーパレット</h2>
+    <div class="preset-row" id="presetRow"></div>
+    <div class="color-grid">
+      <div class="color-item"><label>背景</label><input type="color" id="col-bg" data-key="bg" value="#000018"></div>
+      <div class="color-item"><label>地面</label><input type="color" id="col-ground" data-key="ground" value="#18183a"></div>
+      <div class="color-item"><label>自機</label><input type="color" id="col-player" data-key="player" value="#56b400"></div>
+      <div class="color-item"><label>自機・縁</label><input type="color" id="col-playerOut" data-key="playerOut" value="#2c5a00"></div>
+      <div class="color-item"><label>敵1列目</label><input type="color" id="col-e0" data-key="e0" value="#d82800"></div>
+      <div class="color-item"><label>敵2列目</label><input type="color" id="col-e1" data-key="e1" value="#d8a800"></div>
+      <div class="color-item"><label>敵3-4列目</label><input type="color" id="col-e2" data-key="e2" value="#0078f8"></div>
+      <div class="color-item"><label>自機弾</label><input type="color" id="col-bullet" data-key="bullet" value="#f8f8f8"></div>
+      <div class="color-item"><label>敵弾</label><input type="color" id="col-eBullet" data-key="eBullet" value="#d82800"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>フォント</h2>
+    <div class="font-grid" id="fontGrid"></div>
+  </div>
+
+  <footer>
+    <div class="save-status" id="saveStatus"></div>
+    <button class="btn-primary" onclick="saveConfig()">この内容で保存する</button>
+    <button class="btn-secondary" onclick="resetAll()">初期状態に戻す</button>
+  </footer>
+</div>
+
+<script>
+const DB_NAME = 'asobiva_invader_visual_v1';
+const STORE = 'config';
+
+const FONTS = [
+  { name: "Press Start 2P", css: "'Press Start 2P', monospace", gfont: "Press+Start+2P" },
+  { name: "VT323", css: "'VT323', monospace", gfont: "VT323" },
+  { name: "Silkscreen", css: "'Silkscreen', monospace", gfont: "Silkscreen" },
+  { name: "Pixelify Sans", css: "'Pixelify Sans', monospace", gfont: "Pixelify+Sans" },
+  { name: "DotGothic16", css: "'DotGothic16', monospace", gfont: "DotGothic16" },
+];
+
+const PRESETS = [
+  { name: 'ファミコン', colors: { bg:'#000018', ground:'#18183a', player:'#56b400', playerOut:'#2c5a00', e0:'#d82800', e1:'#d8a800', e2:'#0078f8', bullet:'#f8f8f8', eBullet:'#d82800' } },
+  { name: 'ネオン', colors: { bg:'#0a0a12', ground:'#1f2a3a', player:'#39ff7a', playerOut:'#006600', e0:'#ff3366', e1:'#ffd23f', e2:'#6fa8ff', bullet:'#ffffff', eBullet:'#ff3366' } },
+  { name: 'モノクロ', colors: { bg:'#000000', ground:'#333333', player:'#ffffff', playerOut:'#888888', e0:'#cccccc', e1:'#999999', e2:'#666666', bullet:'#ffffff', eBullet:'#cccccc' } },
+  { name: 'サンセット', colors: { bg:'#1a0a2e', ground:'#3a1a4a', player:'#ff8c42', playerOut:'#a04a00', e0:'#ff3864', e1:'#ffba08', e2:'#9d4edd', bullet:'#fff3b0', eBullet:'#ff3864' } },
+];
+
+let images = { player: null, e0: null, e1: null, e2: null, bg: null };
+let selectedFont = FONTS[0];
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(STORE);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function loadExisting() {
+  try {
+    const db = await openDB();
+    const tx = db.transaction(STORE, 'readonly');
+    const store = tx.objectStore(STORE);
+    return await new Promise((resolve) => {
+      const req = store.get('current');
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => resolve(null);
+    });
+  } catch (e) { return null; }
+}
+
+async function saveToDB(cfg) {
+  const db = await openDB();
+  const tx = db.transaction(STORE, 'readwrite');
+  tx.objectStore(STORE).put(cfg, 'current');
+  return new Promise((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function deleteFromDB() {
+  const db = await openDB();
+  const tx = db.transaction(STORE, 'readwrite');
+  tx.objectStore(STORE).delete('current');
+  return new Promise((resolve) => { tx.oncomplete = () => resolve(); });
+}
+
+// ── Image upload ──────────────────────────────
+function onImageFile(key, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    images[key] = reader.result;
+    const thumb = document.getElementById('thumb-' + key);
+    thumb.innerHTML = `<img src="${reader.result}">`;
+    document.getElementById('clear-' + key).classList.remove('hidden');
+    updatePreview(true);
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearImage(key) {
+  images[key] = null;
+  const thumb = document.getElementById('thumb-' + key);
+  if (key === 'bg') {
+    thumb.innerHTML = '';
+    thumb.style.background = '#000018';
+  } else {
+    const colors = { player: '#56b400', e0: '#d82800', e1: '#d8a800', e2: '#0078f8' };
+    thumb.innerHTML = `<div class="dot-fallback" style="background-image:repeating-conic-gradient(${colors[key]} 0% 25%, transparent 0% 50%)"></div>`;
+  }
+  document.getElementById('clear-' + key).classList.add('hidden');
+  updatePreview(true);
+}
+
+// ── Color presets ──────────────────────────────
+function renderPresets() {
+  const row = document.getElementById('presetRow');
+  row.innerHTML = '';
+  PRESETS.forEach((p, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'preset-chip' + (i === 0 ? ' active' : '');
+    chip.textContent = p.name;
+    chip.onclick = () => {
+      document.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      Object.entries(p.colors).forEach(([k, v]) => {
+        const el = document.getElementById('col-' + k);
+        if (el) el.value = v;
+      });
+      updatePreview();
+    };
+    row.appendChild(chip);
+  });
+}
+
+// ── Font options ──────────────────────────────
+function renderFonts() {
+  const grid = document.getElementById('fontGrid');
+  grid.innerHTML = '';
+  FONTS.forEach((f, i) => {
+    const el = document.createElement('div');
+    el.className = 'font-option' + (i === 0 ? ' active' : '');
+    el.style.fontFamily = f.css;
+    el.innerHTML = `DOT INVADER<div class="label">${f.name}</div>`;
+    el.onclick = () => {
+      document.querySelectorAll('.font-option').forEach(o => o.classList.remove('active'));
+      el.classList.add('active');
+      selectedFont = f;
+      updatePreview();
+    };
+    grid.appendChild(el);
+  });
+}
+
+function loadGoogleFonts() {
+  const families = FONTS.map(f => f.gfont).join('&family=');
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = `https://fonts.googleapis.com/css2?family=${families}&display=swap`;
+  document.head.appendChild(link);
+}
+
+// ── Build config object from current UI state ──────────────────────────────
+function buildConfig() {
+  const palette = {};
+  document.querySelectorAll('[data-key]').forEach(el => {
+    palette[el.dataset.key] = el.value;
+  });
+  return {
+    palette,
+    fontFamily: selectedFont.css,
+    images: { ...images },
+  };
+}
+
+// ── ステータス表示 ──────────────────────────────
+function showStatus(msg, duration = 2500) {
+  const el = document.getElementById('saveStatus');
+  el.textContent = msg;
+  setTimeout(() => { if (el.textContent === msg) el.textContent = ''; }, duration);
+}
+
+// ── Live preview ──────────────────────────────
+// 色・フォント: postMessageでリアルタイム反映
+// 画像: IndexedDBに保存 → iframe を作り直してリロード
+async function updatePreview(reloadForImages = false) {
+  const iframe = document.getElementById('previewFrame');
+  const cfg = buildConfig();
+  if (reloadForImages) {
+    showStatus('画像を保存中...', 10000);
+    try {
+      await saveToDB(cfg);
+    } catch(e) {
+      showStatus('保存に失敗しました');
+      return;
+    }
+    showStatus('プレビューを更新中...');
+    // 絶対URLを事前計算してからsrcを直接書き換える
+    const absoluteSrc = new URL('invader_demo.html', window.location.href).href
+      .split('?')[0];  // 既存のクエリパラメータを除去
+    iframe.src = absoluteSrc + '?v=' + Date.now();
+  } else {
+    try {
+      iframe.contentWindow.postMessage({ type: 'asobiva-visual-config', config: cfg }, '*');
+    } catch (e) {}
+  }
+}
+
+document.getElementById('previewFrame').addEventListener('load', () => {
+  // iframeがリロードされた後、DBから設定を読み込むまで少し待ってからpostMessage
+  setTimeout(() => {
+    const cfg = buildConfig();
+    try {
+      document.getElementById('previewFrame').contentWindow.postMessage(
+        { type: 'asobiva-visual-config', config: cfg }, '*'
+      );
+    } catch(e) {}
+    showStatus('');
+  }, 600);
+});
+
+document.querySelectorAll('[data-key]').forEach(el => {
+  el.addEventListener('input', () => updatePreview(false));
+});
+
+// ── Save / Reset ──────────────────────────────
+async function saveConfig() {
+  const cfg = buildConfig();
+  await saveToDB(cfg);
+  const status = document.getElementById('saveStatus');
+  status.textContent = '保存しました。ゲーム側で反映されます。';
+  setTimeout(() => { status.textContent = ''; }, 3000);
+}
+
+async function resetAll() {
+  if (!confirm('保存済みの設定を削除して初期状態に戻しますか？')) return;
+  await deleteFromDB();
+  images = { player: null, e0: null, e1: null, e2: null, bg: null };
+  ['player', 'e0', 'e1', 'e2', 'bg'].forEach(clearImage);
+  document.querySelectorAll('.preset-chip')[0]?.click();
+  selectedFont = FONTS[0];
+  document.querySelectorAll('.font-option')[0]?.click();
+  document.getElementById('previewFrame').contentWindow.location.reload();
+  const status = document.getElementById('saveStatus');
+  status.textContent = '初期状態に戻しました。';
+  setTimeout(() => { status.textContent = ''; }, 3000);
+}
+
+// ── Init ──────────────────────────────
+(async function init() {
+  loadGoogleFonts();
+  renderPresets();
+  renderFonts();
+
+  const existing = await loadExisting();
+  if (existing) {
+    if (existing.palette) {
+      Object.entries(existing.palette).forEach(([k, v]) => {
+        const el = document.getElementById('col-' + k);
+        if (el) el.value = v;
+      });
+    }
+    if (existing.images) {
+      images = { ...images, ...existing.images };
+      Object.entries(existing.images).forEach(([key, src]) => {
+        if (!src) return;
+        const thumb = document.getElementById('thumb-' + key);
+        if (thumb) thumb.innerHTML = `<img src="${src}">`;
+        const clearBtn = document.getElementById('clear-' + key);
+        if (clearBtn) clearBtn.classList.remove('hidden');
+      });
+    }
+    if (existing.fontFamily) {
+      const match = FONTS.find(f => f.css === existing.fontFamily);
+      if (match) selectedFont = match;
+    }
+  }
+})();
+</script>
+</body>
+</html>
