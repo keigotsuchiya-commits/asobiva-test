@@ -129,7 +129,7 @@
     height: clamp(26px, 5.63cqw, 56px);
     flex-shrink: 0; background: #111;
   }
-  .cc-category { font-size: clamp(18px, 3.7cqw, 36px); font-weight: 900; letter-spacing: 0.02em; }
+  .cc-category { font-size: clamp(17px, 3.7cqw, 36px); font-weight: 900; letter-spacing: 0.02em; }
   .cc-body { display: flex; gap: clamp(12px, 2.19cqw, 24px); align-items: flex-start; }
   .cc-photo {
     width: clamp(90px, 27.19cqw, 280px);
@@ -143,15 +143,15 @@
   .cc-photo.cc-round { border-radius: 14px; overflow: hidden; }
   .cc-info { flex: 1; min-width: 0; padding-top: clamp(2px, 1.0cqw, 10px); }
   .cc-name {
-    font-size: clamp(17px, 3.13cqw, 34px); font-weight: 700;
+    font-size: clamp(15px, 3.13cqw, 34px); font-weight: 700;
     padding-bottom: clamp(3px, 0.5cqw, 7px);
     border-bottom: 1px solid #111;
     margin-bottom: clamp(6px, 1.1cqw, 12px);
     overflow-wrap: break-word; word-break: break-word;
   }
   .cc-name .cc-sep { margin: 0 clamp(6px, 1.04cqw, 14px); font-weight: 400; color: #999; }
-  .cc-name .cc-romaji { font-size: 0.8em; font-weight: 300; letter-spacing: 0.01em; }
-  .cc-comment { font-size: clamp(13px, 2.7cqw, 27px); line-height: 1.65; margin: 0; white-space: pre-wrap; }
+  .cc-name .cc-romaji { font-size: 1em; font-weight: 500; letter-spacing: 0.01em; }
+  .cc-comment { font-size: clamp(14px, 2.7cqw, 27px); line-height: 1.65; margin: 0; white-space: pre-wrap; }
 </style>
 </head>
 <body>
@@ -389,15 +389,15 @@ function buildSnippet() {
 .${id} .cc-card{width:100%;background:#fff;font-family:"Hiragino Sans","Noto Sans JP",sans-serif;color:#111;box-sizing:border-box;padding:clamp(16px,2.9cqw,34px) clamp(14px,1.8cqw,30px);}
 .${id} .cc-head{display:flex;align-items:center;gap:clamp(10px,3.44cqw,30px);padding-bottom:clamp(8px,1.67cqw,16px);background-image:repeating-linear-gradient(to right,#888 0px,#888 1.5px,transparent 1.5px,transparent 4px);background-repeat:repeat-x;background-position:left bottom;background-size:100% 1.5px;margin-bottom:clamp(9px,1.56cqw,15px);}
 .${id} .cc-bar{width:clamp(6px,1.46cqw,15px);height:clamp(26px,5.63cqw,56px);flex-shrink:0;background:${accent};}
-.${id} .cc-category{font-size:clamp(18px,3.7cqw,36px);font-weight:900;letter-spacing:0.02em;}
+.${id} .cc-category{font-size:clamp(17px,3.7cqw,36px);font-weight:900;letter-spacing:0.02em;}
 .${id} .cc-body{display:flex;gap:clamp(12px,2.19cqw,24px);align-items:flex-start;}
 .${id} .cc-photo{width:clamp(90px,27.19cqw,280px);height:clamp(90px,27.19cqw,280px);aspect-ratio:1/1;flex-shrink:0;border:1px solid #ddd;${photoStyle}}
 .${id} .cc-photo.cc-round{border-radius:14px;overflow:hidden;}
 .${id} .cc-info{flex:1;min-width:0;padding-top:clamp(2px,1.0cqw,10px);}
-.${id} .cc-name{font-size:clamp(17px,3.13cqw,34px);font-weight:700;padding-bottom:clamp(3px,0.5cqw,7px);border-bottom:1px solid ${accent};margin-bottom:clamp(6px,1.1cqw,12px);overflow-wrap:break-word;word-break:break-word;}
+.${id} .cc-name{font-size:clamp(15px,3.13cqw,34px);font-weight:700;padding-bottom:clamp(3px,0.5cqw,7px);border-bottom:1px solid ${accent};margin-bottom:clamp(6px,1.1cqw,12px);overflow-wrap:break-word;word-break:break-word;}
 .${id} .cc-name .cc-sep{margin:0 clamp(6px,1.04cqw,14px);font-weight:400;color:#999;}
-.${id} .cc-name .cc-romaji{font-size:0.8em;font-weight:300;letter-spacing:0.01em;}
-.${id} .cc-comment{font-size:clamp(13px,2.7cqw,27px);line-height:1.65;margin:0;white-space:pre-wrap;}
+.${id} .cc-name .cc-romaji{font-size:1em;font-weight:500;letter-spacing:0.01em;}
+.${id} .cc-comment{font-size:clamp(14px,2.7cqw,27px);line-height:1.65;margin:0;white-space:pre-wrap;}
 </style>`.trim();
 
   const html = `
