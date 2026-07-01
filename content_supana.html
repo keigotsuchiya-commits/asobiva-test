@@ -1632,7 +1632,7 @@ async function handleDownloadClick() {
 }
 
 async function downloadHTML() {
-  // banner block (single header, 圧縮してから出力)
+  // banner block (圧縮してから出力)
   let headerHTML;
   if (banners[1]) {
     const b64 = await compressImage(banners[1]);
@@ -1645,75 +1645,58 @@ async function downloadHTML() {
   let introHTML = '';
   try {
     const row = await dbOp('banners', 'readonly', s => s.get(99));
-    if (row?.html) introHTML = `  <div class="intro-content">${row.html}</div>\n`;
+    if (row?.html) introHTML = `  <div class="intro-section">${row.html}</div>\n`;
   } catch {}
 
-  // タブごとにカードを出力
-  const TAB_LABELS = { chara: 'Characters', dougu: 'Vehicles&amp;Gear', haikei: 'Locations', poster: 'Posters' };
-  const TABS_ORDER = ['chara', 'dougu', 'haikei', 'poster'];
-
-  async function buildTabCards(tab) {
-    const filtered = cards.filter(c => (c.tab || 'chara') === tab);
-    let html = '';
-    for (const c of filtered) {
-      const gapClass = c.gap === false || c.gap === 'nogap' ? ' no-gap' : c.gap === 'line' ? ' line-gap' : '';
-      if (c.type === 'image') {
-        const compressedB64 = await compressImage(c.base64);
-        const tag = c.link
-          ? `<a class="card" href="${c.link}" target="_blank" rel="noopener"><img src="${compressedB64}" alt=""></a>`
-          : `<div class="card"><img src="${compressedB64}" alt=""></div>`;
-        html += `  <div class="card-section${gapClass}">${tag}</div>\n`;
-      } else if (c.type === 'carousel') {
-        const compressedImgs = [];
-        for (const im of c.images) compressedImgs.push(await compressImage(im));
-        const dots = compressedImgs.map((_, i) => `<span class="${i===0?'active':''}"></span>`).join('');
-        const imgsJson = JSON.stringify(compressedImgs).replace(/"/g, '&quot;');
-        html += `  <div class="card-section${gapClass}"><div class="carousel-card" data-images="${imgsJson}" data-index="0" onclick="cyclerCarousel(this)"><img src="${compressedImgs[0]}" alt="">${compressedImgs.length > 1 ? `<div class="carousel-dots">${dots}</div><div class="carousel-count">1 / ${compressedImgs.length}</div>` : ''}</div></div>\n`;
-      } else {
-        const escaped = injectAutoResize(c.html).replace(/"/g, '&quot;');
-        html += `  <div class="card-section${gapClass}"><div class="html-card"><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:60px" scrolling="no" onload="try{var h=this.contentDocument.documentElement.scrollHeight||this.contentDocument.body.scrollHeight;if(h>0)this.style.height=h+'px';}catch(e){}"></iframe></div></div>\n`;
-      }
+  // カード1枚を出力するヘルパー
+  async function buildCardHTML(c) {
+    const gapClass = c.gap === false || c.gap === 'nogap' ? ' no-gap' : c.gap === 'line' ? ' line-gap' : '';
+    if (c.type === 'image') {
+      const b = await compressImage(c.base64);
+      const tag = c.link
+        ? `<a class="card" href="${c.link}" target="_blank" rel="noopener"><img src="${b}" alt=""></a>`
+        : `<div class="card"><img src="${b}" alt=""></div>`;
+      return `  <div class="card-section${gapClass}">${tag}</div>\n`;
+    } else if (c.type === 'carousel') {
+      const imgs = [];
+      for (const im of c.images) imgs.push(await compressImage(im));
+      const dots = imgs.map((_, i) => `<span class="${i===0?'active':''}"></span>`).join('');
+      const imgsJson = JSON.stringify(imgs).replace(/"/g, '&quot;');
+      return `  <div class="card-section${gapClass}"><div class="carousel-card" data-images="${imgsJson}" data-index="0" onclick="cyclerCarousel(this)"><img src="${imgs[0]}" alt="">${imgs.length > 1 ? `<div class="carousel-dots">${dots}</div><div class="carousel-count">1 / ${imgs.length}</div>` : ''}</div></div>\n`;
+    } else {
+      const escaped = injectAutoResize(c.html).replace(/"/g, '&quot;');
+      return `  <div class="card-section${gapClass}"><div class="html-card"><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:60px" scrolling="no" onload="try{var h=this.contentDocument.documentElement.scrollHeight||this.contentDocument.body.scrollHeight;if(h>0)this.style.height=h+'px';}catch(e){}"></iframe></div></div>\n`;
     }
-    return html;
   }
 
-  // タブボタン
-  const tabBtns = TABS_ORDER.map((t, i) =>
-    `<button class="tab-btn${i===0?' active':''}" data-tab="${t}" onclick="switchTab('${t}')">${TAB_LABELS[t]}</button>`
+  // タブごとにカードを出力
+  const TAB_DEFS = [
+    { id: 'chara',  label: 'Characters' },
+    { id: 'dougu',  label: 'Vehicles&amp;Gear' },
+    { id: 'haikei', label: 'Locations' },
+    { id: 'poster', label: 'Posters' },
+  ];
+
+  const tabBtns = TAB_DEFS.map((t, i) =>
+    `<button class="tab-btn${i===0?' active':''}" data-tab="${t.id}" onclick="switchTab('${t.id}')">${t.label}</button>`
   ).join('');
 
-  // タブコンテンツ
   let tabContents = '';
-  for (let i = 0; i < TABS_ORDER.length; i++) {
-    const t = TABS_ORDER[i];
-    const tCards = await buildTabCards(t);
-    tabContents += `  <div id="tabContent-${t}" class="tab-content"${i > 0 ? ' style="display:none;"' : ''}>${tCards || '<div class="empty-section"><div class="empty-state"><strong>まだカードがありません</strong></div></div>'}</div>\n`;
+  for (let i = 0; i < TAB_DEFS.length; i++) {
+    const { id } = TAB_DEFS[i];
+    const filtered = cards.filter(c => (c.tab || 'chara') === id);
+    let inner = '';
+    for (const c of filtered) inner += await buildCardHTML(c);
+    if (!inner) inner = '<div class="empty-section"><div class="empty-state"><strong>まだカードがありません</strong></div></div>';
+    tabContents += `  <div id="tabContent-${id}" class="tab-content"${i > 0 ? ' style="display:none;"' : ''}>\n${inner}  </div>\n`;
   }
 
   // commonカード
   const commonCards = cards.filter(c => (c.tab || 'chara') === 'common');
   let commonHTML = '';
   if (commonCards.length > 0) {
-    commonHTML = '  <div class="common-section-wrap">\n';
-    for (const c of commonCards) {
-      const gapClass = c.gap === false || c.gap === 'nogap' ? ' no-gap' : c.gap === 'line' ? ' line-gap' : '';
-      if (c.type === 'image') {
-        const compressedB64 = await compressImage(c.base64);
-        const tag = c.link
-          ? `<a class="card" href="${c.link}" target="_blank" rel="noopener"><img src="${compressedB64}" alt=""></a>`
-          : `<div class="card"><img src="${compressedB64}" alt=""></div>`;
-        commonHTML += `    <div class="card-section${gapClass}">${tag}</div>\n`;
-      } else if (c.type === 'carousel') {
-        const compressedImgs = [];
-        for (const im of c.images) compressedImgs.push(await compressImage(im));
-        const dots = compressedImgs.map((_, i) => `<span class="${i===0?'active':''}"></span>`).join('');
-        const imgsJson = JSON.stringify(compressedImgs).replace(/"/g, '&quot;');
-        commonHTML += `    <div class="card-section${gapClass}"><div class="carousel-card" data-images="${imgsJson}" data-index="0" onclick="cyclerCarousel(this)"><img src="${compressedImgs[0]}" alt="">${compressedImgs.length > 1 ? `<div class="carousel-dots">${dots}</div><div class="carousel-count">1 / ${compressedImgs.length}</div>` : ''}</div></div>\n`;
-      } else {
-        const escaped = injectAutoResize(c.html).replace(/"/g, '&quot;');
-        commonHTML += `    <div class="card-section${gapClass}"><div class="html-card"><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:60px" scrolling="no" onload="try{var h=this.contentDocument.documentElement.scrollHeight||this.contentDocument.body.scrollHeight;if(h>0)this.style.height=h+'px';}catch(e){}"></iframe></div></div>\n`;
-      }
-    }
+    commonHTML = '  <div class="common-wrap">\n';
+    for (const c of commonCards) commonHTML += await buildCardHTML(c);
     commonHTML += '  </div>\n';
   }
 
@@ -1724,34 +1707,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .wrap { max-width: 480px; margin: 0 auto; background: var(--bg); min-height: 100vh; }
 .site-header { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; background:var(--white); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; }
 .back-link { font-size:12px; font-weight:500; letter-spacing:0.04em; color:var(--ink-soft); text-decoration:none; }
-.banner-slot { width:100%; min-height:80px; background:var(--white); display:flex; align-items:center; justify-content:center; }
-.banner-slot img { width:100%; height:auto; display:block; }
-.slot-label { font-size:10px; letter-spacing:0.12em; color:#ccc; }
-.intro-content { background:var(--white); }
-.tab-bar { display:flex; background:var(--white); border-bottom:1px solid var(--border); border-top:10px solid var(--bg); position:sticky; top:45px; z-index:90; }
-.tab-btn { flex:1; padding:12px 2px; background:none; border:none; border-bottom:2px solid transparent; font-size:10px; font-weight:500; letter-spacing:0.02em; color:var(--ink-soft); cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.tab-btn.active { color:var(--ink); border-bottom-color:var(--ink); font-weight:700; }
-.tab-content { background:var(--bg); }
-.common-section-wrap { background:var(--bg); }
-.card-section { background: var(--bg); padding-top:10px; }
-.card-section.no-gap { background: var(--white); padding-top:0; }
-.card-section.line-gap { background: var(--white); padding-top:0; border-top:1px solid var(--ink); }
-.card { width:100%; display:block; text-decoration:none; background:var(--white); overflow:hidden; }
-.card img { width:100%; height:auto; display:block; }
-.html-card { width:100%; position:relative; background:var(--white); overflow:hidden; padding-bottom:10px; }
-.html-card iframe { display:block; width:100%; height:60px; border:none; background:var(--white); overflow:hidden; }
-.carousel-card { position:relative; width:100%; background:var(--white); cursor:pointer; }
-.carousel-card img { width:100%; height:auto; display:block; }
-.carousel-dots { position:absolute; bottom:10px; left:50%; transform:translateX(-50%); display:flex; gap:5px; }
-.carousel-dots span { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.6); }
-.carousel-dots span.active { background:#fff; }
-.carousel-count { position:absolute; bottom:10px; right:12px; font-size:10px; color:#fff; background:rgba(0,0,0,0.4); padding:2px 7px; border-radius:8px; }
-.empty-section { background: var(--bg); padding-top:10px; }
-.empty-state { padding:60px 24px; text-align:center; color:var(--ink-soft); font-size:13px; line-height:2; background:var(--white); }
-.empty-state strong { display:block; font-size:14px; font-weight:600; color:var(--ink); margin-bottom:6px; }
-.footer-section { background: var(--bg); padding-top:10px; }
-.footer-section.no-gap { padding-top:0; }
-footer { padding:28px 16px; text-align:center; font-size:10px; letter-spacing:0.1em; color:var(--ink-soft); background:var(--white); }
 .burger-btn { background:none; border:none; cursor:pointer; padding:4px; display:flex; flex-direction:column; gap:5px; align-items:flex-end; }
 .burger-btn span { display:block; height:1.5px; background:var(--ink); border-radius:1px; }
 .burger-btn span:nth-child(1) { width:20px; }
@@ -1759,8 +1714,36 @@ footer { padding:28px 16px; text-align:center; font-size:10px; letter-spacing:0.
 .burger-btn span:nth-child(3) { width:20px; }
 .burger-menu { display:none; position:absolute; top:100%; right:0; background:var(--white); border:1px solid var(--border); border-radius:10px; box-shadow:0 4px 16px rgba(0,0,0,0.1); overflow:hidden; z-index:200; min-width:140px; }
 .burger-menu.open { display:block; }
-.nav-link-item { display:block; width:100%; padding:14px 20px; background:none; border:none; border-bottom:1px solid var(--border); font-size:13px; font-weight:500; color:var(--ink); cursor:pointer; text-align:left; text-decoration:none; }
+.nav-link-item { display:block; width:100%; padding:14px 20px; background:none; border:none; border-bottom:1px solid var(--border); font-size:13px; font-weight:500; color:var(--ink); text-align:left; text-decoration:none; }
 .nav-link-item:last-child { border-bottom:none; }
+.banner-slot { width:100%; min-height:80px; background:var(--white); display:flex; align-items:center; justify-content:center; }
+.banner-slot img { width:100%; height:auto; display:block; }
+.slot-label { font-size:10px; letter-spacing:0.12em; color:#ccc; }
+.intro-section { background:var(--white); }
+.tab-bar { display:flex; background:var(--white); border-bottom:1px solid var(--border); border-top:10px solid var(--bg); position:sticky; top:45px; z-index:90; }
+.tab-btn { flex:1; padding:12px 2px; background:none; border:none; border-bottom:2px solid transparent; font-size:10px; font-weight:500; letter-spacing:0.02em; color:var(--ink-soft); cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tab-btn.active { color:var(--ink); border-bottom-color:var(--ink); font-weight:700; }
+.tab-content { background:var(--bg); }
+.common-wrap { background:var(--bg); }
+.card-section { background:var(--bg); padding-top:10px; }
+.card-section.no-gap { background:var(--white); padding-top:0; }
+.card-section.line-gap { background:var(--white); padding-top:0; border-top:1px solid var(--ink); }
+.card { width:100%; display:block; text-decoration:none; background:var(--white); overflow:hidden; }
+.card img { width:100%; height:auto; display:block; }
+.html-card { width:100%; background:var(--white); overflow:hidden; padding-bottom:10px; }
+.html-card iframe { display:block; width:100%; height:60px; border:none; background:var(--white); overflow:hidden; }
+.carousel-card { width:100%; position:relative; background:var(--white); cursor:pointer; }
+.carousel-card img { width:100%; height:auto; display:block; }
+.carousel-dots { position:absolute; bottom:10px; left:0; right:0; display:flex; justify-content:center; gap:6px; }
+.carousel-dots span { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.55); }
+.carousel-dots span.active { background:#fff; }
+.carousel-count { position:absolute; top:10px; right:10px; font-size:10px; color:#fff; background:rgba(0,0,0,0.45); padding:3px 8px; border-radius:20px; }
+.empty-section { background:var(--bg); padding-top:10px; }
+.empty-state { padding:60px 24px; text-align:center; color:var(--ink-soft); font-size:13px; line-height:2; background:var(--white); }
+.empty-state strong { display:block; font-size:14px; font-weight:600; color:var(--ink); margin-bottom:6px; }
+.footer-section { background:var(--bg); padding-top:10px; }
+.footer-section.no-gap { padding-top:0; }
+footer { padding:28px 16px; text-align:center; font-size:10px; letter-spacing:0.1em; color:var(--ink-soft); background:var(--white); }
 `;
 
   const footerText = document.getElementById('footerText')?.textContent || 'ASOBIVA — i.roiro';
@@ -1790,43 +1773,38 @@ footer { padding:28px 16px; text-align:center; font-size:10px; letter-spacing:0.
       <div class="burger-menu" id="burgerMenuStatic">${navLinksHTML}</div>
     </div>
   </div>
-  <div class="header-pair" style="display:flex;flex-direction:column;background:var(--white);">
+  <div style="display:flex;flex-direction:column;background:var(--white);">
 ${headerHTML}  </div>
-${introHTML}  <div class="tab-bar" id="tabBar">${tabBtns}</div>
+${introHTML}  <div class="tab-bar">${tabBtns}</div>
 ${tabContents}${commonHTML}  <div class="footer-section${footerGapClass}">
     <footer>${footerText}</footer>
   </div>
 </div>
 <scr` + `ipt>
 function switchTab(tab) {
-  document.querySelectorAll('.tab-btn').forEach(function(btn){
-    btn.classList.toggle('active', btn.dataset.tab === tab);
-  });
-  document.querySelectorAll('.tab-content').forEach(function(el){
-    el.style.display = el.id === 'tabContent-' + tab ? '' : 'none';
-  });
+  document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.tab === tab); });
+  document.querySelectorAll('.tab-content').forEach(function(el){ el.style.display = el.id === 'tabContent-' + tab ? '' : 'none'; });
 }
 function cyclerCarousel(el){
-  var images = JSON.parse(el.dataset.images);
-  var idx = (parseInt(el.dataset.index, 10) + 1) % images.length;
+  var imgs = JSON.parse(el.dataset.images);
+  var idx = (parseInt(el.dataset.index,10)+1) % imgs.length;
   el.dataset.index = String(idx);
-  el.querySelector('img').src = images[idx];
-  var dots = el.querySelectorAll('.carousel-dots span');
-  dots.forEach(function(d, i){ d.classList.toggle('active', i === idx); });
-  var count = el.querySelector('.carousel-count');
-  if (count) count.textContent = (idx + 1) + ' / ' + images.length;
+  el.querySelector('img').src = imgs[idx];
+  el.querySelectorAll('.carousel-dots span').forEach(function(d,i){ d.classList.toggle('active', i===idx); });
+  var ct = el.querySelector('.carousel-count');
+  if(ct) ct.textContent = (idx+1) + ' / ' + imgs.length;
 }
 window.addEventListener('message', function(e){
-  if (e.data && e.data.type === 'asobiva-resize') {
+  if(e.data && e.data.type === 'asobiva-resize'){
     document.querySelectorAll('.html-card iframe').forEach(function(f){
-      if (f.contentWindow === e.source) f.style.height = Math.max(60, e.data.height) + 'px';
+      if(f.contentWindow === e.source) f.style.height = Math.max(60, e.data.height) + 'px';
     });
   }
 });
 document.addEventListener('click', function(e){
   var menu = document.getElementById('burgerMenuStatic');
   var btn = document.getElementById('burgerBtnStatic');
-  if (menu && !menu.contains(e.target) && !btn.contains(e.target)) menu.classList.remove('open');
+  if(menu && !menu.contains(e.target) && !btn.contains(e.target)) menu.classList.remove('open');
 });
 </scr` + `ipt>
 </body>
