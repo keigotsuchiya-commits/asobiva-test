@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>クリエイタープロフィールカード ジェネレーター（HTML出力版）</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Hiragino Sans", "Noto Sans JP", sans-serif;
+    background: #f4f4f2;
+    color: #111;
+    padding-bottom: 70px;
+  }
+  header {
+    padding: 20px 16px 12px;
+    background: #111;
+    color: #fff;
+  }
+  header h1 { margin: 0; font-size: 17px; font-weight: 700; }
+  header p { margin: 6px 0 0; font-size: 12px; color: #bbb; line-height: 1.6; }
+
+  .preview-wrap {
+    padding: 16px;
+    background: #e5e5e2;
+  }
+  .preview-frame {
+    background: #fff;
+    border: 1px solid #ccc;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .panel { padding: 16px; }
+  .group {
+    background: #fff;
+    border-radius: 10px;
+    padding: 14px 16px 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .group h2 { font-size: 13px; font-weight: 700; margin: 0 0 10px; color: #555; }
+  label { display: block; font-size: 12px; font-weight: 500; color: #666; margin: 10px 0 4px; }
+  label:first-of-type { margin-top: 0; }
+  input[type="text"], textarea {
+    width: 100%;
+    font-family: inherit;
+    font-size: 15px;
+    padding: 9px 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fafafa;
+    resize: vertical;
+  }
+  textarea { min-height: 64px; line-height: 1.5; }
+  .row2 { display: flex; gap: 10px; }
+  .row2 > div { flex: 1; min-width: 0; }
+
+  .imgbtns { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .imgbtns button, .shapebtn {
+    flex: 1; min-width: 90px; padding: 10px 8px; font-size: 12.5px;
+    border: 1px solid #ccc; background: #fff; border-radius: 6px; font-family: inherit;
+  }
+  .shapebtn.active { background: #111; color: #fff; border-color: #111; }
+
+  input[type="color"] { width: 48px; height: 36px; border: 1px solid #ddd; border-radius: 6px; padding: 2px; background: #fafafa; }
+  .colorrow { display: flex; align-items: center; gap: 10px; }
+  .swatches { display: flex; gap: 6px; flex-wrap: wrap; }
+  .sw { width: 28px; height: 28px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px #ccc; }
+
+  .presetbtns { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+  .presetbtns button { flex: 0 0 auto; font-size: 12px; padding: 8px 12px; border-radius: 999px; border: 1px solid #ccc; background: #fff; font-family: inherit; white-space: nowrap; }
+
+  .actionbar {
+    position: sticky; bottom: 0; padding: 12px 16px; background: #fff; border-top: 1px solid #ddd;
+    display: flex; gap: 8px;
+  }
+  .actionbar button {
+    flex: 1; padding: 14px 8px; font-size: 14px; font-weight: 700; color: #fff; border: none; border-radius: 8px; font-family: inherit;
+  }
+  #copyBtn { background: #444; }
+  #downloadBtn { background: #111; }
+  .actionbar button:active { opacity: 0.8; }
+
+  #codeOut {
+    width: 100%; min-height: 160px; font-family: monospace; font-size: 11px; line-height: 1.5;
+    padding: 10px; border: 1px solid #ddd; border-radius: 6px; background: #fafafa; white-space: pre; overflow: auto;
+  }
+  .hint { font-size: 11px; color: #999; margin-top: 8px; line-height: 1.6; }
+  #fileInput { display: none; }
+  #copyStatus { font-size: 12px; color: #2a7a2a; margin-top: 6px; display:none; }
+
+  /* ---- card template (scoped, safe to paste into any page) ----
+     Full-width card whose proportions match the reference design
+     (photo:text ratio, spacing) using container query units (cqw,
+     relative to the card's own rendered width), each wrapped in
+     clamp() so text never shrinks below a readable floor on narrow
+     phones. This keeps the layout proportionally identical to the
+     sample images at any width, without wrapping or oversized gaps. */
+  .cc-wrap {
+    container-type: inline-size;
+    width: 100%;
+  }
+  .cc-card {
+    width: 100%;
+    background: #fff;
+    font-family: "Hiragino Sans", "Noto Sans JP", sans-serif;
+    color: #111;
+    box-sizing: border-box;
+    padding: clamp(16px, 2.887cqw, 36px) clamp(16px, 3.093cqw, 38px);
+  }
+  .cc-head {
+    display: flex; align-items: center;
+    gap: clamp(8px, 1.443cqw, 18px);
+    padding-bottom: clamp(8px, 1.443cqw, 18px);
+    border-bottom: 3px dotted #999;
+    margin-bottom: clamp(14px, 2.268cqw, 28px);
+  }
+  .cc-bar {
+    width: clamp(6px, 0.825cqw, 10px);
+    height: clamp(24px, 3.093cqw, 40px);
+    flex-shrink: 0; background: #111;
+  }
+  .cc-category { font-size: clamp(17px, 2.268cqw, 32px); font-weight: 900; letter-spacing: 0.02em; }
+  .cc-body { display: flex; gap: clamp(14px, 2.887cqw, 34px); align-items: flex-start; }
+  .cc-photo {
+    width: clamp(78px, 20.619cqw, 260px);
+    height: clamp(78px, 20.619cqw, 260px);
+    aspect-ratio: 1 / 1;
+    flex-shrink: 0; background: #eee no-repeat center/cover;
+    border: 1px solid #ddd;
+    display: flex; align-items: center; justify-content: center;
+    color: #bbb; font-size: clamp(10px, 1.34cqw, 14px);
+  }
+  .cc-photo.cc-round { border-radius: 14px; overflow: hidden; }
+  .cc-info { flex: 1; min-width: 0; padding-top: clamp(2px, 0.619cqw, 10px); }
+  .cc-name {
+    font-size: clamp(16px, 2.268cqw, 30px); font-weight: 700;
+    padding-bottom: clamp(6px, 1.031cqw, 14px);
+    border-bottom: 2px solid #111;
+    margin-bottom: clamp(10px, 1.649cqw, 22px);
+  }
+  .cc-name .cc-sep { margin: 0 clamp(6px, 1.031cqw, 14px); font-weight: 400; color: #999; }
+  .cc-comment { font-size: clamp(14px, 1.649cqw, 20px); line-height: 1.7; margin: 0; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>クリエイタープロフィールカード ジェネレーター</h1>
+  <p>実際のHTML/CSSでカードを生成します。画像を選んでテキストを入力すると下にプレビューが表示され、そのままサイトに貼り付けられるコードを出力できます。</p>
+</header>
+
+<div class="preview-wrap">
+  <div class="preview-frame">
+    <div class="cc-wrap">
+      <div class="cc-card" id="ccCard">
+        <div class="cc-head">
+          <span class="cc-bar" id="ccBar"></span>
+          <span class="cc-category" id="ccCategory"></span>
+        </div>
+        <div class="cc-body">
+          <div class="cc-photo" id="ccPhoto"><span id="ccPhotoPlaceholder">画像未設定</span></div>
+          <div class="cc-info">
+            <div class="cc-name" id="ccNameRow" style="border-color:#111;">
+              <span id="ccNameJp"></span><span class="cc-sep">|</span><span id="ccNameRomaji"></span>
+            </div>
+            <p class="cc-comment" id="ccComment"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+
+  <div class="group">
+    <h2>サンプルを読み込む</h2>
+    <div class="presetbtns" id="presetBtns"></div>
+  </div>
+
+  <div class="group">
+    <h2>テキスト</h2>
+    <label>肩書き・カテゴリ（例: ほらばな新聞社 取締役社長）</label>
+    <input type="text" id="category" maxlength="40">
+
+    <div class="row2">
+      <div>
+        <label>名前（日本語）</label>
+        <input type="text" id="nameJp" maxlength="20">
+      </div>
+      <div>
+        <label>名前（ローマ字）</label>
+        <input type="text" id="nameRomaji" maxlength="40">
+      </div>
+    </div>
+
+    <label>一言コメント</label>
+    <textarea id="comment" maxlength="120"></textarea>
+  </div>
+
+  <div class="group">
+    <h2>写真・イラスト</h2>
+    <div class="imgbtns">
+      <button id="pickImgBtn" type="button">画像を選択</button>
+      <button id="clearImgBtn" type="button">画像をクリア</button>
+    </div>
+    <input type="file" id="fileInput" accept="image/*">
+    <div class="hint">画像はBase64としてコードに埋め込まれるので、書き出したHTMLはそのまま単体で動きます。</div>
+
+    <label>画像の枠</label>
+    <div class="imgbtns">
+      <button class="shapebtn active" data-shape="square" type="button">角丸なし</button>
+      <button class="shapebtn" data-shape="round" type="button">角丸</button>
+    </div>
+
+    <label>画像の位置（縦位置の調整）</label>
+    <input type="range" id="imgFocusY" min="0" max="100" value="50" style="width:100%;">
+  </div>
+
+  <div class="group">
+    <h2>アクセントカラー</h2>
+    <div class="colorrow">
+      <input type="color" id="accentColor" value="#111111">
+      <div class="swatches" id="swatches"></div>
+    </div>
+    <div class="hint">左のバーと名前下の線の色です。基本は黒（モノクロ）推奨。</div>
+  </div>
+
+  <div class="group">
+    <h2>出力コード</h2>
+    <textarea id="codeOut" readonly></textarea>
+    <div id="copyStatus">コピーしました。</div>
+    <div class="hint">「コードを更新」を押すと最新の内容が反映されます。このコードをそのままページのHTMLに貼り付けてください（同じページに複数枚貼る場合はクラス名の重複に注意してください）。</div>
+  </div>
+
+</div>
+
+<div class="actionbar">
+  <button id="updateCodeBtn" type="button">コードを更新</button>
+  <button id="copyBtn" type="button">コピー</button>
+  <button id="downloadBtn" type="button">HTMLで保存</button>
+</div>
+
+<script>
+const els = {
+  category: document.getElementById('category'),
+  nameJp: document.getElementById('nameJp'),
+  nameRomaji: document.getElementById('nameRomaji'),
+  comment: document.getElementById('comment'),
+  accentColor: document.getElementById('accentColor'),
+  imgFocusY: document.getElementById('imgFocusY'),
+};
+
+const ccCard = document.getElementById('ccCard');
+const ccBar = document.getElementById('ccBar');
+const ccCategory = document.getElementById('ccCategory');
+const ccPhoto = document.getElementById('ccPhoto');
+const ccPhotoPlaceholder = document.getElementById('ccPhotoPlaceholder');
+const ccNameRow = document.getElementById('ccNameRow');
+const ccNameJp = document.getElementById('ccNameJp');
+const ccNameRomaji = document.getElementById('ccNameRomaji');
+const ccComment = document.getElementById('ccComment');
+
+let imgDataUrl = null;
+let shape = 'square';
+
+const presets = [
+  { label: '真実 誠', category: 'ほらばな新聞社 取締役社長', nameJp: '真実 誠', nameRomaji: 'MAKOTO SHINJITSU',
+    comment: 'ほら話も、真剣に書けば新聞になる。うちの記者たちは、みんなそれを信じている。私が何者かは、関係ない。' },
+  { label: '利久島 誠', category: 'PROJECT SUPANA クリエイター', nameJp: '利久島 誠', nameRomaji: 'MAKOTO RIKUSHIMA',
+    comment: '架空の道具でも、内部構造まで設計する。嘘をつかない世界を作るのが、僕の仕事です。' },
+  { label: '春日 恒一', category: '福徳神社 宮司', nameJp: '春日 恒一', nameRomaji: 'KOUICHI KASUGA',
+    comment: '神様のことは、正直よく分かりません。でも、ここに来て笑顔で帰っていく人を見ると、何かはあるんだろうと思います。' },
+  { label: '波留 宗一郎', category: 'PROJECT SUPANA クリエイター', nameJp: '波留 宗一郎', nameRomaji: 'SOUICHIROU HARU',
+    comment: '俺が描くのは、ポーズじゃなくてその人の人生です。服の着こなし一つで、そいつが何を大事にしてきたか分かります。' }
+];
+
+const swatchColors = ['#111111', '#7a4a3a', '#1f4e79', '#5a5a2a', '#8a2b2b', '#2f5233'];
+
+function updatePreview() {
+  ccCategory.textContent = els.category.value;
+  ccNameJp.textContent = els.nameJp.value;
+  ccNameRomaji.textContent = els.nameRomaji.value.toUpperCase();
+  ccComment.textContent = els.comment.value;
+  ccBar.style.background = els.accentColor.value;
+  ccNameRow.style.borderBottomColor = els.accentColor.value;
+
+  if (imgDataUrl) {
+    ccPhoto.style.backgroundImage = `url(${imgDataUrl})`;
+    ccPhoto.style.backgroundPositionY = els.imgFocusY.value + '%';
+    ccPhotoPlaceholder.style.display = 'none';
+  } else {
+    ccPhoto.style.backgroundImage = 'none';
+    ccPhotoPlaceholder.style.display = 'inline';
+  }
+  ccPhoto.classList.toggle('cc-round', shape === 'round');
+}
+
+Object.values(els).forEach(el => el.addEventListener('input', updatePreview));
+
+document.querySelectorAll('.shapebtn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.shapebtn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    shape = btn.dataset.shape;
+    updatePreview();
+  });
+});
+
+const fileInput = document.getElementById('fileInput');
+document.getElementById('pickImgBtn').addEventListener('click', () => fileInput.click());
+document.getElementById('clearImgBtn').addEventListener('click', () => {
+  imgDataUrl = null;
+  fileInput.value = '';
+  updatePreview();
+});
+fileInput.addEventListener('change', () => {
+  const file = fileInput.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    imgDataUrl = ev.target.result;
+    updatePreview();
+  };
+  reader.readAsDataURL(file);
+});
+
+const swatchesEl = document.getElementById('swatches');
+swatchColors.forEach(c => {
+  const sw = document.createElement('div');
+  sw.className = 'sw';
+  sw.style.background = c;
+  sw.addEventListener('click', () => {
+    els.accentColor.value = c;
+    updatePreview();
+  });
+  swatchesEl.appendChild(sw);
+});
+
+const presetBtnsEl = document.getElementById('presetBtns');
+presets.forEach(p => {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.textContent = p.label;
+  b.addEventListener('click', () => {
+    els.category.value = p.category;
+    els.nameJp.value = p.nameJp;
+    els.nameRomaji.value = p.nameRomaji;
+    els.comment.value = p.comment;
+    updatePreview();
+  });
+  presetBtnsEl.appendChild(b);
+});
+
+els.category.value = presets[0].category;
+els.nameJp.value = presets[0].nameJp;
+els.nameRomaji.value = presets[0].nameRomaji;
+els.comment.value = presets[0].comment;
+updatePreview();
+
+// ---- code generation ----
+function uid() {
+  return 'cc' + Math.random().toString(36).slice(2, 8);
+}
+
+function buildSnippet() {
+  const id = uid();
+  const accent = els.accentColor.value;
+  const roundClass = shape === 'round' ? ' cc-round' : '';
+  const photoStyle = imgDataUrl
+    ? `background:#eee url('${imgDataUrl}') no-repeat center ${els.imgFocusY.value}%/cover;`
+    : `background:#eee;`;
+
+  const style = `
+<style>
+.${id}.cc-wrap{container-type:inline-size;width:100%;}
+.${id} .cc-card{width:100%;background:#fff;font-family:"Hiragino Sans","Noto Sans JP",sans-serif;color:#111;box-sizing:border-box;padding:clamp(16px,2.887cqw,36px) clamp(16px,3.093cqw,38px);}
+.${id} .cc-head{display:flex;align-items:center;gap:clamp(8px,1.443cqw,18px);padding-bottom:clamp(8px,1.443cqw,18px);border-bottom:3px dotted #999;margin-bottom:clamp(14px,2.268cqw,28px);}
+.${id} .cc-bar{width:clamp(6px,0.825cqw,10px);height:clamp(24px,3.093cqw,40px);flex-shrink:0;background:${accent};}
+.${id} .cc-category{font-size:clamp(17px,2.268cqw,32px);font-weight:900;letter-spacing:0.02em;}
+.${id} .cc-body{display:flex;gap:clamp(14px,2.887cqw,34px);align-items:flex-start;}
+.${id} .cc-photo{width:clamp(78px,20.619cqw,260px);height:clamp(78px,20.619cqw,260px);aspect-ratio:1/1;flex-shrink:0;border:1px solid #ddd;${photoStyle}}
+.${id} .cc-photo.cc-round{border-radius:14px;overflow:hidden;}
+.${id} .cc-info{flex:1;min-width:0;padding-top:clamp(2px,0.619cqw,10px);}
+.${id} .cc-name{font-size:clamp(16px,2.268cqw,30px);font-weight:700;padding-bottom:clamp(6px,1.031cqw,14px);border-bottom:2px solid ${accent};margin-bottom:clamp(10px,1.649cqw,22px);}
+.${id} .cc-name .cc-sep{margin:0 clamp(6px,1.031cqw,14px);font-weight:400;color:#999;}
+.${id} .cc-comment{font-size:clamp(14px,1.649cqw,20px);line-height:1.7;margin:0;white-space:pre-wrap;}
+</style>`.trim();
+
+  const html = `
+<div class="cc-wrap ${id}">
+  <div class="cc-card">
+    <div class="cc-head">
+      <span class="cc-bar"></span>
+      <span class="cc-category">${escapeHtml(els.category.value)}</span>
+    </div>
+    <div class="cc-body">
+      <div class="cc-photo${roundClass}"></div>
+      <div class="cc-info">
+        <div class="cc-name">${escapeHtml(els.nameJp.value)}<span class="cc-sep">|</span>${escapeHtml(els.nameRomaji.value.toUpperCase())}</div>
+        <p class="cc-comment">${escapeHtml(els.comment.value)}</p>
+      </div>
+    </div>
+  </div>
+</div>`.trim();
+
+  return style + '\n\n' + html;
+}
+
+function escapeHtml(str) {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+const codeOut = document.getElementById('codeOut');
+document.getElementById('updateCodeBtn').addEventListener('click', () => {
+  codeOut.value = buildSnippet();
+  document.getElementById('copyStatus').style.display = 'none';
+});
+
+document.getElementById('copyBtn').addEventListener('click', async () => {
+  if (!codeOut.value) codeOut.value = buildSnippet();
+  try {
+    await navigator.clipboard.writeText(codeOut.value);
+  } catch (e) {
+    codeOut.select();
+    document.execCommand('copy');
+  }
+  const status = document.getElementById('copyStatus');
+  status.style.display = 'block';
+  setTimeout(() => status.style.display = 'none', 2000);
+});
+
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  const snippet = buildSnippet();
+  const fullDoc = `<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${escapeHtml(els.nameJp.value)}</title>
+</head>
+<body style="margin:0;padding:24px;background:#f4f4f2;">
+${snippet}
+</body>
+</html>`;
+  codeOut.value = snippet;
+  const blob = new Blob([fullDoc], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  const safeName = (els.nameJp.value || 'profile').replace(/\s+/g, '');
+  link.download = `creator_profile_${safeName}.html`;
+  link.href = url;
+  link.click();
+  URL.revokeObjectURL(url);
+});
+
+codeOut.value = buildSnippet();
+</script>
+
+</body>
+</html>
