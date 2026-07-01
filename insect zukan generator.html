@@ -397,7 +397,10 @@
 
     <fieldset>
       <legend>一括テキスト読み込み</legend>
-      <label>AIが記載したテキスト（テンプレート形式）を貼り付けてください</label>
+      <label>テキストファイルを選択するか、直接貼り付けてください</label>
+      <div style="margin-bottom:6px;">
+        <input type="file" id="f_txt_file" accept=".txt,text/plain" style="font-size:13px;">
+      </div>
       <textarea id="f_bulk" style="min-height:90px;" placeholder="【図鑑No.】001&#10;【和名】○○○○&#10;【読み】○○○○&#10;...（テンプレート参照）"></textarea>
       <div class="actions" style="margin-top:8px;">
         <button id="btn_parse" type="button">テキストを各項目に反映</button>
@@ -599,6 +602,18 @@ const keyMap = {
   '備考': 'f_note',
   '解説文': 'f_desc'
 };
+
+// テキストファイル選択→テキストエリアに自動展開
+document.getElementById('f_txt_file').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev)=>{
+    document.getElementById('f_bulk').value = ev.target.result;
+    document.getElementById('parse_status').textContent = 'ファイルを読み込みました：' + file.name + '　→「テキストを各項目に反映」を押してください';
+  };
+  reader.readAsText(file, 'UTF-8');
+});
 
 document.getElementById('btn_parse').addEventListener('click', ()=>{
   const raw = document.getElementById('f_bulk').value;
