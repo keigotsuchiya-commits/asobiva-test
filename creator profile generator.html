@@ -131,13 +131,13 @@
   }
   .cc-category { font-size: clamp(17px, 3.7cqw, 36px); font-weight: 900; letter-spacing: 0.02em; }
   .cc-body {
-    display: flex; gap: clamp(12px, 2.19cqw, 24px); align-items: flex-start;
+    display: flex; gap: clamp(6px, 1.5cqw, 16px); align-items: flex-start;
     margin-left: calc(-1 * clamp(4px, 1.4cqw, 12px));
     width: calc(100% + clamp(4px, 1.4cqw, 12px));
   }
   .cc-photo {
-    width: clamp(90px, 27.19cqw, 280px);
-    height: clamp(90px, 27.19cqw, 280px);
+    width: clamp(86px, 25.83cqw, 266px);
+    height: clamp(86px, 25.83cqw, 266px);
     aspect-ratio: 1 / 1;
     flex-shrink: 0; background: #eee no-repeat center/cover;
     border: 1px solid #ddd;
@@ -394,8 +394,8 @@ function buildSnippet() {
 .${id} .cc-head{display:flex;align-items:center;gap:clamp(10px,3.44cqw,30px);padding-bottom:clamp(8px,1.67cqw,16px);background-image:repeating-linear-gradient(to right,#888 0px,#888 1.5px,transparent 1.5px,transparent 4px);background-repeat:repeat-x;background-position:left bottom;background-size:100% 1.5px;margin-bottom:clamp(9px,1.56cqw,15px);}
 .${id} .cc-bar{width:clamp(6px,1.46cqw,15px);height:clamp(26px,5.63cqw,56px);flex-shrink:0;background:${accent};}
 .${id} .cc-category{font-size:clamp(17px,3.7cqw,36px);font-weight:900;letter-spacing:0.02em;}
-.${id} .cc-body{display:flex;gap:clamp(12px,2.19cqw,24px);align-items:flex-start;margin-left:calc(-1 * clamp(4px,1.4cqw,12px));width:calc(100% + clamp(4px,1.4cqw,12px));}
-.${id} .cc-photo{width:clamp(90px,27.19cqw,280px);height:clamp(90px,27.19cqw,280px);aspect-ratio:1/1;flex-shrink:0;border:1px solid #ddd;${photoStyle}}
+.${id} .cc-body{display:flex;gap:clamp(6px,1.5cqw,16px);align-items:flex-start;margin-left:calc(-1 * clamp(4px,1.4cqw,12px));width:calc(100% + clamp(4px,1.4cqw,12px));}
+.${id} .cc-photo{width:clamp(86px,25.83cqw,266px);height:clamp(86px,25.83cqw,266px);aspect-ratio:1/1;flex-shrink:0;border:1px solid #ddd;${photoStyle}}
 .${id} .cc-photo.cc-round{border-radius:14px;overflow:hidden;}
 .${id} .cc-info{flex:1;min-width:0;padding-top:clamp(2px,1.0cqw,10px);}
 .${id} .cc-name{font-size:clamp(15px,3.13cqw,34px);font-weight:700;padding-bottom:clamp(3px,0.5cqw,7px);border-bottom:1px solid ${accent};margin-bottom:clamp(6px,1.1cqw,12px);overflow-wrap:break-word;word-break:break-word;}
