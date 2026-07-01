@@ -24,11 +24,11 @@
     body{ padding:16px 0 0; }
   }
   h1{
-    font-size:16px;
+    font-size:21px;
     margin:0 0 4px;
   }
   p.lead{
-    font-size:12px;
+    font-size:16px;
     color:var(--sub);
     margin:0 0 16px;
   }
@@ -60,20 +60,20 @@
     margin:0 0 4px;
   }
   legend{
-    font-size:11px;
+    font-size:14px;
     color:var(--sub);
     padding:0 4px 0 0;
     letter-spacing:.05em;
   }
   label{
     display:block;
-    font-size:11px;
+    font-size:14px;
     color:var(--sub);
     margin:8px 0 2px;
   }
   input[type=text], textarea{
     width:100%;
-    font-size:13px;
+    font-size:17px;
     font-family:inherit;
     padding:6px 8px;
     border:1px solid #ccc7b8;
@@ -81,7 +81,7 @@
     background:#fdfcf8;
   }
   textarea{ resize:vertical; min-height:50px; }
-  input[type=file]{ font-size:12px; }
+  input[type=file]{ font-size:16px; }
   .row2{ display:flex; gap:8px; }
   .row2 > div{ flex:1; }
 
@@ -92,7 +92,7 @@
     flex-wrap:wrap;
   }
   button{
-    font-size:13px;
+    font-size:17px;
     padding:8px 14px;
     border-radius:4px;
     border:1px solid var(--accent);
@@ -105,7 +105,7 @@
     color:var(--accent);
   }
   #status{
-    font-size:11px;
+    font-size:14px;
     color:var(--sub);
     margin-top:6px;
     min-height:14px;
@@ -160,31 +160,38 @@
   }
   .zukan-card .zc-header{
     display:flex;
-    align-items:baseline;
-    gap:2cqw;
+    flex-direction:column;
+    gap:0.6cqw;
     border-bottom: 0.25cqw solid #2c2a24;
     padding-bottom:1.4cqw;
     margin-bottom:1.6cqw;
     flex-shrink:0;
   }
+  .zukan-card .zc-classification{
+    font-family:"EB Garamond",serif;
+    font-size:2.1cqw;
+    letter-spacing:.12em;
+    color:#6b6655;
+  }
+  .zukan-card .zc-namerow{
+    display:flex;
+    align-items:baseline;
+    gap:1.6cqw;
+  }
   .zukan-card .zc-no{
     font-family:"EB Garamond",serif;
-    font-size:2.4cqw;
+    font-size:2.3cqw;
     letter-spacing:.1em;
     color:#6b6655;
     flex-shrink:0;
   }
   .zukan-card .zc-no b{
-    display:block;
-    font-size:3.2cqw;
+    display:inline;
+    font-size:2.6cqw;
     color:#2c2a24;
   }
-  .zukan-card .zc-titles{
-    flex:1;
-    min-width:0;
-  }
   .zukan-card .zc-name{
-    font-size:3.6cqw;
+    font-size:5.5cqw;
     font-weight:700;
     letter-spacing:.04em;
     line-height:1.15;
@@ -193,33 +200,15 @@
     text-overflow:ellipsis;
   }
   .zukan-card .zc-yomi{
-    font-size:1.5cqw;
+    font-size:2.0cqw;
     color:#6b6655;
-    margin-top:0.3cqw;
     letter-spacing:.08em;
   }
   .zukan-card .zc-latin{
     font-family:"EB Garamond",serif;
     font-style:italic;
-    font-size:1.9cqw;
+    font-size:2.5cqw;
     color:#3c392f;
-    margin-top:0.2cqw;
-  }
-  .zukan-card .zc-badge{
-    flex-shrink:0;
-    border:0.2cqw solid #2c2a24;
-    padding:0.6cqw 1.2cqw;
-    font-size:1.3cqw;
-    letter-spacing:.1em;
-    color:#6b6655;
-    text-align:center;
-    align-self:flex-start;
-  }
-  .zukan-card .zc-badge b{
-    display:block;
-    font-size:1.6cqw;
-    color:#2c2a24;
-    font-family:"EB Garamond",serif;
   }
 
   .zukan-card .zc-body{
@@ -252,7 +241,7 @@
     right:0;
     text-align:center;
     font-family:"EB Garamond",serif;
-    font-size:1.2cqw;
+    font-size:1.6cqw;
     letter-spacing:.15em;
     color:#9a9686;
   }
@@ -266,12 +255,12 @@
     align-content:start;
     column-gap: 1.4cqw;
     row-gap: 0;
-    font-size:1.55cqw;
+    font-size:2.0cqw;
     line-height:1.7;
   }
   .zukan-card .zc-info dt{
     color:#6b6655;
-    font-size:1.35cqw;
+    font-size:1.8cqw;
     white-space:nowrap;
     border-bottom:0.06cqw dotted #b9b5a6;
     padding:0.45cqw 0;
@@ -296,14 +285,14 @@
   .zukan-card .zc-footer .zc-desc-label{
     flex-shrink:0;
     font-family:"EB Garamond",serif;
-    font-size:1.2cqw;
+    font-size:1.6cqw;
     letter-spacing:.2em;
     color:#9a9686;
     writing-mode: vertical-rl;
   }
   .zukan-card .zc-desc{
     flex:1;
-    font-size:1.55cqw;
+    font-size:2.0cqw;
     line-height:1.6;
     letter-spacing:.02em;
     display:-webkit-box;
@@ -316,7 +305,7 @@
     top:1.4cqw;
     right:2cqw;
     font-family:"EB Garamond",serif;
-    font-size:1.1cqw;
+    font-size:1.4cqw;
     letter-spacing:.1em;
     color:#c4c0b0;
   }
@@ -333,20 +322,20 @@
       overflow:visible;
       padding:16px;
     }
-    .zukan-card .zc-corner{ font-size:9px; top:12px; right:14px; }
+    .zukan-card .zc-corner{ font-size:12px; top:12px; right:14px; }
     .zukan-card .zc-header{
       flex-wrap:wrap;
       border-bottom-width:2px;
       padding-bottom:10px;
       margin-bottom:12px;
     }
-    .zukan-card .zc-no{ font-size:11px; }
-    .zukan-card .zc-no b{ font-size:16px; }
-    .zukan-card .zc-name{ font-size:22px; white-space:normal; }
-    .zukan-card .zc-yomi{ font-size:11px; }
-    .zukan-card .zc-latin{ font-size:13px; }
-    .zukan-card .zc-badge{ font-size:10px; padding:4px 8px; border-width:1px; }
-    .zukan-card .zc-badge b{ font-size:12px; }
+    .zukan-card .zc-no{ font-size:14px; }
+    .zukan-card .zc-no b{ font-size:21px; }
+    .zukan-card .zc-name{ font-size:29px; white-space:normal; }
+    .zukan-card .zc-yomi{ font-size:14px; }
+    .zukan-card .zc-latin{ font-size:17px; }
+    .zukan-card .zc-badge{ font-size:13px; padding:4px 8px; border-width:1px; }
+    .zukan-card .zc-badge b{ font-size:16px; }
 
     .zukan-card .zc-body{
       flex-direction:column;
@@ -357,15 +346,15 @@
       aspect-ratio:1/1;
       border-width:1px;
     }
-    .zukan-card .zc-image .zc-fig{ font-size:9px; bottom:6px; }
+    .zukan-card .zc-image .zc-fig{ font-size:12px; bottom:6px; }
 
     .zukan-card .zc-info{
-      font-size:13px;
+      font-size:17px;
       line-height:1.8;
       grid-template-columns:5.5em 1fr;
       column-gap:10px;
     }
-    .zukan-card .zc-info dt{ font-size:11px; white-space:normal; }
+    .zukan-card .zc-info dt{ font-size:14px; white-space:normal; }
     .zukan-card .zc-info dd{
       white-space:normal;
       overflow:visible;
@@ -381,11 +370,11 @@
     }
     .zukan-card .zc-footer .zc-desc-label{
       writing-mode:horizontal-tb;
-      font-size:10px;
+      font-size:13px;
       letter-spacing:.15em;
     }
     .zukan-card .zc-desc{
-      font-size:13.5px;
+      font-size:18px;
       line-height:1.75;
       -webkit-line-clamp:unset;
       display:block;
@@ -410,7 +399,7 @@
       <div class="actions" style="margin-top:8px;">
         <button id="btn_parse" type="button">テキストを各項目に反映</button>
       </div>
-      <div id="parse_status" style="font-size:11px;color:#7a766c;margin-top:4px;"></div>
+      <div id="parse_status" style="font-size:14px;color:#7a766c;margin-top:4px;"></div>
     </fieldset>
 
     <fieldset>
@@ -442,7 +431,7 @@
     <fieldset>
       <legend>イラスト</legend>
       <input type="file" id="f_image" accept="image/*">
-      <div id="img_status" style="font-size:11px;color:#7a766c;margin-top:4px;"></div>
+      <div id="img_status" style="font-size:14px;color:#7a766c;margin-top:4px;"></div>
     </fieldset>
 
     <fieldset>
@@ -511,13 +500,13 @@
       <div class="zukan-card" id="card">
         <div class="zc-corner">SPECIMEN RECORD</div>
         <div class="zc-header">
-          <div class="zc-no">No.<b id="o_no">001</b></div>
-          <div class="zc-titles">
-            <div class="zc-name" id="o_name">ヨアケミノムシ</div>
-            <div class="zc-yomi" id="o_yomi">よあけみのむし</div>
-            <div class="zc-latin" id="o_latin">Pseudolarva auroris</div>
+          <div class="zc-classification" id="o_classification">架空昆虫網 ナナフシ目（仮）</div>
+          <div class="zc-namerow">
+            <span class="zc-no">No.<b id="o_no">001</b></span>
+            <span class="zc-name" id="o_name">ヨアケミノムシ</span>
           </div>
-          <div class="zc-badge">分類<b id="o_classification">ナナフシ目</b></div>
+          <div class="zc-yomi" id="o_yomi">よあけみのむし</div>
+          <div class="zc-latin" id="o_latin">Pseudolarva auroris</div>
         </div>
         <div class="zc-body">
           <div class="zc-image">
@@ -639,45 +628,43 @@ const CARD_CSS = `
 .zukan-card-wrap{container-type:inline-size;width:100%;}
 .zukan-card{width:100%;aspect-ratio:4/3;background:#ffffff;border:1px solid #2c2a24;box-shadow:inset 0 0 0 4px #fff, inset 0 0 0 5px #2c2a24;font-family:"Shippori Mincho","Hiragino Mincho ProN",serif;color:#2c2a24;display:flex;flex-direction:column;padding:3.2cqw;overflow:hidden;position:relative;}
 .zukan-card .zc-header{display:flex;align-items:baseline;gap:2cqw;border-bottom:0.25cqw solid #2c2a24;padding-bottom:1.4cqw;margin-bottom:1.6cqw;flex-shrink:0;}
-.zukan-card .zc-no{font-family:"EB Garamond",serif;font-size:2.4cqw;letter-spacing:.1em;color:#6b6655;flex-shrink:0;}
-.zukan-card .zc-no b{display:block;font-size:3.2cqw;color:#2c2a24;}
-.zukan-card .zc-titles{flex:1;min-width:0;}
-.zukan-card .zc-name{font-size:3.6cqw;font-weight:700;letter-spacing:.04em;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.zukan-card .zc-yomi{font-size:1.5cqw;color:#6b6655;margin-top:0.3cqw;letter-spacing:.08em;}
-.zukan-card .zc-latin{font-family:"EB Garamond",serif;font-style:italic;font-size:1.9cqw;color:#3c392f;margin-top:0.2cqw;}
-.zukan-card .zc-badge{flex-shrink:0;border:0.2cqw solid #2c2a24;padding:0.6cqw 1.2cqw;font-size:1.3cqw;letter-spacing:.1em;color:#6b6655;text-align:center;align-self:flex-start;}
-.zukan-card .zc-badge b{display:block;font-size:1.6cqw;color:#2c2a24;font-family:"EB Garamond",serif;}
+.zukan-card .zc-classification{font-family:"EB Garamond",serif;font-size:2.1cqw;letter-spacing:.12em;color:#6b6655;}
+.zukan-card .zc-namerow{display:flex;align-items:baseline;gap:1.6cqw;}
+.zukan-card .zc-no{font-family:"EB Garamond",serif;font-size:2.3cqw;letter-spacing:.1em;color:#6b6655;flex-shrink:0;}
+.zukan-card .zc-no b{display:inline;font-size:2.6cqw;color:#2c2a24;}
+.zukan-card .zc-name{font-size:5.5cqw;font-weight:700;letter-spacing:.04em;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.zukan-card .zc-yomi{font-size:2.0cqw;color:#6b6655;letter-spacing:.08em;}
+.zukan-card .zc-latin{font-family:"EB Garamond",serif;font-style:italic;font-size:2.5cqw;color:#3c392f;}
 .zukan-card .zc-body{display:flex;gap:2.4cqw;flex:1;min-height:0;}
 .zukan-card .zc-image{width:38%;flex-shrink:0;border:0.2cqw solid #2c2a24;background:#ffffff;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;}
 .zukan-card .zc-image img{width:100%;height:100%;object-fit:contain;padding:2cqw;}
-.zukan-card .zc-image .zc-fig{position:absolute;bottom:0.8cqw;left:0;right:0;text-align:center;font-family:"EB Garamond",serif;font-size:1.2cqw;letter-spacing:.15em;color:#9a9686;}
-.zukan-card .zc-info{flex:1;min-width:0;overflow:hidden;display:grid;grid-template-columns:auto 1fr;align-content:start;column-gap:1.4cqw;row-gap:0;font-size:1.55cqw;line-height:1.7;}
-.zukan-card .zc-info dt{color:#6b6655;font-size:1.35cqw;white-space:nowrap;border-bottom:0.06cqw dotted #b9b5a6;padding:0.45cqw 0;}
+.zukan-card .zc-image .zc-fig{position:absolute;bottom:0.8cqw;left:0;right:0;text-align:center;font-family:"EB Garamond",serif;font-size:1.6cqw;letter-spacing:.15em;color:#9a9686;}
+.zukan-card .zc-info{flex:1;min-width:0;overflow:hidden;display:grid;grid-template-columns:auto 1fr;align-content:start;column-gap:1.4cqw;row-gap:0;font-size:2.0cqw;line-height:1.7;}
+.zukan-card .zc-info dt{color:#6b6655;font-size:1.8cqw;white-space:nowrap;border-bottom:0.06cqw dotted #b9b5a6;padding:0.45cqw 0;}
 .zukan-card .zc-info dd{margin:0;border-bottom:0.06cqw dotted #b9b5a6;padding:0.45cqw 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .zukan-card .zc-footer{flex-shrink:0;margin-top:1.8cqw;border-top:0.2cqw solid #2c2a24;padding-top:1.2cqw;display:flex;gap:1.6cqw;}
-.zukan-card .zc-footer .zc-desc-label{flex-shrink:0;font-family:"EB Garamond",serif;font-size:1.2cqw;letter-spacing:.2em;color:#9a9686;writing-mode:vertical-rl;}
-.zukan-card .zc-desc{flex:1;font-size:1.55cqw;line-height:1.6;letter-spacing:.02em;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}
-.zukan-card .zc-corner{position:absolute;top:1.4cqw;right:2cqw;font-family:"EB Garamond",serif;font-size:1.1cqw;letter-spacing:.1em;color:#c4c0b0;}
+.zukan-card .zc-footer .zc-desc-label{flex-shrink:0;font-family:"EB Garamond",serif;font-size:1.6cqw;letter-spacing:.2em;color:#9a9686;writing-mode:vertical-rl;}
+.zukan-card .zc-desc{flex:1;font-size:2.0cqw;line-height:1.6;letter-spacing:.02em;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}
+.zukan-card .zc-corner{position:absolute;top:1.4cqw;right:2cqw;font-family:"EB Garamond",serif;font-size:1.4cqw;letter-spacing:.1em;color:#c4c0b0;}
 @container (max-width: 480px){
 .zukan-card{aspect-ratio:auto;height:auto;overflow:visible;padding:16px;}
-.zukan-card .zc-corner{font-size:9px;top:12px;right:14px;}
+.zukan-card .zc-corner{font-size:12px;top:12px;right:14px;}
 .zukan-card .zc-header{flex-wrap:wrap;border-bottom-width:2px;padding-bottom:10px;margin-bottom:12px;}
-.zukan-card .zc-no{font-size:11px;}
-.zukan-card .zc-no b{font-size:16px;}
-.zukan-card .zc-name{font-size:22px;white-space:normal;}
-.zukan-card .zc-yomi{font-size:11px;}
-.zukan-card .zc-latin{font-size:13px;}
-.zukan-card .zc-badge{font-size:10px;padding:4px 8px;border-width:1px;}
-.zukan-card .zc-badge b{font-size:12px;}
+.zukan-card .zc-classification{font-size:14px;}
+.zukan-card .zc-no{font-size:14px;}
+.zukan-card .zc-no b{font-size:14px;}
+.zukan-card .zc-name{font-size:34px;white-space:normal;}
+.zukan-card .zc-yomi{font-size:14px;}
+.zukan-card .zc-latin{font-size:17px;}
 .zukan-card .zc-body{flex-direction:column;gap:14px;}
 .zukan-card .zc-image{width:100%;aspect-ratio:1/1;border-width:1px;}
-.zukan-card .zc-image .zc-fig{font-size:9px;bottom:6px;}
-.zukan-card .zc-info{font-size:13px;line-height:1.8;grid-template-columns:5.5em 1fr;column-gap:10px;}
-.zukan-card .zc-info dt{font-size:11px;white-space:normal;}
+.zukan-card .zc-image .zc-fig{font-size:12px;bottom:6px;}
+.zukan-card .zc-info{font-size:17px;line-height:1.8;grid-template-columns:5.5em 1fr;column-gap:10px;}
+.zukan-card .zc-info dt{font-size:14px;white-space:normal;}
 .zukan-card .zc-info dd{white-space:normal;overflow:visible;text-overflow:clip;}
 .zukan-card .zc-footer{margin-top:14px;padding-top:10px;border-top-width:1px;flex-direction:column;gap:6px;}
-.zukan-card .zc-footer .zc-desc-label{writing-mode:horizontal-tb;font-size:10px;letter-spacing:.15em;}
-.zukan-card .zc-desc{font-size:13.5px;line-height:1.75;-webkit-line-clamp:unset;display:block;overflow:visible;}
+.zukan-card .zc-footer .zc-desc-label{writing-mode:horizontal-tb;font-size:13px;letter-spacing:.15em;}
+.zukan-card .zc-desc{font-size:18px;line-height:1.75;-webkit-line-clamp:unset;display:block;overflow:visible;}
 }
 `;
 
