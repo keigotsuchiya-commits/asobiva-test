@@ -511,6 +511,21 @@ body.admin-mode .card-replace { display: flex; }
   margin-left: 8px;
 }
 body.admin-mode .footer-gap-btn { display: inline-block; }
+.footer-section.no-gap {
+  padding-top: 0;
+}
+.footer-gap-btn {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 10px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  text-decoration: underline;
+  letter-spacing: 0.06em;
+  margin-left: 8px;
+}
+body.admin-mode .footer-gap-btn { display: inline-block; }
 footer {
   padding: 28px 16px;
   text-align: center;
@@ -758,7 +773,7 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
 
 <script>
 // ── IndexedDB (Base64ストレージ) ──────────────
-const DB_NAME = 'asobiva_content_bonkichi2_b64';
+const DB_NAME = 'asobiva_content_mushi_b64';
 let db;
 
 function openDB() {
@@ -1215,6 +1230,27 @@ async function toggleFooterGap() {
   await dbOp('banners', 'readwrite', s => s.put({ slot: 98, footerNoGap: noGap }));
 }
 
+// ── Footer gap toggle ─────────────────────────
+async function loadFooterGap() {
+  try {
+    const row = await dbOp('banners', 'readonly', s => s.get(98));
+    const noGap = row?.footerNoGap === true;
+    const sec = document.getElementById('footerSection');
+    const btn = document.getElementById('footerGapBtn');
+    if (sec) sec.classList.toggle('no-gap', noGap);
+    if (btn) btn.textContent = noGap ? '隙間なし' : '隙間あり';
+  } catch {}
+}
+
+async function toggleFooterGap() {
+  const sec = document.getElementById('footerSection');
+  const btn = document.getElementById('footerGapBtn');
+  const noGap = !sec.classList.contains('no-gap');
+  sec.classList.toggle('no-gap', noGap);
+  btn.textContent = noGap ? '隙間なし' : '隙間あり';
+  await dbOp('banners', 'readwrite', s => s.put({ slot: 98, footerNoGap: noGap }));
+}
+
 // ── Footer editor ─────────────────────────────
 async function loadFooterText() {
   try {
@@ -1390,6 +1426,7 @@ async function replaceCard(id, file) {
 async function toggleGap(id) {
   const c = cards.find(c => c.id === id);
   if (!c) return;
+  // 隙間あり → ライン → 隙間なし → 隙間あり
   if (c.gap === true || c.gap === undefined) c.gap = 'line';
   else if (c.gap === 'line') c.gap = false;
   else c.gap = true;

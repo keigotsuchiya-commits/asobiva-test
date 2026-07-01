@@ -1648,9 +1648,23 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .empty-state strong { display:block; font-size:14px; font-weight:600; color:var(--ink); margin-bottom:6px; }
 .footer-section { background: var(--bg); padding-top:10px; }
 .footer-section.no-gap { padding-top:0; }
+.site-header { display:flex; align-items:center; justify-content:flex-end; padding:10px 16px; background:var(--white); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; }
+.burger-btn { background:none; border:none; cursor:pointer; padding:4px; display:flex; flex-direction:column; gap:5px; align-items:flex-end; }
+.burger-btn span { display:block; height:1.5px; background:var(--ink); border-radius:1px; }
+.burger-btn span:nth-child(1) { width:20px; }
+.burger-btn span:nth-child(2) { width:14px; }
+.burger-btn span:nth-child(3) { width:20px; }
+.burger-menu { display:none; position:absolute; top:100%; right:12px; background:var(--white); border:1px solid var(--border); border-radius:10px; box-shadow:0 4px 16px rgba(0,0,0,0.1); overflow:hidden; z-index:200; min-width:140px; }
+.burger-menu.open { display:block; }
+.nav-link-item { display:block; width:100%; padding:14px 20px; background:none; border:none; border-bottom:1px solid var(--border); font-size:13px; font-weight:500; color:var(--ink); cursor:pointer; text-align:left; text-decoration:none; }
+.nav-link-item:last-child { border-bottom:none; }
 footer { padding:28px 16px; text-align:center; font-size:10px; letter-spacing:0.1em; color:var(--ink-soft); background:var(--white); }
 `;
 
+
+  let navItems = [];
+  try { navItems = JSON.parse(localStorage.getItem('asobiva_nav_v1')) || []; } catch {}
+  const navLinksHTML = navItems.map(item => `<a class="nav-link-item" href="${item.url}">${item.label}</a>`).join('');
   const footerText = document.getElementById('footerText')?.textContent || 'ASOBIVA — i.roiro';
   const footerNoGap = document.getElementById('footerSection')?.classList.contains('no-gap');
   const footerGapClass = footerNoGap ? ' no-gap' : '';
@@ -1665,7 +1679,13 @@ footer { padding:28px 16px; text-align:center; font-size:10px; letter-spacing:0.
 </head>
 <body>
 <div class="wrap">
-  <div class="site-header"><a href="asobiva.html" class="back-link">← トップへ戻る</a></div>
+  <div class="site-header">
+    <button class="burger-btn" id="burgerBtnStatic" onclick="document.getElementById('burgerMenuStatic').classList.toggle('open')">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="burger-menu" id="burgerMenuStatic">${navLinksHTML}</div>
+  </div>
+  <div class="site-header-back"><a href="asobiva.html" class="back-link">← トップへ戻る</a></div>
   <div class="header-pair">
 ${headerHTML}  </div>
 ${cardsHTML}  <div class="footer-section${footerGapClass}">
@@ -1690,6 +1710,13 @@ function cyclerCarousel(el){
   var count = el.querySelector('.carousel-count');
   if (count) count.textContent = (idx + 1) + ' / ' + images.length;
 }
+</scr` + `ipt>
+<scr` + `ipt>
+document.addEventListener('click', function(e){
+  var menu = document.getElementById('burgerMenuStatic');
+  var btn = document.getElementById('burgerBtnStatic');
+  if (menu && !menu.contains(e.target) && !btn.contains(e.target)) menu.classList.remove('open');
+});
 </scr` + `ipt>
 </body>
 </html>
