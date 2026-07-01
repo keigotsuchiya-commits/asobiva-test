@@ -1527,7 +1527,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .empty-state strong { display:block; font-size:14px; font-weight:600; color:var(--ink); margin-bottom:6px; }
 .footer-section { background: var(--bg); padding-top:10px; }
 .footer-section.no-gap { padding-top:0; }
-.site-header { display:flex; align-items:center; justify-content:flex-end; padding:10px 16px; background:var(--white); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; }
+.site-header { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; background:var(--white); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; }
 .burger-btn { background:none; border:none; cursor:pointer; padding:4px; display:flex; flex-direction:column; gap:5px; align-items:flex-end; }
 .burger-btn span { display:block; height:1.5px; background:var(--ink); border-radius:1px; }
 .burger-btn span:nth-child(1) { width:20px; }
@@ -1559,12 +1559,14 @@ footer { padding:28px 16px; text-align:center; font-size:10px; letter-spacing:0.
 <body>
 <div class="wrap">
   <div class="site-header">
-    <button class="burger-btn" id="burgerBtnStatic" onclick="document.getElementById('burgerMenuStatic').classList.toggle('open')">
-      <span></span><span></span><span></span>
-    </button>
-    <div class="burger-menu" id="burgerMenuStatic">${navLinksHTML}</div>
+    <a href="asobiva.html" class="back-link">← トップへ戻る</a>
+    <div style="position:relative;">
+      <button class="burger-btn" id="burgerBtnStatic" onclick="document.getElementById('burgerMenuStatic').classList.toggle('open')">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="burger-menu" id="burgerMenuStatic">${navLinksHTML}</div>
+    </div>
   </div>
-  <div class="site-header-back"><a href="asobiva.html" class="back-link">← トップへ戻る</a></div>
   <div class="header-pair">
 ${headerHTML}  </div>
 ${cardsHTML}  <div class="footer-section${footerGapClass}">
