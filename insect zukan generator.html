@@ -398,8 +398,12 @@
     <fieldset>
       <legend>一括テキスト読み込み</legend>
       <label>テキストファイルを選択するか、直接貼り付けてください</label>
-      <div style="margin-bottom:6px;">
-        <input type="file" id="f_txt_file" accept=".txt,text/plain" style="font-size:13px;">
+      <div style="margin-bottom:8px;">
+        <input type="file" id="f_txt_file" accept=".txt" style="display:none;">
+        <button type="button" id="btn_txt_select" style="width:100%;padding:12px;font-size:15px;background:#fff;border:1px solid #4a4334;color:#4a4334;border-radius:4px;cursor:pointer;">
+          📄 テキストファイルを選択
+        </button>
+        <div id="txt_file_name" style="font-size:12px;color:#7a766c;margin-top:4px;"></div>
       </div>
       <textarea id="f_bulk" style="min-height:90px;" placeholder="【図鑑No.】001&#10;【和名】○○○○&#10;【読み】○○○○&#10;...（テンプレート参照）"></textarea>
       <div class="actions" style="margin-top:8px;">
@@ -603,6 +607,11 @@ const keyMap = {
   '解説文': 'f_desc'
 };
 
+// テキストファイル選択ボタン
+document.getElementById('btn_txt_select').addEventListener('click', ()=>{
+  document.getElementById('f_txt_file').click();
+});
+
 // テキストファイル選択→テキストエリアに自動展開
 document.getElementById('f_txt_file').addEventListener('change', (e)=>{
   const file = e.target.files[0];
@@ -610,7 +619,8 @@ document.getElementById('f_txt_file').addEventListener('change', (e)=>{
   const reader = new FileReader();
   reader.onload = (ev)=>{
     document.getElementById('f_bulk').value = ev.target.result;
-    document.getElementById('parse_status').textContent = 'ファイルを読み込みました：' + file.name + '　→「テキストを各項目に反映」を押してください';
+    document.getElementById('txt_file_name').textContent = '選択中：' + file.name;
+    document.getElementById('parse_status').textContent = 'ファイルを読み込みました。→「テキストを各項目に反映」を押してください';
   };
   reader.readAsText(file, 'UTF-8');
 });
