@@ -743,7 +743,7 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
         <!-- ナビリンク一覧（動的に生成） -->
         <div id="navLinks"></div>
         <div class="burger-menu-divider"></div>
-        <button class="burger-menu-item" id="adminBtn" onclick="toggleAdmin()">管理</button>
+        <button class="burger-menu-item" id="adminBtnMenu" onclick="toggleAdmin()">管理</button>
         <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
         <button class="burger-menu-item admin-only" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
         <button class="burger-menu-item admin-only" id="downloadHtmlBtn" onclick="handleDownloadClick()">公開用保存</button>
@@ -1368,6 +1368,8 @@ function toggleAdmin() {
   adminMode = !adminMode;
   document.body.classList.toggle('admin-mode', adminMode);
   document.getElementById('adminBtn').classList.toggle('active', adminMode);
+  const menuBtn = document.getElementById('adminBtnMenu');
+  if (menuBtn) menuBtn.classList.toggle('active', adminMode);
   closeBurgerMenu();
   if (!adminMode) closePanel();
   render();
