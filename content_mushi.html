@@ -407,26 +407,43 @@ body.admin-mode .card:hover img { transform: none; }
 }
 
 /* ── HTML CAROUSEL ── */
+.html-carousel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: var(--white);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+  border-bottom: 1px solid var(--border);
+}
+.html-carousel-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: var(--white);
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+}
 .html-carousel-nav {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(0,0,0,0.4);
-  color: #fff;
+  background: none;
+  color: var(--ink);
   border: none;
   width: 32px;
   height: 32px;
-  border-radius: 50%;
   font-size: 20px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 5;
+  opacity: 0.5;
+  transition: opacity 0.15s;
 }
-.html-carousel-nav.prev { left: 8px; }
-.html-carousel-nav.next { right: 8px; }
-.html-carousel-nav:hover { background: rgba(0,0,0,0.65); }
+.html-carousel-nav:hover { opacity: 1; }
 body.admin-mode .html-card-label { display: block; }
 
 .card-del {
@@ -1015,44 +1032,55 @@ function render() {
       wrap.appendChild(iframe);
 
       if (c.htmls.length > 1) {
-        const dots = document.createElement('div');
-        dots.className = 'carousel-dots';
-        c.htmls.forEach((_, i) => {
-          const dot = document.createElement('span');
-          if (i === 0) dot.classList.add('active');
-          dots.appendChild(dot);
-        });
-        wrap.appendChild(dots);
-
-        const count = document.createElement('div');
-        count.className = 'carousel-count';
+        // 上部：‹ 枚数 ›
+        const header = document.createElement('div');
+        header.className = 'html-carousel-header';
+        const prevBtnTop = document.createElement('button');
+        prevBtnTop.className = 'html-carousel-nav';
+        prevBtnTop.textContent = '‹';
+        const count = document.createElement('span');
         count.textContent = `1 / ${c.htmls.length}`;
-        wrap.appendChild(count);
+        const nextBtnTop = document.createElement('button');
+        nextBtnTop.className = 'html-carousel-nav';
+        nextBtnTop.textContent = '›';
+        header.appendChild(prevBtnTop);
+        header.appendChild(count);
+        header.appendChild(nextBtnTop);
+        wrap.insertBefore(header, iframe);
 
-        const prevBtn = document.createElement('button');
-        prevBtn.className = 'html-carousel-nav prev';
-        prevBtn.textContent = '‹';
-        prevBtn.addEventListener('click', e => {
-          e.preventDefault(); e.stopPropagation();
+        // 下部：‹ › 
+        const footer = document.createElement('div');
+        footer.className = 'html-carousel-footer';
+        const prevBtnBottom = document.createElement('button');
+        prevBtnBottom.className = 'html-carousel-nav';
+        prevBtnBottom.textContent = '‹';
+        const countBottom = document.createElement('span');
+        countBottom.textContent = `1 / ${c.htmls.length}`;
+        const nextBtnBottom = document.createElement('button');
+        nextBtnBottom.className = 'html-carousel-nav';
+        nextBtnBottom.textContent = '›';
+        footer.appendChild(prevBtnBottom);
+        footer.appendChild(countBottom);
+        footer.appendChild(nextBtnBottom);
+        wrap.appendChild(footer);
+
+        // 共通のナビ処理
+        function goPrev() {
           let idx = (parseInt(wrap.dataset.index, 10) - 1 + c.htmls.length) % c.htmls.length;
           wrap.dataset.index = String(idx);
           iframe.srcdoc = injectAutoResize(c.htmls[idx]);
-          dots.querySelectorAll('span').forEach((d, i) => d.classList.toggle('active', i === idx));
           count.textContent = `${idx + 1} / ${c.htmls.length}`;
-        });
-        const nextBtn = document.createElement('button');
-        nextBtn.className = 'html-carousel-nav next';
-        nextBtn.textContent = '›';
-        nextBtn.addEventListener('click', e => {
-          e.preventDefault(); e.stopPropagation();
+          countBottom.textContent = `${idx + 1} / ${c.htmls.length}`;
+        }
+        function goNext() {
           let idx = (parseInt(wrap.dataset.index, 10) + 1) % c.htmls.length;
           wrap.dataset.index = String(idx);
           iframe.srcdoc = injectAutoResize(c.htmls[idx]);
-          dots.querySelectorAll('span').forEach((d, i) => d.classList.toggle('active', i === idx));
           count.textContent = `${idx + 1} / ${c.htmls.length}`;
-        });
-        wrap.appendChild(prevBtn);
-        wrap.appendChild(nextBtn);
+          countBottom.textContent = `${idx + 1} / ${c.htmls.length}`;
+        }
+        [prevBtnTop, prevBtnBottom].forEach(btn => btn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); goPrev(); }));
+        [nextBtnTop, nextBtnBottom].forEach(btn => btn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); goNext(); }));
       }
       supportsReplace = false;
     } else if (c.type === 'carousel') {
