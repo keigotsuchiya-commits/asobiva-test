@@ -405,6 +405,28 @@ body.admin-mode .card:hover img { transform: none; }
   border-radius: 20px;
   pointer-events: none;
 }
+
+/* ── HTML CAROUSEL ── */
+.html-carousel-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0,0,0,0.4);
+  color: #fff;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+}
+.html-carousel-nav.prev { left: 8px; }
+.html-carousel-nav.next { right: 8px; }
+.html-carousel-nav:hover { background: rgba(0,0,0,0.65); }
 body.admin-mode .html-card-label { display: block; }
 
 .card-del {
@@ -893,6 +915,7 @@ async function init() {
       html: r.html,
       base64: r.base64,
       images: r.images,
+      htmls: r.htmls,
       name: r.name || '',
       link: r.link || '',
       gap: r.gap !== undefined ? r.gap : true
@@ -971,6 +994,67 @@ function render() {
       img.loading = 'lazy';
       wrap.appendChild(img);
       replaceAccept = 'image/*,text/html,.html';
+    } else if (c.type === 'html-carousel') {
+      wrap = document.createElement('div');
+      wrap.className = 'carousel-card html-carousel-card';
+      wrap.dataset.index = '0';
+
+      const iframe = document.createElement('iframe');
+      iframe.srcdoc = injectAutoResize(c.htmls[0]);
+      iframe.loading = 'lazy';
+      iframe.scrolling = 'no';
+      iframe.style.cssText = 'width:100%;border:none;height:60px;display:block;overflow:hidden;';
+      iframe.sandbox = 'allow-scripts allow-popups allow-forms allow-same-origin';
+      iframe.addEventListener('load', function() {
+        try {
+          const h = iframe.contentDocument.documentElement.scrollHeight || iframe.contentDocument.body.scrollHeight;
+          if (h > 0) iframe.style.height = h + 'px';
+        } catch(e) {}
+        iframe.contentWindow.postMessage({ type: 'asobiva-init' }, '*');
+      });
+      wrap.appendChild(iframe);
+
+      if (c.htmls.length > 1) {
+        const dots = document.createElement('div');
+        dots.className = 'carousel-dots';
+        c.htmls.forEach((_, i) => {
+          const dot = document.createElement('span');
+          if (i === 0) dot.classList.add('active');
+          dots.appendChild(dot);
+        });
+        wrap.appendChild(dots);
+
+        const count = document.createElement('div');
+        count.className = 'carousel-count';
+        count.textContent = `1 / ${c.htmls.length}`;
+        wrap.appendChild(count);
+
+        const prevBtn = document.createElement('button');
+        prevBtn.className = 'html-carousel-nav prev';
+        prevBtn.textContent = '‹';
+        prevBtn.addEventListener('click', e => {
+          e.preventDefault(); e.stopPropagation();
+          let idx = (parseInt(wrap.dataset.index, 10) - 1 + c.htmls.length) % c.htmls.length;
+          wrap.dataset.index = String(idx);
+          iframe.srcdoc = injectAutoResize(c.htmls[idx]);
+          dots.querySelectorAll('span').forEach((d, i) => d.classList.toggle('active', i === idx));
+          count.textContent = `${idx + 1} / ${c.htmls.length}`;
+        });
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'html-carousel-nav next';
+        nextBtn.textContent = '›';
+        nextBtn.addEventListener('click', e => {
+          e.preventDefault(); e.stopPropagation();
+          let idx = (parseInt(wrap.dataset.index, 10) + 1) % c.htmls.length;
+          wrap.dataset.index = String(idx);
+          iframe.srcdoc = injectAutoResize(c.htmls[idx]);
+          dots.querySelectorAll('span').forEach((d, i) => d.classList.toggle('active', i === idx));
+          count.textContent = `${idx + 1} / ${c.htmls.length}`;
+        });
+        wrap.appendChild(prevBtn);
+        wrap.appendChild(nextBtn);
+      }
+      supportsReplace = false;
     } else if (c.type === 'carousel') {
       wrap = document.createElement('div');
       wrap.className = 'carousel-card';
@@ -1356,7 +1440,7 @@ function renderPreviews() {
   const imgCount = pendingFiles.filter(f => !isHtmlFile(f)).length;
   const htmlCount = pendingFiles.filter(isHtmlFile).length;
   const toggleWrap = document.getElementById('carouselToggleWrap');
-  if (imgCount >= 2 && htmlCount === 0) {
+  if ((imgCount >= 2 && htmlCount === 0) || (htmlCount >= 2 && imgCount === 0)) {
     toggleWrap.style.display = 'flex';
   } else {
     toggleWrap.style.display = 'none';
@@ -1379,11 +1463,21 @@ async function addCards() {
   btn.textContent = '保存中…';
 
   if (isCarousel) {
-    const images = pendingFiles.filter(f => !isHtmlFile(f));
-    const images64 = [];
-    for (const f of images) images64.push(await fileToBase64(f));
-    const id = await dbOp('cards', 'readwrite', s => s.add({ type: 'carousel', images: images64, link: '' }));
-    cards.push({ id, type: 'carousel', images: images64, link: '' });
+    const htmlFiles = pendingFiles.filter(isHtmlFile);
+    if (htmlFiles.length >= 2) {
+      // HTMLカルーセル
+      const htmlTexts = [];
+      for (const f of htmlFiles) htmlTexts.push(await fileToText(f));
+      const id = await dbOp('cards', 'readwrite', s => s.add({ type: 'html-carousel', htmls: htmlTexts, link: '' }));
+      cards.push({ id, type: 'html-carousel', htmls: htmlTexts, link: '' });
+    } else {
+      // 画像カルーセル
+      const images = pendingFiles.filter(f => !isHtmlFile(f));
+      const images64 = [];
+      for (const f of images) images64.push(await fileToBase64(f));
+      const id = await dbOp('cards', 'readwrite', s => s.add({ type: 'carousel', images: images64, link: '' }));
+      cards.push({ id, type: 'carousel', images: images64, link: '' });
+    }
   } else {
     for (const f of pendingFiles) {
       if (isHtmlFile(f)) {
@@ -1564,7 +1658,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .empty-state strong { display:block; font-size:14px; font-weight:600; color:var(--ink); margin-bottom:6px; }
 .footer-section { background: var(--bg); padding-top:10px; }
 .footer-section.no-gap { padding-top:0; }
-.site-header { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; background:var(--white); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; }
+.site-header { display:flex; align-items:center; justify-content:flex-end; padding:10px 16px; background:var(--white); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; }
 .burger-btn { background:none; border:none; cursor:pointer; padding:4px; display:flex; flex-direction:column; gap:5px; align-items:flex-end; }
 .burger-btn span { display:block; height:1.5px; background:var(--ink); border-radius:1px; }
 .burger-btn span:nth-child(1) { width:20px; }
@@ -1596,14 +1690,12 @@ footer { padding:28px 16px; text-align:center; font-size:10px; letter-spacing:0.
 <body>
 <div class="wrap">
   <div class="site-header">
-    <a href="asobiva.html" class="back-link">← トップへ戻る</a>
-    <div style="position:relative;">
-      <button class="burger-btn" id="burgerBtnStatic" onclick="document.getElementById('burgerMenuStatic').classList.toggle('open')">
-        <span></span><span></span><span></span>
-      </button>
-      <div class="burger-menu" id="burgerMenuStatic">${navLinksHTML}</div>
-    </div>
+    <button class="burger-btn" id="burgerBtnStatic" onclick="document.getElementById('burgerMenuStatic').classList.toggle('open')">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="burger-menu" id="burgerMenuStatic">${navLinksHTML}</div>
   </div>
+  <div class="site-header-back"><a href="asobiva.html" class="back-link">← トップへ戻る</a></div>
   <div class="header-pair">
 ${headerHTML}  </div>
 ${cardsHTML}  <div class="footer-section${footerGapClass}">
