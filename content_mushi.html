@@ -918,7 +918,7 @@ async function init() {
     const rows = await dbOp('cards', 'readonly', s => s.getAll());
     cards = (rows || []).map(r => ({
       id: r.id,
-      type: r.type || 'html',
+      type: r.type || (r.base64 ? 'image' : r.htmls ? 'html-carousel' : 'html'),
       html: r.html,
       base64: r.base64,
       images: r.images,
@@ -981,7 +981,8 @@ function render() {
     container.appendChild(sec);
   }
 
-  cards.forEach(c => {
+  try {
+    cards.forEach(c => {
     const sec = document.createElement('div');
     const gapClass = c.gap === false || c.gap === 'nogap' ? ' no-gap' : c.gap === 'line' ? ' line-gap' : '';
     sec.className = 'card-section' + gapClass;
@@ -1166,6 +1167,9 @@ function render() {
     sec.appendChild(wrap);
     container.appendChild(sec);
   });
+  } catch(err) {
+    console.error('render error:', err);
+  }
 
   if (adminMode) {
     const addSec = document.createElement('div');
@@ -1291,27 +1295,6 @@ function moveNavItem(i, dir) {
   renderNavLinks();
 }
 
-
-// ── Footer gap toggle ─────────────────────────
-async function loadFooterGap() {
-  try {
-    const row = await dbOp('banners', 'readonly', s => s.get(98));
-    const noGap = row?.footerNoGap === true;
-    const sec = document.getElementById('footerSection');
-    const btn = document.getElementById('footerGapBtn');
-    if (sec) sec.classList.toggle('no-gap', noGap);
-    if (btn) btn.textContent = noGap ? '隙間なし' : '隙間あり';
-  } catch {}
-}
-
-async function toggleFooterGap() {
-  const sec = document.getElementById('footerSection');
-  const btn = document.getElementById('footerGapBtn');
-  const noGap = !sec.classList.contains('no-gap');
-  sec.classList.toggle('no-gap', noGap);
-  btn.textContent = noGap ? '隙間なし' : '隙間あり';
-  await dbOp('banners', 'readwrite', s => s.put({ slot: 98, footerNoGap: noGap }));
-}
 
 // ── Footer gap toggle ─────────────────────────
 async function loadFooterGap() {
@@ -1737,7 +1720,7 @@ document.addEventListener('click', function(e){
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
-  a.download = `content_sample_${ts}.html`;
+  a.download = `content_mushi_${ts}.html`;
   document.body.appendChild(a);
   a.click();
   a.remove();
