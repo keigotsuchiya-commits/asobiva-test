@@ -320,39 +320,6 @@ body.admin-mode .banner-slot .banner-edit { display: flex; }
 }
 .card-gap-btn:hover { background: rgba(0,0,0,0.75); }
 body.admin-mode .card-gap-btn { display: flex; }
-
-/* ── HTML CAROUSEL ── */
-.html-carousel-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 12px;
-  background: var(--white);
-  border-top: 1px solid var(--border);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  color: var(--ink-soft);
-}
-.html-carousel-footer span {
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  color: var(--ink-soft);
-}
-.html-carousel-nav {
-  background: none;
-  color: var(--ink);
-  border: none;
-  width: 32px;
-  height: 32px;
-  font-size: 20px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.5;
-  transition: opacity 0.15s;
-}
-.html-carousel-nav:hover { opacity: 1; }
 .card {
   width: 100%;
   position: relative;
@@ -806,13 +773,13 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
 
 <script>
 // ── IndexedDB (Base64ストレージ) ──────────────
-const DB_NAME = 'asobiva_content_mushi_b64';
+const DB_NAME = 'asobiva_mushi_v2';
 let db;
 
 function openDB() {
   return new Promise((res) => {
     try {
-      const req = indexedDB.open(DB_NAME, 3);
+      const req = indexedDB.open(DB_NAME, 1);
       req.onupgradeneeded = e => {
         const d = e.target.result;
         if (!d.objectStoreNames.contains('cards'))
@@ -922,11 +889,10 @@ async function init() {
     const rows = await dbOp('cards', 'readonly', s => s.getAll());
     cards = (rows || []).map(r => ({
       id: r.id,
-      type: r.type || (r.base64 ? 'image' : r.htmls ? 'html-carousel' : 'html'),
+      type: r.type || 'html',
       html: r.html,
       base64: r.base64,
       images: r.images,
-      htmls: r.htmls,
       name: r.name || '',
       link: r.link || '',
       gap: r.gap !== undefined ? r.gap : true
@@ -1005,57 +971,6 @@ function render() {
       img.loading = 'lazy';
       wrap.appendChild(img);
       replaceAccept = 'image/*,text/html,.html';
-    } else if (c.type === 'html-carousel') {
-      wrap = document.createElement('div');
-      wrap.className = 'carousel-card html-carousel-card';
-      wrap.dataset.index = '0';
-
-      const iframe = document.createElement('iframe');
-      iframe.srcdoc = injectAutoResize(c.htmls[0]);
-      iframe.loading = 'lazy';
-      iframe.scrolling = 'no';
-      iframe.style.cssText = 'width:100%;border:none;height:60px;display:block;overflow:hidden;';
-      iframe.sandbox = 'allow-scripts allow-popups allow-forms allow-same-origin';
-      iframe.addEventListener('load', function() {
-        try {
-          const h = iframe.contentDocument.documentElement.scrollHeight || iframe.contentDocument.body.scrollHeight;
-          if (h > 0) iframe.style.height = h + 'px';
-        } catch(e) {}
-        iframe.contentWindow.postMessage({ type: 'asobiva-init' }, '*');
-      });
-      wrap.appendChild(iframe);
-
-      if (c.htmls.length > 1) {
-        const footer = document.createElement('div');
-        footer.className = 'html-carousel-footer';
-        const prevBtn = document.createElement('button');
-        prevBtn.className = 'html-carousel-nav';
-        prevBtn.textContent = '‹';
-        const count = document.createElement('span');
-        count.textContent = `1 / ${c.htmls.length}`;
-        const nextBtn = document.createElement('button');
-        nextBtn.className = 'html-carousel-nav';
-        nextBtn.textContent = '›';
-        footer.appendChild(prevBtn);
-        footer.appendChild(count);
-        footer.appendChild(nextBtn);
-        wrap.appendChild(footer);
-        prevBtn.addEventListener('click', e => {
-          e.preventDefault(); e.stopPropagation();
-          let idx = (parseInt(wrap.dataset.index, 10) - 1 + c.htmls.length) % c.htmls.length;
-          wrap.dataset.index = String(idx);
-          iframe.srcdoc = injectAutoResize(c.htmls[idx]);
-          count.textContent = `${idx + 1} / ${c.htmls.length}`;
-        });
-        nextBtn.addEventListener('click', e => {
-          e.preventDefault(); e.stopPropagation();
-          let idx = (parseInt(wrap.dataset.index, 10) + 1) % c.htmls.length;
-          wrap.dataset.index = String(idx);
-          iframe.srcdoc = injectAutoResize(c.htmls[idx]);
-          count.textContent = `${idx + 1} / ${c.htmls.length}`;
-        });
-      }
-      supportsReplace = false;
     } else if (c.type === 'carousel') {
       wrap = document.createElement('div');
       wrap.className = 'carousel-card';
@@ -1315,7 +1230,26 @@ async function toggleFooterGap() {
   await dbOp('banners', 'readwrite', s => s.put({ slot: 98, footerNoGap: noGap }));
 }
 
+// ── Footer gap toggle ─────────────────────────
+async function loadFooterGap() {
+  try {
+    const row = await dbOp('banners', 'readonly', s => s.get(98));
+    const noGap = row?.footerNoGap === true;
+    const sec = document.getElementById('footerSection');
+    const btn = document.getElementById('footerGapBtn');
+    if (sec) sec.classList.toggle('no-gap', noGap);
+    if (btn) btn.textContent = noGap ? '隙間なし' : '隙間あり';
+  } catch {}
+}
 
+async function toggleFooterGap() {
+  const sec = document.getElementById('footerSection');
+  const btn = document.getElementById('footerGapBtn');
+  const noGap = !sec.classList.contains('no-gap');
+  sec.classList.toggle('no-gap', noGap);
+  btn.textContent = noGap ? '隙間なし' : '隙間あり';
+  await dbOp('banners', 'readwrite', s => s.put({ slot: 98, footerNoGap: noGap }));
+}
 
 // ── Footer editor ─────────────────────────────
 async function loadFooterText() {
@@ -1422,7 +1356,7 @@ function renderPreviews() {
   const imgCount = pendingFiles.filter(f => !isHtmlFile(f)).length;
   const htmlCount = pendingFiles.filter(isHtmlFile).length;
   const toggleWrap = document.getElementById('carouselToggleWrap');
-  if ((imgCount >= 2 && htmlCount === 0) || (htmlCount >= 2 && imgCount === 0)) {
+  if (imgCount >= 2 && htmlCount === 0) {
     toggleWrap.style.display = 'flex';
   } else {
     toggleWrap.style.display = 'none';
@@ -1445,19 +1379,11 @@ async function addCards() {
   btn.textContent = '保存中…';
 
   if (isCarousel) {
-    const htmlFiles = pendingFiles.filter(isHtmlFile);
-    if (htmlFiles.length >= 2) {
-      const htmlTexts = [];
-      for (const f of htmlFiles) htmlTexts.push(await fileToText(f));
-      const id = await dbOp('cards', 'readwrite', s => s.add({ type: 'html-carousel', htmls: htmlTexts, link: '', gap: true }));
-      cards.push({ id, type: 'html-carousel', htmls: htmlTexts, link: '', gap: true });
-    } else {
-      const images = pendingFiles.filter(f => !isHtmlFile(f));
-      const images64 = [];
-      for (const f of images) images64.push(await fileToBase64(f));
-      const id = await dbOp('cards', 'readwrite', s => s.add({ type: 'carousel', images: images64, link: '', gap: true }));
-      cards.push({ id, type: 'carousel', images: images64, link: '', gap: true });
-    }
+    const images = pendingFiles.filter(f => !isHtmlFile(f));
+    const images64 = [];
+    for (const f of images) images64.push(await fileToBase64(f));
+    const id = await dbOp('cards', 'readwrite', s => s.add({ type: 'carousel', images: images64, link: '' }));
+    cards.push({ id, type: 'carousel', images: images64, link: '' });
   } else {
     for (const f of pendingFiles) {
       if (isHtmlFile(f)) {
@@ -1506,7 +1432,7 @@ async function toggleGap(id) {
   else c.gap = true;
   await dbOp('cards', 'readwrite', s => s.put({
     id: c.id, type: c.type, html: c.html, base64: c.base64,
-    images: c.images, htmls: c.htmls, name: c.name, link: c.link, gap: c.gap
+    images: c.images, name: c.name, link: c.link, gap: c.gap
   }));
   render();
 }
