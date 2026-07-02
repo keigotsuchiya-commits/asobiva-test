@@ -320,6 +320,39 @@ body.admin-mode .banner-slot .banner-edit { display: flex; }
 }
 .card-gap-btn:hover { background: rgba(0,0,0,0.75); }
 body.admin-mode .card-gap-btn { display: flex; }
+
+/* ── HTML CAROUSEL ── */
+.html-carousel-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: var(--white);
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+}
+.html-carousel-footer span {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+}
+.html-carousel-nav {
+  background: none;
+  color: var(--ink);
+  border: none;
+  width: 32px;
+  height: 32px;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+}
+.html-carousel-nav:hover { opacity: 1; }
 .card {
   width: 100%;
   position: relative;
@@ -405,35 +438,6 @@ body.admin-mode .card:hover img { transform: none; }
   border-radius: 20px;
   pointer-events: none;
 }
-
-/* ── HTML CAROUSEL ── */
-
-.html-carousel-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 12px;
-  background: var(--white);
-  border-top: 1px solid var(--border);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  color: var(--ink-soft);
-}
-.html-carousel-nav {
-  background: none;
-  color: var(--ink);
-  border: none;
-  width: 32px;
-  height: 32px;
-  font-size: 20px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.5;
-  transition: opacity 0.15s;
-}
-.html-carousel-nav:hover { opacity: 1; }
 body.admin-mode .html-card-label { display: block; }
 
 .card-del {
@@ -743,7 +747,7 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
         <!-- ナビリンク一覧（動的に生成） -->
         <div id="navLinks"></div>
         <div class="burger-menu-divider"></div>
-        <button class="burger-menu-item" id="adminBtnMenu" onclick="toggleAdmin()">管理</button>
+        <button class="burger-menu-item" id="adminBtn" onclick="toggleAdmin()">管理</button>
         <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
         <button class="burger-menu-item admin-only" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
         <button class="burger-menu-item admin-only" id="downloadHtmlBtn" onclick="handleDownloadClick()">公開用保存</button>
@@ -808,7 +812,7 @@ let db;
 function openDB() {
   return new Promise((res) => {
     try {
-      const req = indexedDB.open(DB_NAME, 2);
+      const req = indexedDB.open(DB_NAME, 1);
       req.onupgradeneeded = e => {
         const d = e.target.result;
         if (!d.objectStoreNames.contains('cards'))
@@ -981,8 +985,7 @@ function render() {
     container.appendChild(sec);
   }
 
-  try {
-    cards.forEach(c => {
+  cards.forEach(c => {
     const sec = document.createElement('div');
     const gapClass = c.gap === false || c.gap === 'nogap' ? ' no-gap' : c.gap === 'line' ? ' line-gap' : '';
     sec.className = 'card-section' + gapClass;
@@ -1023,7 +1026,6 @@ function render() {
       wrap.appendChild(iframe);
 
       if (c.htmls.length > 1) {
-        // 下部：‹ 枚数 ›
         const footer = document.createElement('div');
         footer.className = 'html-carousel-footer';
         const prevBtn = document.createElement('button');
@@ -1038,7 +1040,6 @@ function render() {
         footer.appendChild(count);
         footer.appendChild(nextBtn);
         wrap.appendChild(footer);
-
         prevBtn.addEventListener('click', e => {
           e.preventDefault(); e.stopPropagation();
           let idx = (parseInt(wrap.dataset.index, 10) - 1 + c.htmls.length) % c.htmls.length;
@@ -1167,9 +1168,6 @@ function render() {
     sec.appendChild(wrap);
     container.appendChild(sec);
   });
-  } catch(err) {
-    console.error('render error:', err);
-  }
 
   if (adminMode) {
     const addSec = document.createElement('div');
@@ -1317,6 +1315,8 @@ async function toggleFooterGap() {
   await dbOp('banners', 'readwrite', s => s.put({ slot: 98, footerNoGap: noGap }));
 }
 
+
+
 // ── Footer editor ─────────────────────────────
 async function loadFooterText() {
   try {
@@ -1351,8 +1351,6 @@ function toggleAdmin() {
   adminMode = !adminMode;
   document.body.classList.toggle('admin-mode', adminMode);
   document.getElementById('adminBtn').classList.toggle('active', adminMode);
-  const menuBtn = document.getElementById('adminBtnMenu');
-  if (menuBtn) menuBtn.classList.toggle('active', adminMode);
   closeBurgerMenu();
   if (!adminMode) closePanel();
   render();
@@ -1449,18 +1447,16 @@ async function addCards() {
   if (isCarousel) {
     const htmlFiles = pendingFiles.filter(isHtmlFile);
     if (htmlFiles.length >= 2) {
-      // HTMLカルーセル
       const htmlTexts = [];
       for (const f of htmlFiles) htmlTexts.push(await fileToText(f));
-      const id = await dbOp('cards', 'readwrite', s => s.add({ type: 'html-carousel', htmls: htmlTexts, link: '' }));
-      cards.push({ id, type: 'html-carousel', htmls: htmlTexts, link: '' });
+      const id = await dbOp('cards', 'readwrite', s => s.add({ type: 'html-carousel', htmls: htmlTexts, link: '', gap: true }));
+      cards.push({ id, type: 'html-carousel', htmls: htmlTexts, link: '', gap: true });
     } else {
-      // 画像カルーセル
       const images = pendingFiles.filter(f => !isHtmlFile(f));
       const images64 = [];
       for (const f of images) images64.push(await fileToBase64(f));
-      const id = await dbOp('cards', 'readwrite', s => s.add({ type: 'carousel', images: images64, link: '' }));
-      cards.push({ id, type: 'carousel', images: images64, link: '' });
+      const id = await dbOp('cards', 'readwrite', s => s.add({ type: 'carousel', images: images64, link: '', gap: true }));
+      cards.push({ id, type: 'carousel', images: images64, link: '', gap: true });
     }
   } else {
     for (const f of pendingFiles) {
@@ -1510,7 +1506,7 @@ async function toggleGap(id) {
   else c.gap = true;
   await dbOp('cards', 'readwrite', s => s.put({
     id: c.id, type: c.type, html: c.html, base64: c.base64,
-    images: c.images, name: c.name, link: c.link, gap: c.gap
+    images: c.images, htmls: c.htmls, name: c.name, link: c.link, gap: c.gap
   }));
   render();
 }
@@ -1642,7 +1638,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .empty-state strong { display:block; font-size:14px; font-weight:600; color:var(--ink); margin-bottom:6px; }
 .footer-section { background: var(--bg); padding-top:10px; }
 .footer-section.no-gap { padding-top:0; }
-.site-header { display:flex; align-items:center; justify-content:flex-end; padding:10px 16px; background:var(--white); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; }
+.site-header { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; background:var(--white); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; }
 .burger-btn { background:none; border:none; cursor:pointer; padding:4px; display:flex; flex-direction:column; gap:5px; align-items:flex-end; }
 .burger-btn span { display:block; height:1.5px; background:var(--ink); border-radius:1px; }
 .burger-btn span:nth-child(1) { width:20px; }
@@ -1674,12 +1670,14 @@ footer { padding:28px 16px; text-align:center; font-size:10px; letter-spacing:0.
 <body>
 <div class="wrap">
   <div class="site-header">
-    <button class="burger-btn" id="burgerBtnStatic" onclick="document.getElementById('burgerMenuStatic').classList.toggle('open')">
-      <span></span><span></span><span></span>
-    </button>
-    <div class="burger-menu" id="burgerMenuStatic">${navLinksHTML}</div>
+    <a href="asobiva.html" class="back-link">← トップへ戻る</a>
+    <div style="position:relative;">
+      <button class="burger-btn" id="burgerBtnStatic" onclick="document.getElementById('burgerMenuStatic').classList.toggle('open')">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="burger-menu" id="burgerMenuStatic">${navLinksHTML}</div>
+    </div>
   </div>
-  <div class="site-header-back"><a href="asobiva.html" class="back-link">← トップへ戻る</a></div>
   <div class="header-pair">
 ${headerHTML}  </div>
 ${cardsHTML}  <div class="footer-section${footerGapClass}">
@@ -1720,7 +1718,7 @@ document.addEventListener('click', function(e){
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
-  a.download = `content_mushi_${ts}.html`;
+  a.download = `content_sample_${ts}.html`;
   document.body.appendChild(a);
   a.click();
   a.remove();
