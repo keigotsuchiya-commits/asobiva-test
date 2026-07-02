@@ -351,37 +351,40 @@ body.admin-mode .card:hover img { transform: none; }
   height: auto;
   display: block;
 }
-.carousel-dots {
-  position: absolute;
-  bottom: 10px;
-  left: 0; right: 0;
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  pointer-events: none;
-}
-.carousel-dots span {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.55);
-  transition: background 0.2s, transform 0.2s;
-}
-.carousel-dots span.active {
-  background: #fff;
-  transform: scale(1.25);
-}
-.carousel-count {
-  position: absolute;
-  top: 10px; right: 10px;
-  font-size: 10px;
-  letter-spacing: 0.05em;
-  color: #fff;
-  background: rgba(0,0,0,0.45);
-  padding: 3px 8px;
-  border-radius: 20px;
-  pointer-events: none;
-}
 body.admin-mode .html-card-label { display: block; }
+
+/* ── CAROUSEL FOOTER ── */
+.carousel-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: var(--white);
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+}
+.carousel-footer span {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+}
+.carousel-nav {
+  background: none;
+  color: var(--ink);
+  border: none;
+  width: 32px;
+  height: 32px;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+}
+.carousel-nav:hover { opacity: 1; }
 
 .card-del {
   display: none;
@@ -1125,27 +1128,37 @@ function renderTab(tab) {
       wrap.appendChild(img);
 
       if (c.images.length > 1) {
-        const dots = document.createElement('div');
-        dots.className = 'carousel-dots';
-        c.images.forEach((_, idx) => {
-          const dot = document.createElement('span');
-          if (idx === 0) dot.classList.add('active');
-          dots.appendChild(dot);
-        });
-        wrap.appendChild(dots);
+        const footer = document.createElement('div');
+        footer.className = 'carousel-footer';
 
-        const count = document.createElement('div');
-        count.className = 'carousel-count';
+        const prevBtn = document.createElement('button');
+        prevBtn.className = 'carousel-nav';
+        prevBtn.textContent = '‹';
+
+        const count = document.createElement('span');
         count.textContent = `1 / ${c.images.length}`;
-        wrap.appendChild(count);
 
-        wrap.addEventListener('click', e => {
-          if (adminMode) return; // avoid conflicting with admin controls
-          e.preventDefault();
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'carousel-nav';
+        nextBtn.textContent = '›';
+
+        footer.appendChild(prevBtn);
+        footer.appendChild(count);
+        footer.appendChild(nextBtn);
+        wrap.appendChild(footer);
+
+        prevBtn.addEventListener('click', e => {
+          e.preventDefault(); e.stopPropagation();
+          let idx = (parseInt(wrap.dataset.index, 10) - 1 + c.images.length) % c.images.length;
+          wrap.dataset.index = String(idx);
+          img.src = c.images[idx];
+          count.textContent = `${idx + 1} / ${c.images.length}`;
+        });
+        nextBtn.addEventListener('click', e => {
+          e.preventDefault(); e.stopPropagation();
           let idx = (parseInt(wrap.dataset.index, 10) + 1) % c.images.length;
           wrap.dataset.index = String(idx);
           img.src = c.images[idx];
-          dots.querySelectorAll('span').forEach((d, i) => d.classList.toggle('active', i === idx));
           count.textContent = `${idx + 1} / ${c.images.length}`;
         });
       }
@@ -1665,7 +1678,7 @@ async function downloadHTML() {
       for (const im of c.images) imgs.push(await compressImage(im));
       const dots = imgs.map((_, i) => `<span class="${i===0?'active':''}"></span>`).join('');
       const imgsJson = JSON.stringify(imgs).replace(/"/g, '&quot;');
-      return `  <div class="card-section${gapClass}"><div class="carousel-card" data-images="${imgsJson}" data-index="0" onclick="cyclerCarousel(this)"><img src="${imgs[0]}" alt="">${imgs.length > 1 ? `<div class="carousel-dots">${dots}</div><div class="carousel-count">1 / ${imgs.length}</div>` : ''}</div></div>\n`;
+      return `  <div class="card-section${gapClass}"><div class="carousel-card" data-index="0"><img src="${imgs[0]}" alt="">${imgs.length > 1 ? `<div class="carousel-footer"><button class="carousel-nav" onclick="(function(el){var idx=(parseInt(el.closest('.carousel-card').dataset.index,10)-1+${imgs.length})%${imgs.length};el.closest('.carousel-card').dataset.index=String(idx);el.closest('.carousel-card').querySelector('img').src=${JSON.stringify(imgs)}[idx];el.closest('.carousel-card').querySelector('span').textContent=(idx+1)+' / ${imgs.length}';})(this)">&#8249;</button><span>1 / ${imgs.length}</span><button class="carousel-nav" onclick="(function(el){var idx=(parseInt(el.closest('.carousel-card').dataset.index,10)+1)%${imgs.length};el.closest('.carousel-card').dataset.index=String(idx);el.closest('.carousel-card').querySelector('img').src=${JSON.stringify(imgs)}[idx];el.closest('.carousel-card').querySelector('span').textContent=(idx+1)+' / ${imgs.length}';})(this)">&#8250;</button></div>` : ''}</div></div>\n`;
     } else {
       const escaped = injectAutoResize(c.html).replace(/"/g, '&quot;');
       return `  <div class="card-section${gapClass}"><div class="html-card"><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:60px" scrolling="no" onload="try{var h=this.contentDocument.documentElement.scrollHeight||this.contentDocument.body.scrollHeight;if(h>0)this.style.height=h+'px';}catch(e){}"></iframe></div></div>\n`;
@@ -1739,10 +1752,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .html-card iframe { display:block; width:100%; height:60px; border:none; background:var(--white); overflow:hidden; }
 .carousel-card { width:100%; position:relative; background:var(--white); cursor:pointer; }
 .carousel-card img { width:100%; height:auto; display:block; }
-.carousel-dots { position:absolute; bottom:10px; left:0; right:0; display:flex; justify-content:center; gap:6px; }
-.carousel-dots span { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.55); }
-.carousel-dots span.active { background:#fff; }
-.carousel-count { position:absolute; top:10px; right:10px; font-size:10px; color:#fff; background:rgba(0,0,0,0.45); padding:3px 8px; border-radius:20px; }
+.carousel-footer { display:flex; align-items:center; justify-content:space-between; padding:6px 12px; background:var(--white); border-top:1px solid var(--border); font-size:11px; letter-spacing:0.08em; color:var(--ink-soft); }
+.carousel-footer span { font-size:11px; letter-spacing:0.08em; color:var(--ink-soft); }
+.carousel-nav { background:none; color:var(--ink); border:none; width:32px; height:32px; font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; opacity:0.5; }
 .empty-section { background:var(--bg); padding-top:10px; }
 .empty-state { padding:60px 24px; text-align:center; color:var(--ink-soft); font-size:13px; line-height:2; background:var(--white); }
 .empty-state strong { display:block; font-size:14px; font-weight:600; color:var(--ink); margin-bottom:6px; }
@@ -1790,15 +1802,7 @@ function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.tab === tab); });
   document.querySelectorAll('.tab-content').forEach(function(el){ el.style.display = el.id === 'tabContent-' + tab ? '' : 'none'; });
 }
-function cyclerCarousel(el){
-  var imgs = JSON.parse(el.dataset.images);
-  var idx = (parseInt(el.dataset.index,10)+1) % imgs.length;
-  el.dataset.index = String(idx);
-  el.querySelector('img').src = imgs[idx];
-  el.querySelectorAll('.carousel-dots span').forEach(function(d,i){ d.classList.toggle('active', i===idx); });
-  var ct = el.querySelector('.carousel-count');
-  if(ct) ct.textContent = (idx+1) + ' / ' + imgs.length;
-}
+
 window.addEventListener('message', function(e){
   if(e.data && e.data.type === 'asobiva-resize'){
     document.querySelectorAll('.html-card iframe').forEach(function(f){
