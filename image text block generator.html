@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>画像+テキスト ブロック ジェネレーター</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    overflow-x: hidden;
+    font-family: "Hiragino Sans", "Noto Sans JP", sans-serif;
+    background: #f4f4f2;
+    color: #111;
+    padding-bottom: 70px;
+  }
+  header {
+    padding: 20px 16px 12px;
+    background: #111;
+    color: #fff;
+  }
+  header h1 { margin: 0; font-size: 17px; font-weight: 700; }
+  header p { margin: 6px 0 0; font-size: 12px; color: #bbb; line-height: 1.6; }
+
+  .preview-wrap { padding: 16px 0; background: #e5e5e2; }
+  .preview-frame { background: #fff; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; }
+
+  .panel { padding: 16px; }
+  .group {
+    background: #fff; border-radius: 10px; padding: 14px 16px 16px; margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .group h2 { font-size: 13px; font-weight: 700; margin: 0 0 10px; color: #555; }
+  label { display: block; font-size: 12px; font-weight: 500; color: #666; margin: 10px 0 4px; }
+  label:first-of-type { margin-top: 0; }
+  textarea {
+    width: 100%; font-family: inherit; font-size: 15px; padding: 9px 10px;
+    border: 1px solid #ddd; border-radius: 6px; background: #fafafa; resize: vertical; min-height: 100px; line-height: 1.5;
+  }
+
+  .imgbtns { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .imgbtns button, .posbtn {
+    flex: 1; min-width: 90px; padding: 10px 8px; font-size: 12.5px;
+    border: 1px solid #ccc; background: #fff; border-radius: 6px; font-family: inherit;
+  }
+  .posbtn.active { background: #111; color: #fff; border-color: #111; }
+
+  label.rangelabel { display:flex; justify-content:space-between; }
+  input[type="range"] { width: 100%; }
+
+  .actionbar {
+    position: sticky; bottom: 0; padding: 12px 16px; background: #fff; border-top: 1px solid #ddd;
+    display: flex; gap: 8px;
+  }
+  .actionbar button {
+    flex: 1; padding: 14px 8px; font-size: 14px; font-weight: 700; color: #fff; border: none; border-radius: 8px; font-family: inherit;
+  }
+  #copyBtn { background: #444; }
+  #downloadBtn { background: #111; }
+  .actionbar button:active { opacity: 0.8; }
+
+  #codeOut {
+    width: 100%; min-height: 160px; font-family: monospace; font-size: 11px; line-height: 1.5;
+    padding: 10px; border: 1px solid #ddd; border-radius: 6px; background: #fafafa; white-space: pre; overflow: auto;
+  }
+  .hint { font-size: 11px; color: #999; margin-top: 8px; line-height: 1.6; }
+  #fileInput { display: none; }
+  #copyStatus { font-size: 12px; color: #2a7a2a; margin-top: 6px; display:none; }
+
+  /* ---- block template (scoped, safe to paste into any page) ---- */
+  .it-wrap { width: 100vw; position: relative; left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw; }
+  .it-block {
+    width: 100%; box-sizing: border-box;
+    display: flex; align-items: flex-start; gap: clamp(14px, 2.9cqw, 30px);
+  }
+  .it-block.it-right { flex-direction: row-reverse; }
+  .it-block.it-none { display: block; }
+  .it-img { flex: 0 0 38%; max-width: 38%; }
+  .it-img img { display: block; width: 100%; height: auto; }
+  .it-text { flex: 1; min-width: 0; }
+  .it-text p {
+    margin: 0; line-height: 1.8; white-space: pre-wrap;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>画像+テキスト ブロック ジェネレーター</h1>
+  <p>画像を左・右・なしから選び、本文と組み合わせたシンプルなブロックのHTMLコードを出力します（装飾なし）。</p>
+</header>
+
+<div class="preview-wrap">
+  <div class="preview-frame">
+    <div class="it-wrap">
+      <div class="it-block it-left" id="itBlock">
+        <div class="it-img" id="itImgWrap">
+          <img id="itImg" src="" alt="" style="display:none;">
+          <div id="itPlaceholder" style="background:#eee;border:1px solid #ddd;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:13px;">画像未設定</div>
+        </div>
+        <div class="it-text"><p id="itText"></p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+
+  <div class="group">
+    <h2>画像の配置</h2>
+    <div class="imgbtns">
+      <button class="posbtn active" data-pos="left" type="button">左</button>
+      <button class="posbtn" data-pos="right" type="button">右</button>
+      <button class="posbtn" data-pos="none" type="button">画像なし</button>
+    </div>
+  </div>
+
+  <div class="group">
+    <h2>画像</h2>
+    <div class="imgbtns">
+      <button id="pickImgBtn" type="button">画像を選択</button>
+      <button id="clearImgBtn" type="button">画像をクリア</button>
+    </div>
+    <input type="file" id="fileInput" accept="image/*">
+    <div class="hint">アップロードした画像はそのままの縦横比で表示されます（切り抜きなし）。Base64でコードに埋め込まれるので、そのまま貼り付けて使えます。</div>
+
+    <label class="rangelabel"><span>画像の幅</span><span id="imgWidthVal">38%</span></label>
+    <input type="range" id="imgWidthRange" min="20" max="55" value="38">
+  </div>
+
+  <div class="group">
+    <h2>本文</h2>
+    <textarea id="bodyText" maxlength="600"></textarea>
+    <div class="hint">太字にしたい部分は <code>**太字**</code>、細字にしたい部分は <code>__細字__</code> のように囲んでください。（例：これは<code>**大事**</code>な話です）</div>
+    <label class="rangelabel"><span>文字サイズ</span><span id="fontSizeVal">17px</span></label>
+    <input type="range" id="fontSizeRange" min="12" max="32" value="17">
+  </div>
+
+  <div class="group">
+    <h2>余白</h2>
+    <label class="rangelabel"><span>上</span><span id="padTopVal">20px</span></label>
+    <input type="range" id="padTop" min="0" max="60" value="20">
+    <label class="rangelabel"><span>下</span><span id="padBottomVal">20px</span></label>
+    <input type="range" id="padBottom" min="0" max="60" value="20">
+    <label class="rangelabel"><span>左</span><span id="padLeftVal">16px</span></label>
+    <input type="range" id="padLeft" min="0" max="60" value="16">
+    <label class="rangelabel"><span>右</span><span id="padRightVal">16px</span></label>
+    <input type="range" id="padRight" min="0" max="60" value="16">
+  </div>
+
+  <div class="group">
+    <h2>出力コード</h2>
+    <textarea id="codeOut" readonly></textarea>
+    <div id="copyStatus">コピーしました。</div>
+    <div class="hint">「コードを更新」→「コピー」で、ページのHTMLに直接貼り付けてください。</div>
+  </div>
+
+</div>
+
+<div class="actionbar">
+  <button id="updateCodeBtn" type="button">コードを更新</button>
+  <button id="copyBtn" type="button">コピー</button>
+  <button id="downloadBtn" type="button">HTMLで保存</button>
+</div>
+
+<script>
+let state = { pos: 'left', imgDataUrl: null, imgWidthPct: 38, padTop: 20, padBottom: 20, padLeft: 16, padRight: 16, fontSize: 17 };
+
+const itBlock = document.getElementById('itBlock');
+const itImg = document.getElementById('itImg');
+const itPlaceholder = document.getElementById('itPlaceholder');
+const itImgWrap = document.getElementById('itImgWrap');
+const itText = document.getElementById('itText');
+const bodyText = document.getElementById('bodyText');
+
+bodyText.value = 'ここに本文を入力します。画像の横に回り込む形で表示されます。';
+
+function escapeHtmlLive(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function parseMarkup(str) {
+  return str
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/__(.+?)__/g, '<span style="font-weight:300">$1</span>');
+}
+
+function updatePreview() {
+  itText.innerHTML = parseMarkup(escapeHtmlLive(bodyText.value));
+  itText.style.fontSize = state.fontSize + 'px';
+  itImgWrap.style.flex = `0 0 ${state.imgWidthPct}%`;
+  itImgWrap.style.maxWidth = `${state.imgWidthPct}%`;
+  itBlock.style.paddingTop = state.padTop + 'px';
+  itBlock.style.paddingBottom = state.padBottom + 'px';
+  itBlock.style.paddingLeft = state.padLeft + 'px';
+  itBlock.style.paddingRight = state.padRight + 'px';
+
+  itBlock.classList.remove('it-left','it-right','it-none');
+  itBlock.classList.add('it-' + state.pos);
+
+  if (state.pos === 'none') {
+    itImgWrap.style.display = 'none';
+  } else {
+    itImgWrap.style.display = '';
+  }
+
+  if (state.imgDataUrl) {
+    itImg.src = state.imgDataUrl;
+    itImg.style.display = 'block';
+    itPlaceholder.style.display = 'none';
+  } else {
+    itImg.style.display = 'none';
+    itPlaceholder.style.display = 'flex';
+  }
+}
+
+[['padTop','padTopVal'],['padBottom','padBottomVal'],['padLeft','padLeftVal'],['padRight','padRightVal']].forEach(([sliderId,valId]) => {
+  const slider = document.getElementById(sliderId);
+  const valEl = document.getElementById(valId);
+  slider.addEventListener('input', () => {
+    state[sliderId] = Number(slider.value);
+    valEl.textContent = slider.value + 'px';
+    updatePreview();
+  });
+});
+
+const fontSizeRange = document.getElementById('fontSizeRange');
+const fontSizeVal = document.getElementById('fontSizeVal');
+fontSizeRange.addEventListener('input', () => {
+  state.fontSize = Number(fontSizeRange.value);
+  fontSizeVal.textContent = state.fontSize + 'px';
+  updatePreview();
+});
+
+document.querySelectorAll('.posbtn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.posbtn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.pos = btn.dataset.pos;
+    updatePreview();
+  });
+});
+
+const fileInput = document.getElementById('fileInput');
+document.getElementById('pickImgBtn').addEventListener('click', () => fileInput.click());
+document.getElementById('clearImgBtn').addEventListener('click', () => {
+  state.imgDataUrl = null;
+  fileInput.value = '';
+  updatePreview();
+});
+fileInput.addEventListener('change', () => {
+  const file = fileInput.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    state.imgDataUrl = ev.target.result;
+    updatePreview();
+  };
+  reader.readAsDataURL(file);
+});
+
+const imgWidthRange = document.getElementById('imgWidthRange');
+const imgWidthVal = document.getElementById('imgWidthVal');
+imgWidthRange.addEventListener('input', () => {
+  state.imgWidthPct = Number(imgWidthRange.value);
+  imgWidthVal.textContent = state.imgWidthPct + '%';
+  updatePreview();
+});
+
+bodyText.addEventListener('input', updatePreview);
+
+updatePreview();
+
+// ---- code generation ----
+function uid() { return 'it' + Math.random().toString(36).slice(2, 8); }
+
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function buildSnippet() {
+  const id = uid();
+  const hasImg = state.pos !== 'none' && state.imgDataUrl;
+  const posClass = state.pos === 'right' ? 'it-right' : (state.pos === 'none' ? 'it-none' : 'it-left');
+
+  const style = `
+<style>
+.${id}.it-wrap{width:100vw;position:relative;left:50%;right:50%;margin-left:-50vw;margin-right:-50vw;}
+.${id} .it-block{width:100%;box-sizing:border-box;padding:${state.padTop}px ${state.padRight}px ${state.padBottom}px ${state.padLeft}px;display:flex;align-items:flex-start;gap:clamp(14px,2.9cqw,30px);font-family:"Hiragino Sans","Noto Sans JP",sans-serif;}
+.${id} .it-block.it-right{flex-direction:row-reverse;}
+.${id} .it-block.it-none{display:block;}
+.${id} .it-img{flex:0 0 ${state.imgWidthPct}%;max-width:${state.imgWidthPct}%;}
+.${id} .it-img img{display:block;width:100%;height:auto;}
+.${id} .it-text{flex:1;min-width:0;}
+.${id} .it-text p{margin:0;font-size:${state.fontSize}px;line-height:1.8;color:#111;white-space:pre-wrap;}
+</style>`.trim();
+
+  const imgBlock = hasImg
+    ? `\n    <div class="it-img"><img src="${state.imgDataUrl}" alt=""></div>`
+    : '';
+
+  const html = `
+<div class="it-wrap ${id}">
+  <div class="it-block ${posClass}">${imgBlock}
+    <div class="it-text"><p>${parseMarkup(escapeHtml(bodyText.value))}</p></div>
+  </div>
+</div>`.trim();
+
+  return style + '\n\n' + html;
+}
+
+const codeOut = document.getElementById('codeOut');
+document.getElementById('updateCodeBtn').addEventListener('click', () => {
+  codeOut.value = buildSnippet();
+  document.getElementById('copyStatus').style.display = 'none';
+});
+
+document.getElementById('copyBtn').addEventListener('click', async () => {
+  if (!codeOut.value) codeOut.value = buildSnippet();
+  try {
+    await navigator.clipboard.writeText(codeOut.value);
+  } catch (e) {
+    codeOut.select();
+    document.execCommand('copy');
+  }
+  const status = document.getElementById('copyStatus');
+  status.style.display = 'block';
+  setTimeout(() => status.style.display = 'none', 2000);
+});
+
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  const snippet = buildSnippet();
+  const fullDoc = `<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>image-text-block</title>
+</head>
+<body style="margin:0;padding:0;background:#fff;">
+${snippet}
+</body>
+</html>`;
+  codeOut.value = snippet;
+  const blob = new Blob([fullDoc], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.download = 'image-text-block.html';
+  link.href = url;
+  link.click();
+  URL.revokeObjectURL(url);
+});
+
+codeOut.value = buildSnippet();
+</script>
+
+</body>
+</html>
