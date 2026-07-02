@@ -1376,7 +1376,7 @@ async function toggleFooterGap() {
 // ── Footer editor ─────────────────────────────
 async function loadFooterText() {
   try {
-    const row = await dbOp('banners', 'readonly', s => s.get(99));
+    const row = await dbOp('banners', 'readonly', s => s.get(97));
     if (row?.footerText) {
       document.getElementById('footerText').textContent = row.footerText;
     }
@@ -1398,7 +1398,7 @@ function closeFooterEditor() {
 async function saveFooterText() {
   const text = document.getElementById('footerTextInput').value.trim();
   if (!text) return;
-  await dbOp('banners', 'readwrite', s => s.put({ slot: 99, footerText: text }));
+  await dbOp('banners', 'readwrite', s => s.put({ slot: 97, footerText: text }));
   document.getElementById('footerText').textContent = text;
   closeFooterEditor();
 }
@@ -1725,7 +1725,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .banner-slot { width:100%; min-height:80px; background:var(--white); display:flex; align-items:center; justify-content:center; }
 .banner-slot img { width:100%; height:auto; display:block; }
 .slot-label { font-size:10px; letter-spacing:0.12em; color:#ccc; }
-.intro-section { background:var(--white); }
 .tab-bar { display:flex; background:var(--white); border-bottom:1px solid var(--border); border-top:10px solid var(--bg); position:sticky; top:45px; z-index:90; }
 .tab-btn { flex:1; padding:12px 2px; background:none; border:none; border-bottom:2px solid transparent; font-size:10px; font-weight:500; letter-spacing:0.02em; color:var(--ink-soft); cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .tab-btn.active { color:var(--ink); border-bottom-color:var(--ink); font-weight:700; }
