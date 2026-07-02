@@ -407,17 +407,7 @@ body.admin-mode .card:hover img { transform: none; }
 }
 
 /* ── HTML CAROUSEL ── */
-.html-carousel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 12px;
-  background: var(--white);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  color: var(--ink-soft);
-  border-bottom: 1px solid var(--border);
-}
+
 .html-carousel-footer {
   display: flex;
   align-items: center;
@@ -1032,55 +1022,36 @@ function render() {
       wrap.appendChild(iframe);
 
       if (c.htmls.length > 1) {
-        // 上部：‹ 枚数 ›
-        const header = document.createElement('div');
-        header.className = 'html-carousel-header';
-        const prevBtnTop = document.createElement('button');
-        prevBtnTop.className = 'html-carousel-nav';
-        prevBtnTop.textContent = '‹';
-        const count = document.createElement('span');
-        count.textContent = `1 / ${c.htmls.length}`;
-        const nextBtnTop = document.createElement('button');
-        nextBtnTop.className = 'html-carousel-nav';
-        nextBtnTop.textContent = '›';
-        header.appendChild(prevBtnTop);
-        header.appendChild(count);
-        header.appendChild(nextBtnTop);
-        wrap.insertBefore(header, iframe);
-
-        // 下部：‹ › 
+        // 下部：‹ 枚数 ›
         const footer = document.createElement('div');
         footer.className = 'html-carousel-footer';
-        const prevBtnBottom = document.createElement('button');
-        prevBtnBottom.className = 'html-carousel-nav';
-        prevBtnBottom.textContent = '‹';
-        const countBottom = document.createElement('span');
-        countBottom.textContent = `1 / ${c.htmls.length}`;
-        const nextBtnBottom = document.createElement('button');
-        nextBtnBottom.className = 'html-carousel-nav';
-        nextBtnBottom.textContent = '›';
-        footer.appendChild(prevBtnBottom);
-        footer.appendChild(countBottom);
-        footer.appendChild(nextBtnBottom);
+        const prevBtn = document.createElement('button');
+        prevBtn.className = 'html-carousel-nav';
+        prevBtn.textContent = '‹';
+        const count = document.createElement('span');
+        count.textContent = `1 / ${c.htmls.length}`;
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'html-carousel-nav';
+        nextBtn.textContent = '›';
+        footer.appendChild(prevBtn);
+        footer.appendChild(count);
+        footer.appendChild(nextBtn);
         wrap.appendChild(footer);
 
-        // 共通のナビ処理
-        function goPrev() {
+        prevBtn.addEventListener('click', e => {
+          e.preventDefault(); e.stopPropagation();
           let idx = (parseInt(wrap.dataset.index, 10) - 1 + c.htmls.length) % c.htmls.length;
           wrap.dataset.index = String(idx);
           iframe.srcdoc = injectAutoResize(c.htmls[idx]);
           count.textContent = `${idx + 1} / ${c.htmls.length}`;
-          countBottom.textContent = `${idx + 1} / ${c.htmls.length}`;
-        }
-        function goNext() {
+        });
+        nextBtn.addEventListener('click', e => {
+          e.preventDefault(); e.stopPropagation();
           let idx = (parseInt(wrap.dataset.index, 10) + 1) % c.htmls.length;
           wrap.dataset.index = String(idx);
           iframe.srcdoc = injectAutoResize(c.htmls[idx]);
           count.textContent = `${idx + 1} / ${c.htmls.length}`;
-          countBottom.textContent = `${idx + 1} / ${c.htmls.length}`;
-        }
-        [prevBtnTop, prevBtnBottom].forEach(btn => btn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); goPrev(); }));
-        [nextBtnTop, nextBtnBottom].forEach(btn => btn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); goNext(); }));
+        });
       }
       supportsReplace = false;
     } else if (c.type === 'carousel') {
