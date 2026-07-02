@@ -321,6 +321,33 @@ body.admin-mode .card-gap-btn { display: flex; }
 .card:hover img { transform: scale(1.015); }
 body.admin-mode .card:hover img { transform: none; }
 
+/* ── HTML CARD ── */
+.html-card {
+  width: 100%;
+  position: relative;
+  background: var(--white);
+  overflow: hidden;
+  padding-bottom: 10px;
+}
+.html-card iframe {
+  display: block;
+  width: 100%;
+  height: 60px;
+  border: none;
+  background: var(--white);
+  overflow: hidden;
+}
+.html-card-label {
+  display: none;
+  padding: 8px 16px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+}
+body.admin-mode .html-card-label { display: block; }
+
 .card-del {
   display: none;
   position: absolute;
@@ -685,7 +712,7 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
   <div class="panel-title">カードを追加</div>
   <div style="font-size:10px;color:#aaa;margin-top:-12px;margin-bottom:16px;">公開用保存時に自動圧縮されます（v2）</div>
   <div class="drop-zone" id="dropZone">
-    <input type="file" id="fileInput" accept="image/*" multiple onchange="onFileSelect(this.files)">
+    <input type="file" id="fileInput" accept="image/*,text/html,.html" multiple onchange="onFileSelect(this.files)">
     <div class="dz-icon">🖼️</div>
     <span class="dz-label">画像を選択 または ドロップ</span>
     <span class="dz-hint">JPG · PNG · GIF · WEBP　複数選択可</span>
@@ -748,6 +775,40 @@ function dbOp(store, mode, fn) {
 }
 
 // ── ファイル → Base64 変換 ────────────────────
+function fileToText(file) {
+  return new Promise((res, rej) => {
+    const reader = new FileReader();
+    reader.onload = e => res(e.target.result);
+    reader.onerror = rej;
+    reader.readAsText(file);
+  });
+}
+
+function injectAutoResize(html) {
+  const script = `<scr` + `ipt>
+(function(){
+  function report(){ parent.postMessage({ type:'asobiva-resize', height: document.body.scrollHeight }, '*'); }
+  window.addEventListener('message', function(e){ if(e.data&&e.data.type==='asobiva-init') report(); });
+  window.addEventListener('load', report);
+  if(document.readyState==='complete') report();
+  if(window.ResizeObserver) new ResizeObserver(report).observe(document.body);
+})();
+</scr` + `ipt>`;
+  return /<\/body>/i.test(html) ? html.replace(/<\/body>/i, script + '</body>') : html + script;
+}
+
+window.addEventListener('message', e => {
+  if (e.data && e.data.type === 'asobiva-resize') {
+    document.querySelectorAll('.html-card iframe').forEach(f => {
+      if (f.contentWindow === e.source) f.style.height = Math.max(60, e.data.height) + 'px';
+    });
+  }
+});
+
+function isHtmlFile(f) {
+  return f.type === 'text/html' || f.name.toLowerCase().endsWith('.html');
+}
+
 function fileToBase64(file) {
   return new Promise((res, rej) => {
     const reader = new FileReader();
@@ -806,7 +867,7 @@ async function init() {
     }
     setLoadingBar(60);
     const rows = await dbOp('cards', 'readonly', s => s.getAll());
-    cards = rows.map(r => ({ id: r.id, base64: r.base64, link: r.link || '', order: (r.order ?? r.id), gap: r.gap !== false }));
+    cards = rows.map(r => ({ id: r.id, type: r.type || 'image', base64: r.base64, html: r.html, name: r.name || '', link: r.link || '', order: (r.order ?? r.id), gap: r.gap !== false }));
     cards.sort((a, b) => a.order - b.order);
   }
 
@@ -917,36 +978,88 @@ function render() {
     const sec = document.createElement('div');
     sec.className = 'card-section' + (c.gap === false ? ' no-gap' : '');
 
-    const a = document.createElement('a');
-    a.className = 'card';
-    a.href = adminMode ? '#' : (c.link || '#');
-    if (!adminMode && c.link) a.target = '_blank';
-    a.rel = 'noopener';
+    let wrap, replaceInput, replaceBtn;
 
-    const img = document.createElement('img');
-    img.src = c.base64;
-    img.alt = '';
-    img.loading = 'lazy';
+    if (c.type === 'html') {
+      // HTMLカード
+      wrap = document.createElement('div');
+      wrap.className = 'html-card';
 
-    const replaceBtn = document.createElement('button');
-    replaceBtn.className = 'card-replace';
-    replaceBtn.title = '差し替え';
-    replaceBtn.textContent = '⇄';
+      const label = document.createElement('div');
+      label.className = 'html-card-label';
+      label.textContent = c.name || '(無題)';
 
-    const replaceInput = document.createElement('input');
-    replaceInput.type = 'file';
-    replaceInput.accept = 'image/*';
-    replaceInput.className = 'card-replace-input';
-    replaceInput.addEventListener('change', e => {
-      e.preventDefault(); e.stopPropagation();
-      const f = e.target.files[0];
-      if (f) replaceCard(c.id, f);
-    });
+      const iframe = document.createElement('iframe');
+      iframe.srcdoc = injectAutoResize(c.html);
+      iframe.loading = 'lazy';
+      iframe.scrolling = 'no';
+      iframe.style.cssText = 'width:100%;border:none;height:60px;display:block;overflow:hidden;';
+      iframe.sandbox = 'allow-scripts allow-popups allow-forms allow-same-origin';
+      iframe.addEventListener('load', function() {
+        try {
+          const h = iframe.contentDocument.documentElement.scrollHeight || iframe.contentDocument.body.scrollHeight;
+          if (h > 0) iframe.style.height = h + 'px';
+        } catch(e) {}
+        iframe.contentWindow.postMessage({ type: 'asobiva-init' }, '*');
+      });
 
-    replaceBtn.addEventListener('click', e => {
-      e.preventDefault(); e.stopPropagation();
-      replaceInput.click();
-    });
+      wrap.appendChild(label);
+      wrap.appendChild(iframe);
+
+      replaceInput = document.createElement('input');
+      replaceInput.type = 'file';
+      replaceInput.accept = 'text/html,.html';
+      replaceInput.className = 'card-replace-input';
+      replaceInput.addEventListener('change', e => {
+        e.preventDefault(); e.stopPropagation();
+        const f = e.target.files[0];
+        if (f) replaceCard(c.id, f);
+      });
+
+      replaceBtn = document.createElement('button');
+      replaceBtn.className = 'card-replace';
+      replaceBtn.title = '差し替え';
+      replaceBtn.textContent = '⇄';
+      replaceBtn.addEventListener('click', e => {
+        e.preventDefault(); e.stopPropagation();
+        replaceInput.click();
+      });
+
+    } else {
+      // 画像カード
+      wrap = document.createElement('a');
+      wrap.className = 'card';
+      wrap.href = adminMode ? '#' : (c.link || '#');
+      if (!adminMode && c.link) wrap.target = '_blank';
+      wrap.rel = 'noopener';
+
+      const img = document.createElement('img');
+      img.src = c.base64;
+      img.alt = '';
+      img.loading = 'lazy';
+      wrap.appendChild(img);
+
+      replaceInput = document.createElement('input');
+      replaceInput.type = 'file';
+      replaceInput.accept = 'image/*';
+      replaceInput.className = 'card-replace-input';
+      replaceInput.addEventListener('change', e => {
+        e.preventDefault(); e.stopPropagation();
+        const f = e.target.files[0];
+        if (f) replaceCard(c.id, f);
+      });
+
+      replaceBtn = document.createElement('button');
+      replaceBtn.className = 'card-replace';
+      replaceBtn.title = '差し替え';
+      replaceBtn.textContent = '⇄';
+      replaceBtn.addEventListener('click', e => {
+        e.preventDefault(); e.stopPropagation();
+        replaceInput.click();
+      });
+    }
+
+    const a = wrap; // 後のコードとの互換性のため
 
     const linkBtn = document.createElement('button');
     linkBtn.className = 'card-link-btn' + (c.link ? ' has-link' : '');
@@ -997,14 +1110,17 @@ function render() {
       e.preventDefault(); e.stopPropagation();
       toggleGap(c.id);
     });
-    a.appendChild(img);
-    a.appendChild(replaceBtn);
-    a.appendChild(replaceInput);
-    a.appendChild(linkBtn);
-    a.appendChild(delBtn);
-    a.appendChild(moveWrap);
-    a.appendChild(gapBtn);
-    sec.appendChild(a);
+
+    if (c.type !== 'html') {
+      wrap.appendChild(img);
+    }
+    wrap.appendChild(replaceBtn);
+    wrap.appendChild(replaceInput);
+    if (c.type !== 'html') wrap.appendChild(linkBtn);
+    wrap.appendChild(delBtn);
+    wrap.appendChild(moveWrap);
+    wrap.appendChild(gapBtn);
+    sec.appendChild(wrap);
     container.appendChild(sec);
   });
 
@@ -1218,7 +1334,7 @@ function resetForm() {
 // ── File select ───────────────────────────────
 function onFileSelect(files) {
   for (const f of files) {
-    if (f.type.startsWith('image/')) pendingFiles.push(f);
+    if (f.type.startsWith('image/') || isHtmlFile(f)) pendingFiles.push(f);
   }
   renderPreviews();
 }
@@ -1227,15 +1343,23 @@ function renderPreviews() {
   const grid = document.getElementById('previewGrid');
   grid.innerHTML = '';
   pendingFiles.forEach((f, i) => {
-    const url = URL.createObjectURL(f);
     const div = document.createElement('div');
     div.className = 'p-thumb';
-    const img = document.createElement('img');
-    img.src = url; img.alt = '';
+    if (isHtmlFile(f)) {
+      const lbl = document.createElement('div');
+      lbl.style.cssText = 'font-size:10px;color:#888;padding:4px;word-break:break-all;text-align:center;';
+      lbl.textContent = f.name;
+      div.appendChild(lbl);
+    } else {
+      const url = URL.createObjectURL(f);
+      const img = document.createElement('img');
+      img.src = url; img.alt = '';
+      div.appendChild(img);
+    }
     const del = document.createElement('button');
     del.className = 'p-del'; del.textContent = '✕';
     del.onclick = () => { pendingFiles.splice(i, 1); renderPreviews(); };
-    div.appendChild(img); div.appendChild(del);
+    div.appendChild(del);
     grid.appendChild(div);
   });
   document.getElementById('addBtn').disabled = pendingFiles.length === 0;
@@ -1257,10 +1381,17 @@ async function addCards() {
   let nextOrder = cards.length ? Math.max(...cards.map(c => c.order)) + 1 : 1;
 
   for (const f of pendingFiles) {
-    const base64 = await fileToBase64(f);
     const order = nextOrder++;
-    const id = await dbOp('cards', 'readwrite', s => s.add({ base64, link, order }));
-    cards.push({ id, base64, link, order });
+    if (isHtmlFile(f)) {
+      const html = await fileToText(f);
+      const name = f.name;
+      const id = await dbOp('cards', 'readwrite', s => s.add({ type: 'html', html, name, link, order, gap: true }));
+      cards.push({ id, type: 'html', html, name, link, order, gap: true });
+    } else {
+      const base64 = await fileToBase64(f);
+      const id = await dbOp('cards', 'readwrite', s => s.add({ type: 'image', base64, link, order, gap: true }));
+      cards.push({ id, type: 'image', base64, link, order, gap: true });
+    }
   }
 
   btn.textContent = '追加する';
@@ -1273,19 +1404,30 @@ async function toggleGap(id) {
   const c = cards.find(c => c.id === id);
   if (!c) return;
   c.gap = c.gap === false ? true : false;
-  await dbOp('cards', 'readwrite', s => s.put({ id: c.id, base64: c.base64, link: c.link, order: c.order, gap: c.gap }));
+  const record = c.type === 'html'
+    ? { id: c.id, type: 'html', html: c.html, name: c.name, link: c.link, order: c.order, gap: c.gap }
+    : { id: c.id, type: 'image', base64: c.base64, link: c.link, order: c.order, gap: c.gap };
+  await dbOp('cards', 'readwrite', s => s.put(record));
   render();
 }
 
 // ── Replace ───────────────────────────────────
 async function replaceCard(id, file) {
-  const base64 = await fileToBase64(file);
   const existing = cards.find(c => c.id === id);
   const link = existing?.link || '';
   const order = existing?.order ?? id;
-  await dbOp('cards', 'readwrite', s => s.put({ id, base64, link, order }));
+  const gap = existing?.gap !== false;
   const i = cards.findIndex(c => c.id === id);
-  if (i !== -1) cards[i].base64 = base64;
+  if (isHtmlFile(file)) {
+    const html = await fileToText(file);
+    const name = file.name;
+    await dbOp('cards', 'readwrite', s => s.put({ id, type: 'html', html, name, link, order, gap }));
+    if (i !== -1) { cards[i].type = 'html'; cards[i].html = html; cards[i].name = name; }
+  } else {
+    const base64 = await fileToBase64(file);
+    await dbOp('cards', 'readwrite', s => s.put({ id, type: 'image', base64, link, order, gap }));
+    if (i !== -1) { cards[i].type = 'image'; cards[i].base64 = base64; }
+  }
   render();
 }
 
