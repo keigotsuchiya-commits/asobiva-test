@@ -808,7 +808,7 @@ let db;
 function openDB() {
   return new Promise((res) => {
     try {
-      const req = indexedDB.open(DB_NAME, 1);
+      const req = indexedDB.open(DB_NAME, 2);
       req.onupgradeneeded = e => {
         const d = e.target.result;
         if (!d.objectStoreNames.contains('cards'))
