@@ -199,6 +199,8 @@ body.admin-mode .intro-section .intro-edit { display: flex; }
   border-bottom: 1px solid var(--border);
   border-top: 10px solid var(--bg);
 }
+.main-tab-bar.no-gap { border-top: none; }
+.main-tab-bar.line-gap { border-top: 1px solid var(--ink); }
 .main-tab-btn {
   flex: 1;
   padding: 12px 4px;
@@ -251,6 +253,16 @@ body.admin-mode .intro-section .intro-edit { display: flex; }
   flex-wrap: wrap;
 }
 body.admin-mode .tab-edit-bar { display: flex; }
+.intro-gap-btn {
+  font-size: 11px;
+  padding: 5px 12px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.intro-gap-btn:hover { border-color: var(--ink); color: var(--ink); }
 .tab-edit-btn {
   font-size: 11px;
   padding: 5px 12px;
@@ -532,6 +544,7 @@ body.admin-mode .footer-gap-btn { display: inline-block; }
   <div class="tab-edit-bar" id="tabEditBar">
     <button class="tab-edit-btn" onclick="openMainTabEditor()">大カテゴリーを編集</button>
     <button class="tab-edit-btn" id="subTabEditBtn" onclick="openSubTabEditor()">サブカテゴリーを編集</button>
+    <button class="intro-gap-btn" id="introGapBtn" onclick="toggleIntroGap()">隙間あり</button>
   </div>
 
   <div id="cardContainer"></div>
@@ -759,6 +772,7 @@ async function init() {
     renderNavLinks();
     loadFooterText();
     loadFooterGap();
+    loadIntroGap();
   }, 200);
 }
 
@@ -1439,6 +1453,34 @@ document.addEventListener('click', e => {
   const btn = document.getElementById('burgerBtn');
   if (menu && !menu.contains(e.target) && !btn.contains(e.target)) menu.classList.remove('open');
 });
+
+// ── Intro Gap ────────────────────────────────
+async function loadIntroGap() {
+  try {
+    const row = await dbOp('banners', 'readonly', s => s.get(3));
+    const gap = row?.introGap || 'gap';
+    applyIntroGap(gap);
+  } catch {}
+}
+
+function applyIntroGap(gap) {
+  const bar = document.getElementById('mainTabBar');
+  const btn = document.getElementById('introGapBtn');
+  bar.classList.remove('no-gap', 'line-gap');
+  if (gap === 'nogap') { bar.classList.add('no-gap'); if (btn) btn.textContent = '隙間なし'; }
+  else if (gap === 'line') { bar.classList.add('line-gap'); if (btn) btn.textContent = 'ライン'; }
+  else { if (btn) btn.textContent = '隙間あり'; }
+}
+
+async function toggleIntroGap() {
+  const bar = document.getElementById('mainTabBar');
+  let current = 'gap';
+  if (bar.classList.contains('no-gap')) current = 'nogap';
+  else if (bar.classList.contains('line-gap')) current = 'line';
+  const next = current === 'gap' ? 'nogap' : current === 'nogap' ? 'line' : 'gap';
+  await dbOp('banners', 'readwrite', s => s.put({ slot: 3, introGap: next }));
+  applyIntroGap(next);
+}
 
 // ── Footer ────────────────────────────────────
 async function loadFooterText() {
