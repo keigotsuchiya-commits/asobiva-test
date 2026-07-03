@@ -348,12 +348,12 @@ function loadFromSavedHtml(text) {
   const imgSrcMatch = text.match(/<img src="(data:image\/[^"]+)"/);
   state.imgDataUrl = imgSrcMatch ? imgSrcMatch[1] : null;
   // body text
-  const bodyMatch = text.match(/<div class="it-text"><p>([\s\S]*?)<\/p>(?:<p class="it-sig">|<\/div>)/);
+  const bodyMatch = text.match(/<div class="it-text"><p[^>]*>([\s\S]*?)<\/p>(?:<p class="it-sig"|<\/div>)/);
   if (bodyMatch) {
     bodyText.value = unescapeHtml(markupFromHtml(bodyMatch[1]));
   }
   // signature
-  const sigMatch = text.match(/<p class="it-sig">([\s\S]*?)<\/p>/);
+  const sigMatch = text.match(/<p class="it-sig"[^>]*>([\s\S]*?)<\/p>/);
   sigText.value = sigMatch ? unescapeHtml(sigMatch[1]) : '';
 
   updatePreview();
@@ -406,13 +406,13 @@ function buildSnippet() {
     : '';
 
   const sigBlock = sigText.value.trim()
-    ? `<p class="it-sig">${escapeHtml(sigText.value)}</p>`
+    ? `<p class="it-sig" style="font-size:${state.fontSize}px">${escapeHtml(sigText.value)}</p>`
     : '';
 
   const html = `
 <div class="it-wrap ${id}">
   <div class="it-block ${posClass}">${imgBlock}
-    <div class="it-text"><p>${parseMarkup(escapeHtml(bodyText.value))}</p>${sigBlock}</div>
+    <div class="it-text"><p style="font-size:${state.fontSize}px">${parseMarkup(escapeHtml(bodyText.value))}</p>${sigBlock}</div>
   </div>
 </div>`.trim();
 
