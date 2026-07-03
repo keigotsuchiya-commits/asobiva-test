@@ -81,6 +81,9 @@
   .it-text p {
     margin: 0; line-height: 1.8; white-space: pre-wrap;
   }
+  .it-text p.it-sig {
+    text-align: right; margin-top: 0.8em; white-space: normal;
+  }
 </style>
 </head>
 <body>
@@ -98,13 +101,31 @@
           <img id="itImg" src="" alt="" style="display:none;">
           <div id="itPlaceholder" style="background:#eee;border:1px solid #ddd;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:13px;">画像未設定</div>
         </div>
-        <div class="it-text"><p id="itText"></p></div>
+        <div class="it-text"><p id="itText"></p><p id="itSig" class="it-sig"></p></div>
       </div>
     </div>
   </div>
 </div>
 
 <div class="panel">
+
+  <div class="group">
+    <h2>保存済みHTMLを読み込む</h2>
+    <div class="imgbtns">
+      <button id="loadHtmlBtn" type="button">HTMLファイルを選択</button>
+    </div>
+    <input type="file" id="loadHtmlInput" accept=".html,text/html">
+    <div class="hint">前に「HTMLで保存」したファイル、または既存ページに貼り付けたコードをコピーして保存したファイルを読み込むと、続きを編集できます。</div>
+  </div>
+
+  <div class="group">
+    <h2>保存済みHTMLを読み込んで編集</h2>
+    <div class="imgbtns">
+      <button id="loadHtmlBtn" type="button">ファイルを選択</button>
+    </div>
+    <input type="file" id="loadHtmlInput" accept=".html,.htm">
+    <div class="hint">この生成ツールで作った「HTMLで保存」ファイル、または「コピー」で貼り付けたコードを含むファイルを選ぶと、内容を読み込んで再編集できます。</div>
+  </div>
 
   <div class="group">
     <h2>画像の配置</h2>
@@ -134,6 +155,8 @@
     <div class="hint">太字にしたい部分は <code>**太字**</code>、細字にしたい部分は <code>__細字__</code> のように囲んでください。（例：これは<code>**大事**</code>な話です）</div>
     <label class="rangelabel"><span>文字サイズ</span><span id="fontSizeVal">17px</span></label>
     <input type="range" id="fontSizeRange" min="12" max="32" value="17">
+    <label>署名（右寄せ・任意）</label>
+    <textarea id="sigText" maxlength="80" style="min-height:44px;"></textarea>
   </div>
 
   <div class="group">
@@ -172,6 +195,8 @@ const itPlaceholder = document.getElementById('itPlaceholder');
 const itImgWrap = document.getElementById('itImgWrap');
 const itText = document.getElementById('itText');
 const bodyText = document.getElementById('bodyText');
+const sigText = document.getElementById('sigText');
+const itSig = document.getElementById('itSig');
 
 bodyText.value = 'ここに本文を入力します。画像の横に回り込む形で表示されます。';
 
@@ -187,6 +212,9 @@ function parseMarkup(str) {
 function updatePreview() {
   itText.innerHTML = parseMarkup(escapeHtmlLive(bodyText.value));
   itText.style.fontSize = state.fontSize + 'px';
+  itSig.textContent = sigText.value;
+  itSig.style.fontSize = state.fontSize + 'px';
+  itSig.style.display = sigText.value.trim() ? '' : 'none';
   itImgWrap.style.flex = `0 0 ${state.imgWidthPct}%`;
   itImgWrap.style.maxWidth = `${state.imgWidthPct}%`;
   itBlock.style.paddingTop = state.padTop + 'px';
@@ -267,6 +295,84 @@ imgWidthRange.addEventListener('input', () => {
 });
 
 bodyText.addEventListener('input', updatePreview);
+sigText.addEventListener('input', updatePreview);
+
+// ---- load & re-edit a previously saved/copied HTML ----
+function unescapeHtml(str) {
+  return str.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+}
+function markupFromHtml(html) {
+  return html
+    .replace(/<strong>([\s\S]*?)<\/strong>/g, '**$1**')
+    .replace(/<span style="font-weight:300">([\s\S]*?)<\/span>/g, '__$1__');
+}
+
+function loadFromSavedHtml(text) {
+  // position
+  const posMatch = text.match(/class="it-block\s+(it-left|it-right|it-none)"/);
+  if (posMatch) {
+    state.pos = posMatch[1].replace('it-', '');
+    document.querySelectorAll('.posbtn').forEach(b => b.classList.toggle('active', b.dataset.pos === state.pos));
+  }
+  // padding
+  const padMatch = text.match(/\.it-block\{[^}]*padding:(\d+(?:\.\d+)?)px (\d+(?:\.\d+)?)px (\d+(?:\.\d+)?)px (\d+(?:\.\d+)?)px/);
+  if (padMatch) {
+    state.padTop = Math.round(parseFloat(padMatch[1]));
+    state.padRight = Math.round(parseFloat(padMatch[2]));
+    state.padBottom = Math.round(parseFloat(padMatch[3]));
+    state.padLeft = Math.round(parseFloat(padMatch[4]));
+    document.getElementById('padTop').value = state.padTop;
+    document.getElementById('padTopVal').textContent = state.padTop + 'px';
+    document.getElementById('padRight').value = state.padRight;
+    document.getElementById('padRightVal').textContent = state.padRight + 'px';
+    document.getElementById('padBottom').value = state.padBottom;
+    document.getElementById('padBottomVal').textContent = state.padBottom + 'px';
+    document.getElementById('padLeft').value = state.padLeft;
+    document.getElementById('padLeftVal').textContent = state.padLeft + 'px';
+  }
+  // image width %
+  const imgWidthMatch = text.match(/\.it-img\{flex:0 0 (\d+(?:\.\d+)?)%/);
+  if (imgWidthMatch) {
+    state.imgWidthPct = Math.round(parseFloat(imgWidthMatch[1]));
+    imgWidthRange.value = state.imgWidthPct;
+    imgWidthVal.textContent = state.imgWidthPct + '%';
+  }
+  // font size
+  const fontMatch = text.match(/\.it-text p\{[^}]*font-size:(\d+(?:\.\d+)?)px/);
+  if (fontMatch) {
+    state.fontSize = Math.round(parseFloat(fontMatch[1]));
+    fontSizeRange.value = state.fontSize;
+    fontSizeVal.textContent = state.fontSize + 'px';
+  }
+  // image src
+  const imgSrcMatch = text.match(/<img src="(data:image\/[^"]+)"/);
+  state.imgDataUrl = imgSrcMatch ? imgSrcMatch[1] : null;
+  // body text
+  const bodyMatch = text.match(/<div class="it-text"><p>([\s\S]*?)<\/p>(?:<p class="it-sig">|<\/div>)/);
+  if (bodyMatch) {
+    bodyText.value = unescapeHtml(markupFromHtml(bodyMatch[1]));
+  }
+  // signature
+  const sigMatch = text.match(/<p class="it-sig">([\s\S]*?)<\/p>/);
+  sigText.value = sigMatch ? unescapeHtml(sigMatch[1]) : '';
+
+  updatePreview();
+}
+
+document.getElementById('loadHtmlBtn').addEventListener('click', () => document.getElementById('loadHtmlInput').click());
+document.getElementById('loadHtmlInput').addEventListener('change', () => {
+  const file = document.getElementById('loadHtmlInput').files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      loadFromSavedHtml(ev.target.result);
+    } catch (e) {
+      alert('読み込みに失敗しました。このツールで作成したファイルか確認してください。');
+    }
+  };
+  reader.readAsText(file);
+});
 
 updatePreview();
 
@@ -292,16 +398,21 @@ function buildSnippet() {
 .${id} .it-img img{display:block;width:100%;height:auto;}
 .${id} .it-text{flex:1;min-width:0;}
 .${id} .it-text p{margin:0;font-size:${state.fontSize}px;line-height:1.8;color:#111;white-space:pre-wrap;}
+.${id} .it-text p.it-sig{text-align:right;margin-top:0.8em;white-space:normal;}
 </style>`.trim();
 
   const imgBlock = hasImg
     ? `\n    <div class="it-img"><img src="${state.imgDataUrl}" alt=""></div>`
     : '';
 
+  const sigBlock = sigText.value.trim()
+    ? `<p class="it-sig">${escapeHtml(sigText.value)}</p>`
+    : '';
+
   const html = `
 <div class="it-wrap ${id}">
   <div class="it-block ${posClass}">${imgBlock}
-    <div class="it-text"><p>${parseMarkup(escapeHtml(bodyText.value))}</p></div>
+    <div class="it-text"><p>${parseMarkup(escapeHtml(bodyText.value))}</p>${sigBlock}</div>
   </div>
 </div>`.trim();
 
