@@ -1035,8 +1035,11 @@ function render() {
       wrap.appendChild(img);
       replaceAccept = 'image/*,text/html,.html';
     } else if (c.type === 'youtube') {
-      wrap = document.createElement('div');
+      wrap = document.createElement('a');
       wrap.className = 'yt-card';
+      wrap.href = adminMode ? '#' : `https://www.youtube.com/watch?v=${c.ytId}`;
+      if (!adminMode) wrap.target = '_blank';
+      wrap.rel = 'noopener';
 
       const thumbWrap = document.createElement('div');
       thumbWrap.className = 'yt-thumb';
@@ -1051,23 +1054,7 @@ function render() {
       playBtn.innerHTML = `<svg viewBox="0 0 68 48" fill="none"><rect width="68" height="48" rx="10" fill="rgba(255,0,0,0.85)"/><path d="M28 16l20 8-20 8V16z" fill="#fff"/></svg>`;
       thumbWrap.appendChild(playBtn);
 
-      const iframeWrap = document.createElement('div');
-      iframeWrap.className = 'yt-iframe-wrap';
-
-      thumbWrap.addEventListener('click', e => {
-        if (adminMode) return;
-        e.preventDefault();
-        thumbWrap.style.display = 'none';
-        iframeWrap.style.display = 'block';
-        const iframe = document.createElement('iframe');
-        iframe.src = `https://www.youtube.com/embed/${c.ytId}`;
-        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
-        iframe.allowFullscreen = true;
-        iframeWrap.appendChild(iframe);
-      });
-
       wrap.appendChild(thumbWrap);
-      wrap.appendChild(iframeWrap);
       if (c.title) {
         const titleEl = document.createElement('div');
         titleEl.className = 'yt-title';
@@ -1664,8 +1651,11 @@ async function downloadHTML() {
           : `<div class="card"><img src="${compressedB64}" alt=""></div>`;
         cardsHTML += `  <div class="card-section${gapClass}">${tag}</div>\n`;
       } else if (c.type === 'youtube') {
-      wrap = document.createElement('div');
+      wrap = document.createElement('a');
       wrap.className = 'yt-card';
+      wrap.href = adminMode ? '#' : `https://www.youtube.com/watch?v=${c.ytId}`;
+      if (!adminMode) wrap.target = '_blank';
+      wrap.rel = 'noopener';
 
       const thumbWrap = document.createElement('div');
       thumbWrap.className = 'yt-thumb';
@@ -1680,23 +1670,7 @@ async function downloadHTML() {
       playBtn.innerHTML = `<svg viewBox="0 0 68 48" fill="none"><rect width="68" height="48" rx="10" fill="rgba(255,0,0,0.85)"/><path d="M28 16l20 8-20 8V16z" fill="#fff"/></svg>`;
       thumbWrap.appendChild(playBtn);
 
-      const iframeWrap = document.createElement('div');
-      iframeWrap.className = 'yt-iframe-wrap';
-
-      thumbWrap.addEventListener('click', e => {
-        if (adminMode) return;
-        e.preventDefault();
-        thumbWrap.style.display = 'none';
-        iframeWrap.style.display = 'block';
-        const iframe = document.createElement('iframe');
-        iframe.src = `https://www.youtube.com/embed/${c.ytId}`;
-        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
-        iframe.allowFullscreen = true;
-        iframeWrap.appendChild(iframe);
-      });
-
       wrap.appendChild(thumbWrap);
-      wrap.appendChild(iframeWrap);
       if (c.title) {
         const titleEl = document.createElement('div');
         titleEl.className = 'yt-title';
@@ -1813,18 +1787,6 @@ function cyclerCarousel(el){
 }
 </scr` + `ipt>
 <scr` + `ipt>
-function playYT(el, id) {
-  var thumb = el.querySelector('.yt-thumb');
-  var wrap = el.querySelector('.yt-iframe-wrap');
-  if (!thumb || !wrap) return;
-  thumb.style.display = 'none';
-  wrap.style.display = 'block';
-  var iframe = document.createElement('iframe');
-  iframe.src = 'https://www.youtube.com/embed/' + id;
-  iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
-  iframe.allowFullscreen = true;
-  wrap.appendChild(iframe);
-}
 document.addEventListener('click', function(e){
   var menu = document.getElementById('burgerMenuStatic');
   var btn = document.getElementById('burgerBtnStatic');
