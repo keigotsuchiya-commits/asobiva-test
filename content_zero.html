@@ -1082,11 +1082,8 @@ function render() {
     } else if (c.type === 'music') {
       return `  <div class="card-section${gapClass}"><div class="music-card">${c.title ? `<div class="music-card-title">${c.title}</div>` : ''}${c.artist ? `<div class="music-card-artist">${c.artist}</div>` : ''}<audio controls src="${c.musicUrl}" preload="none" style="width:100%;display:block;margin-top:8px;"></audio></div></div>\n`;
     } else if (c.type === 'youtube') {
-      wrap = document.createElement('a');
+      wrap = document.createElement('div');
       wrap.className = 'yt-card';
-      wrap.href = adminMode ? '#' : `https://www.youtube.com/watch?v=${c.ytId}`;
-      if (!adminMode) wrap.target = '_blank';
-      wrap.rel = 'noopener';
 
       const thumbWrap = document.createElement('div');
       thumbWrap.className = 'yt-thumb';
@@ -1101,7 +1098,25 @@ function render() {
       playBtn.innerHTML = `<svg viewBox="0 0 68 48" fill="none"><rect width="68" height="48" rx="10" fill="rgba(255,0,0,0.85)"/><path d="M28 16l20 8-20 8V16z" fill="#fff"/></svg>`;
       thumbWrap.appendChild(playBtn);
 
+      const iframeWrap = document.createElement('div');
+      iframeWrap.className = 'yt-iframe-wrap';
+      iframeWrap.style.display = 'none';
+
+      // ▶ボタンをタップした時だけiframeをセット
+      playBtn.addEventListener('click', e => {
+        if (adminMode) return;
+        e.preventDefault(); e.stopPropagation();
+        thumbWrap.style.display = 'none';
+        iframeWrap.style.display = 'block';
+        const iframe = document.createElement('iframe');
+        iframe.src = `https://www.youtube-nocookie.com/embed/${c.ytId}?autoplay=1`;
+        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+        iframe.allowFullscreen = true;
+        iframeWrap.appendChild(iframe);
+      });
+
       wrap.appendChild(thumbWrap);
+      wrap.appendChild(iframeWrap);
       if (c.title) {
         const titleEl = document.createElement('div');
         titleEl.className = 'yt-title';
@@ -1738,11 +1753,8 @@ async function downloadHTML() {
     } else if (c.type === 'music') {
       return `  <div class="card-section${gapClass}"><div class="music-card">${c.title ? `<div class="music-card-title">${c.title}</div>` : ''}${c.artist ? `<div class="music-card-artist">${c.artist}</div>` : ''}<audio controls src="${c.musicUrl}" preload="none" style="width:100%;display:block;margin-top:8px;"></audio></div></div>\n`;
     } else if (c.type === 'youtube') {
-      wrap = document.createElement('a');
+      wrap = document.createElement('div');
       wrap.className = 'yt-card';
-      wrap.href = adminMode ? '#' : `https://www.youtube.com/watch?v=${c.ytId}`;
-      if (!adminMode) wrap.target = '_blank';
-      wrap.rel = 'noopener';
 
       const thumbWrap = document.createElement('div');
       thumbWrap.className = 'yt-thumb';
@@ -1757,7 +1769,25 @@ async function downloadHTML() {
       playBtn.innerHTML = `<svg viewBox="0 0 68 48" fill="none"><rect width="68" height="48" rx="10" fill="rgba(255,0,0,0.85)"/><path d="M28 16l20 8-20 8V16z" fill="#fff"/></svg>`;
       thumbWrap.appendChild(playBtn);
 
+      const iframeWrap = document.createElement('div');
+      iframeWrap.className = 'yt-iframe-wrap';
+      iframeWrap.style.display = 'none';
+
+      // ▶ボタンをタップした時だけiframeをセット
+      playBtn.addEventListener('click', e => {
+        if (adminMode) return;
+        e.preventDefault(); e.stopPropagation();
+        thumbWrap.style.display = 'none';
+        iframeWrap.style.display = 'block';
+        const iframe = document.createElement('iframe');
+        iframe.src = `https://www.youtube-nocookie.com/embed/${c.ytId}?autoplay=1`;
+        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+        iframe.allowFullscreen = true;
+        iframeWrap.appendChild(iframe);
+      });
+
       wrap.appendChild(thumbWrap);
+      wrap.appendChild(iframeWrap);
       if (c.title) {
         const titleEl = document.createElement('div');
         titleEl.className = 'yt-title';
@@ -1874,6 +1904,18 @@ function cyclerCarousel(el){
 }
 </scr` + `ipt>
 <scr` + `ipt>
+function playYT(thumb, id) {
+  var wrap = thumb.parentElement.querySelector('.yt-iframe-wrap');
+  if (!wrap) return;
+  thumb.style.display = 'none';
+  wrap.style.display = 'block';
+  var iframe = document.createElement('iframe');
+  iframe.src = 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1';
+  iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+  iframe.allowFullscreen = true;
+  iframe.style.cssText = 'width:100%;height:100%;border:none;';
+  wrap.appendChild(iframe);
+}
 document.addEventListener('click', function(e){
   var menu = document.getElementById('burgerMenuStatic');
   var btn = document.getElementById('burgerBtnStatic');
