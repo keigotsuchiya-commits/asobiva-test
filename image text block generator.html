@@ -84,6 +84,8 @@
   .it-text p.it-sig {
     text-align: right; margin-top: 0.8em; white-space: normal;
   }
+  .it-sig-wrap { text-align: right; }
+  .it-sig-wrap .it-sig-img { display: inline-block; height: auto; margin-top: 0.4em; }
 </style>
 </head>
 <body>
@@ -101,7 +103,13 @@
           <img id="itImg" src="" alt="" style="display:none;">
           <div id="itPlaceholder" style="background:#eee;border:1px solid #ddd;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:13px;">画像未設定</div>
         </div>
-        <div class="it-text"><p id="itText"></p><p id="itSig" class="it-sig"></p></div>
+        <div class="it-text">
+          <p id="itText"></p>
+          <div id="itSigWrap" class="it-sig-wrap">
+            <p id="itSig" class="it-sig"></p>
+            <img id="itSigImg" class="it-sig-img" src="" alt="" style="display:none;">
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -157,6 +165,15 @@
     <input type="range" id="fontSizeRange" min="12" max="32" value="17">
     <label>署名（右寄せ・任意）</label>
     <textarea id="sigText" maxlength="80" style="min-height:44px;"></textarea>
+
+    <label>署名画像（サイン・任意）</label>
+    <div class="imgbtns">
+      <button id="pickSigImgBtn" type="button">画像を選択</button>
+      <button id="clearSigImgBtn" type="button">画像をクリア</button>
+    </div>
+    <input type="file" id="sigFileInput" accept="image/*">
+    <label class="rangelabel"><span>署名画像の幅</span><span id="sigImgWidthVal">100px</span></label>
+    <input type="range" id="sigImgWidthRange" min="30" max="300" value="100">
   </div>
 
   <div class="group">
@@ -187,7 +204,7 @@
 </div>
 
 <script>
-let state = { pos: 'left', imgDataUrl: null, imgWidthPct: 38, padTop: 20, padBottom: 20, padLeft: 16, padRight: 16, fontSize: 17 };
+let state = { pos: 'left', imgDataUrl: null, imgWidthPct: 38, padTop: 20, padBottom: 20, padLeft: 16, padRight: 16, fontSize: 17, sigImgDataUrl: null, sigImgWidth: 100 };
 
 const itBlock = document.getElementById('itBlock');
 const itImg = document.getElementById('itImg');
@@ -197,6 +214,8 @@ const itText = document.getElementById('itText');
 const bodyText = document.getElementById('bodyText');
 const sigText = document.getElementById('sigText');
 const itSig = document.getElementById('itSig');
+const itSigImg = document.getElementById('itSigImg');
+const itSigWrap = document.getElementById('itSigWrap');
 
 bodyText.value = 'ここに本文を入力します。画像の横に回り込む形で表示されます。';
 
@@ -215,6 +234,15 @@ function updatePreview() {
   itSig.textContent = sigText.value;
   itSig.style.fontSize = state.fontSize + 'px';
   itSig.style.display = sigText.value.trim() ? '' : 'none';
+
+  if (state.sigImgDataUrl) {
+    itSigImg.src = state.sigImgDataUrl;
+    itSigImg.style.width = state.sigImgWidth + 'px';
+    itSigImg.style.display = 'inline-block';
+  } else {
+    itSigImg.style.display = 'none';
+  }
+  itSigWrap.style.display = (sigText.value.trim() || state.sigImgDataUrl) ? '' : 'none';
   itImgWrap.style.flex = `0 0 ${state.imgWidthPct}%`;
   itImgWrap.style.maxWidth = `${state.imgWidthPct}%`;
   itBlock.style.paddingTop = state.padTop + 'px';
@@ -297,6 +325,32 @@ imgWidthRange.addEventListener('input', () => {
 bodyText.addEventListener('input', updatePreview);
 sigText.addEventListener('input', updatePreview);
 
+const sigFileInput = document.getElementById('sigFileInput');
+document.getElementById('pickSigImgBtn').addEventListener('click', () => sigFileInput.click());
+document.getElementById('clearSigImgBtn').addEventListener('click', () => {
+  state.sigImgDataUrl = null;
+  sigFileInput.value = '';
+  updatePreview();
+});
+sigFileInput.addEventListener('change', () => {
+  const file = sigFileInput.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    state.sigImgDataUrl = ev.target.result;
+    updatePreview();
+  };
+  reader.readAsDataURL(file);
+});
+
+const sigImgWidthRange = document.getElementById('sigImgWidthRange');
+const sigImgWidthVal = document.getElementById('sigImgWidthVal');
+sigImgWidthRange.addEventListener('input', () => {
+  state.sigImgWidth = Number(sigImgWidthRange.value);
+  sigImgWidthVal.textContent = state.sigImgWidth + 'px';
+  updatePreview();
+});
+
 // ---- load & re-edit a previously saved/copied HTML ----
 function unescapeHtml(str) {
   return str.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
@@ -355,6 +409,16 @@ function loadFromSavedHtml(text) {
   // signature
   const sigMatch = text.match(/<p class="it-sig"[^>]*>([\s\S]*?)<\/p>/);
   sigText.value = sigMatch ? unescapeHtml(sigMatch[1]) : '';
+  // signature image
+  const sigImgMatch = text.match(/<img class="it-sig-img" src="(data:image\/[^"]+)"[^>]*width:(\d+(?:\.\d+)?)px/);
+  if (sigImgMatch) {
+    state.sigImgDataUrl = sigImgMatch[1];
+    state.sigImgWidth = Math.round(parseFloat(sigImgMatch[2]));
+    sigImgWidthRange.value = state.sigImgWidth;
+    sigImgWidthVal.textContent = state.sigImgWidth + 'px';
+  } else {
+    state.sigImgDataUrl = null;
+  }
 
   updatePreview();
 }
@@ -399,20 +463,28 @@ function buildSnippet() {
 .${id} .it-text{flex:1;min-width:0;}
 .${id} .it-text p{margin:0;font-size:${state.fontSize}px;line-height:1.8;color:#111;white-space:pre-wrap;}
 .${id} .it-text p.it-sig{text-align:right;margin-top:0.8em;white-space:normal;}
+.${id} .it-sig-wrap{text-align:right;}
+.${id} .it-sig-wrap .it-sig-img{display:inline-block;height:auto;margin-top:0.4em;}
 </style>`.trim();
 
   const imgBlock = hasImg
     ? `\n    <div class="it-img"><img src="${state.imgDataUrl}" alt=""></div>`
     : '';
 
-  const sigBlock = sigText.value.trim()
+  const sigTextBlock = sigText.value.trim()
     ? `<p class="it-sig" style="font-size:${state.fontSize}px">${escapeHtml(sigText.value)}</p>`
+    : '';
+  const sigImgBlock = state.sigImgDataUrl
+    ? `<img class="it-sig-img" src="${state.sigImgDataUrl}" alt="" style="width:${state.sigImgWidth}px">`
+    : '';
+  const sigWrapBlock = (sigTextBlock || sigImgBlock)
+    ? `<div class="it-sig-wrap">${sigTextBlock}${sigImgBlock}</div>`
     : '';
 
   const html = `
 <div class="it-wrap ${id}">
   <div class="it-block ${posClass}">${imgBlock}
-    <div class="it-text"><p style="font-size:${state.fontSize}px">${parseMarkup(escapeHtml(bodyText.value))}</p>${sigBlock}</div>
+    <div class="it-text"><p style="font-size:${state.fontSize}px">${parseMarkup(escapeHtml(bodyText.value))}</p>${sigWrapBlock}</div>
   </div>
 </div>`.trim();
 
