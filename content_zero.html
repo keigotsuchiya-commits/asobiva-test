@@ -520,6 +520,29 @@ body.admin-mode .card-replace { display: flex; }
   background: var(--white);
 }
 
+/* ── MUSIC CARD ── */
+.music-card {
+  width: 100%;
+  background: var(--white);
+  overflow: hidden;
+  padding: 16px;
+}
+.music-card audio {
+  width: 100%;
+  display: block;
+  margin-top: 8px;
+}
+.music-card-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.music-card-artist {
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
 /* ── EMPTY STATE ── */
 .empty-section {
   background: var(--bg);
@@ -1034,6 +1057,30 @@ function render() {
       img.loading = 'lazy';
       wrap.appendChild(img);
       replaceAccept = 'image/*,text/html,.html';
+    } else if (c.type === 'music') {
+      wrap = document.createElement('div');
+      wrap.className = 'music-card';
+      if (c.title) {
+        const titleEl = document.createElement('div');
+        titleEl.className = 'music-card-title';
+        titleEl.textContent = c.title;
+        wrap.appendChild(titleEl);
+      }
+      if (c.artist) {
+        const artistEl = document.createElement('div');
+        artistEl.className = 'music-card-artist';
+        artistEl.textContent = c.artist;
+        wrap.appendChild(artistEl);
+      }
+      const audio = document.createElement('audio');
+      audio.controls = true;
+      audio.src = c.musicUrl;
+      audio.preload = 'none';
+      wrap.appendChild(audio);
+      supportsReplace = false;
+
+    } else if (c.type === 'music') {
+      return `  <div class="card-section${gapClass}"><div class="music-card">${c.title ? `<div class="music-card-title">${c.title}</div>` : ''}${c.artist ? `<div class="music-card-artist">${c.artist}</div>` : ''}<audio controls src="${c.musicUrl}" preload="none" style="width:100%;display:block;margin-top:8px;"></audio></div></div>\n`;
     } else if (c.type === 'youtube') {
       wrap = document.createElement('a');
       wrap.className = 'yt-card';
@@ -1535,6 +1582,22 @@ async function addYouTubeCard() {
   render();
 }
 
+// ── Music Card ───────────────────────────────
+async function addMusicCard() {
+  const url = document.getElementById('musicUrl').value.trim();
+  const title = document.getElementById('musicTitle').value.trim();
+  const artist = document.getElementById('musicArtist').value.trim();
+  if (!url) return;
+  const card = { type: 'music', musicUrl: url, title, artist, gap: true };
+  const id = await dbOp('cards', 'readwrite', s => s.add(card));
+  cards.push({ ...card, id });
+  document.getElementById('musicUrl').value = '';
+  document.getElementById('musicTitle').value = '';
+  document.getElementById('musicArtist').value = '';
+  closePanel();
+  render();
+}
+
 // ── Gap toggle ────────────────────────────────
 async function toggleGap(id) {
   const c = cards.find(c => c.id === id);
@@ -1650,7 +1713,31 @@ async function downloadHTML() {
           ? `<a class="card" href="${c.link}" target="_blank" rel="noopener"><img src="${compressedB64}" alt=""></a>`
           : `<div class="card"><img src="${compressedB64}" alt=""></div>`;
         cardsHTML += `  <div class="card-section${gapClass}">${tag}</div>\n`;
-      } else if (c.type === 'youtube') {
+      } else if (c.type === 'music') {
+      wrap = document.createElement('div');
+      wrap.className = 'music-card';
+      if (c.title) {
+        const titleEl = document.createElement('div');
+        titleEl.className = 'music-card-title';
+        titleEl.textContent = c.title;
+        wrap.appendChild(titleEl);
+      }
+      if (c.artist) {
+        const artistEl = document.createElement('div');
+        artistEl.className = 'music-card-artist';
+        artistEl.textContent = c.artist;
+        wrap.appendChild(artistEl);
+      }
+      const audio = document.createElement('audio');
+      audio.controls = true;
+      audio.src = c.musicUrl;
+      audio.preload = 'none';
+      wrap.appendChild(audio);
+      supportsReplace = false;
+
+    } else if (c.type === 'music') {
+      return `  <div class="card-section${gapClass}"><div class="music-card">${c.title ? `<div class="music-card-title">${c.title}</div>` : ''}${c.artist ? `<div class="music-card-artist">${c.artist}</div>` : ''}<audio controls src="${c.musicUrl}" preload="none" style="width:100%;display:block;margin-top:8px;"></audio></div></div>\n`;
+    } else if (c.type === 'youtube') {
       wrap = document.createElement('a');
       wrap.className = 'yt-card';
       wrap.href = adminMode ? '#' : `https://www.youtube.com/watch?v=${c.ytId}`;
