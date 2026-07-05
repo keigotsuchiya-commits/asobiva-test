@@ -484,12 +484,15 @@ body.admin-mode .card-replace { display: flex; }
   position: relative;
   background: #000;
   overflow: hidden;
+  min-height: 200px;
 }
 .yt-thumb img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+  position: relative;
+  z-index: 1;
 }
 .yt-play {
   position: absolute;
@@ -499,6 +502,8 @@ body.admin-mode .card-replace { display: flex; }
   justify-content: center;
   background: rgba(0,0,0,0.2);
   transition: background 0.2s;
+  z-index: 2;
+  cursor: pointer;
 }
 .yt-play:hover { background: rgba(0,0,0,0.35); }
 .yt-play svg { width: 60px; height: 60px; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4)); }
@@ -850,9 +855,22 @@ body.admin-mode .card-move { display: flex; }
     <input type="checkbox" id="carouselToggle">
     <span>選んだ画像を1枚のカードにまとめる（カルーセル）</span>
   </label>
-  <label class="field-label" for="linkUrl">リンク先URL（任意）</label>
-  <input class="field-input" id="linkUrl" type="url" placeholder="https://note.com/...">
-  <button class="btn-add" id="addBtn" onclick="addCards()" disabled>追加する</button>
+  <label class="field-label" for="linkUrl">リンク先URL（任意・画像カード用）</label>
+  <input class="field-input" id="linkUrl" type="url" placeholder="https://...">
+  <div style="margin-top:8px;margin-bottom:16px;padding:16px;border:1.5px dashed var(--border);border-radius:12px;">
+    <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;color:var(--ink-soft);margin-bottom:12px;">▶ YouTubeカードを追加</div>
+    <input class="field-input" id="ytUrl" type="url" placeholder="https://youtube.com/watch?v=...">
+    <input class="field-input" id="ytTitle" type="text" placeholder="タイトル（任意）" style="margin-top:8px;">
+    <button class="tab-edit-btn" onclick="addYouTubeCard()" style="margin-top:8px;width:100%;text-align:center;">YouTubeカードを追加</button>
+  </div>
+  <div style="margin-top:8px;margin-bottom:16px;padding:16px;border:1.5px dashed var(--border);border-radius:12px;">
+    <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;color:var(--ink-soft);margin-bottom:12px;">🎵 音楽カードを追加</div>
+    <input class="field-input" id="musicUrl" type="url" placeholder="GitHubのMP3/MP4 URL">
+    <input class="field-input" id="musicTitle" type="text" placeholder="タイトル（任意）" style="margin-top:8px;">
+    <input class="field-input" id="musicArtist" type="text" placeholder="アーティスト名（任意）" style="margin-top:8px;">
+    <button class="tab-edit-btn" onclick="addMusicCard()" style="margin-top:8px;width:100%;text-align:center;">音楽カードを追加</button>
+  </div>
+  <button class="btn-add" id="addBtn" onclick="addCards()" disabled>画像/HTMLカードを追加</button>
 </div>
 
 <script>
@@ -1084,45 +1102,29 @@ function render() {
     } else if (c.type === 'youtube') {
       wrap = document.createElement('div');
       wrap.className = 'yt-card';
-
-      const thumbWrap = document.createElement('div');
-      thumbWrap.className = 'yt-thumb';
-
-      const img = document.createElement('img');
-      img.src = `https://img.youtube.com/vi/${c.ytId}/hqdefault.jpg`;
-      img.alt = c.title || '';
-      thumbWrap.appendChild(img);
-
-      const playBtn = document.createElement('div');
-      playBtn.className = 'yt-play';
-      playBtn.innerHTML = `<svg viewBox="0 0 68 48" fill="none"><rect width="68" height="48" rx="10" fill="rgba(255,0,0,0.85)"/><path d="M28 16l20 8-20 8V16z" fill="#fff"/></svg>`;
-      thumbWrap.appendChild(playBtn);
-
-      const iframeWrap = document.createElement('div');
-      iframeWrap.className = 'yt-iframe-wrap';
-      iframeWrap.style.display = 'none';
-
-      // ▶ボタンをタップした時だけiframeをセット
-      playBtn.addEventListener('click', e => {
+      wrap.innerHTML = `
+        <div style="width:100%;aspect-ratio:16/9;position:relative;background:#000;overflow:hidden;min-height:200px;">
+          <img src="https://img.youtube.com/vi/${c.ytId}/hqdefault.jpg" alt="${c.title||''}" style="width:100%;height:100%;object-fit:cover;display:block;">
+          <div class="yt-play-btn" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.2);z-index:10;cursor:pointer;">
+            <svg viewBox="0 0 68 48" fill="none" style="width:60px;height:60px;"><rect width="68" height="48" rx="10" fill="rgba(255,0,0,0.85)"/><path d="M28 16l20 8-20 8V16z" fill="#fff"/></svg>
+          </div>
+        </div>
+        <div class="yt-iframe-wrap" style="width:100%;aspect-ratio:16/9;display:none;min-height:200px;"></div>
+        ${c.title ? `<div class="yt-title">${c.title}</div>` : ''}
+      `;
+      wrap.querySelector('.yt-play-btn').addEventListener('click', e => {
         if (adminMode) return;
         e.preventDefault(); e.stopPropagation();
-        thumbWrap.style.display = 'none';
+        wrap.querySelector('div').style.display = 'none';
+        const iframeWrap = wrap.querySelector('.yt-iframe-wrap');
         iframeWrap.style.display = 'block';
         const iframe = document.createElement('iframe');
         iframe.src = `https://www.youtube-nocookie.com/embed/${c.ytId}?autoplay=1`;
         iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
         iframe.allowFullscreen = true;
+        iframe.style.cssText = 'width:100%;height:100%;border:none;';
         iframeWrap.appendChild(iframe);
       });
-
-      wrap.appendChild(thumbWrap);
-      wrap.appendChild(iframeWrap);
-      if (c.title) {
-        const titleEl = document.createElement('div');
-        titleEl.className = 'yt-title';
-        titleEl.textContent = c.title;
-        wrap.appendChild(titleEl);
-      }
       supportsReplace = false;
 
     } else if (c.type === 'carousel') {
@@ -1755,45 +1757,29 @@ async function downloadHTML() {
     } else if (c.type === 'youtube') {
       wrap = document.createElement('div');
       wrap.className = 'yt-card';
-
-      const thumbWrap = document.createElement('div');
-      thumbWrap.className = 'yt-thumb';
-
-      const img = document.createElement('img');
-      img.src = `https://img.youtube.com/vi/${c.ytId}/hqdefault.jpg`;
-      img.alt = c.title || '';
-      thumbWrap.appendChild(img);
-
-      const playBtn = document.createElement('div');
-      playBtn.className = 'yt-play';
-      playBtn.innerHTML = `<svg viewBox="0 0 68 48" fill="none"><rect width="68" height="48" rx="10" fill="rgba(255,0,0,0.85)"/><path d="M28 16l20 8-20 8V16z" fill="#fff"/></svg>`;
-      thumbWrap.appendChild(playBtn);
-
-      const iframeWrap = document.createElement('div');
-      iframeWrap.className = 'yt-iframe-wrap';
-      iframeWrap.style.display = 'none';
-
-      // ▶ボタンをタップした時だけiframeをセット
-      playBtn.addEventListener('click', e => {
+      wrap.innerHTML = `
+        <div style="width:100%;aspect-ratio:16/9;position:relative;background:#000;overflow:hidden;min-height:200px;">
+          <img src="https://img.youtube.com/vi/${c.ytId}/hqdefault.jpg" alt="${c.title||''}" style="width:100%;height:100%;object-fit:cover;display:block;">
+          <div class="yt-play-btn" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.2);z-index:10;cursor:pointer;">
+            <svg viewBox="0 0 68 48" fill="none" style="width:60px;height:60px;"><rect width="68" height="48" rx="10" fill="rgba(255,0,0,0.85)"/><path d="M28 16l20 8-20 8V16z" fill="#fff"/></svg>
+          </div>
+        </div>
+        <div class="yt-iframe-wrap" style="width:100%;aspect-ratio:16/9;display:none;min-height:200px;"></div>
+        ${c.title ? `<div class="yt-title">${c.title}</div>` : ''}
+      `;
+      wrap.querySelector('.yt-play-btn').addEventListener('click', e => {
         if (adminMode) return;
         e.preventDefault(); e.stopPropagation();
-        thumbWrap.style.display = 'none';
+        wrap.querySelector('div').style.display = 'none';
+        const iframeWrap = wrap.querySelector('.yt-iframe-wrap');
         iframeWrap.style.display = 'block';
         const iframe = document.createElement('iframe');
         iframe.src = `https://www.youtube-nocookie.com/embed/${c.ytId}?autoplay=1`;
         iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
         iframe.allowFullscreen = true;
+        iframe.style.cssText = 'width:100%;height:100%;border:none;';
         iframeWrap.appendChild(iframe);
       });
-
-      wrap.appendChild(thumbWrap);
-      wrap.appendChild(iframeWrap);
-      if (c.title) {
-        const titleEl = document.createElement('div');
-        titleEl.className = 'yt-title';
-        titleEl.textContent = c.title;
-        wrap.appendChild(titleEl);
-      }
       supportsReplace = false;
 
     } else if (c.type === 'carousel') {
