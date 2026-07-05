@@ -1104,40 +1104,42 @@ function render() {
       wrap.className = 'yt-card';
 
       // サムネイル（カスタムまたはYouTube自動取得）
-      const thumbSrc = c.thumbB64 || null;
+      const thumbSrc = c.thumbB64 || `https://img.youtube.com/vi/${c.ytId}/hqdefault.jpg`;
 
       const thumbDiv = document.createElement('div');
       thumbDiv.style.cssText = 'width:100%;aspect-ratio:16/9;position:relative;background:#000;overflow:hidden;min-height:200px;';
 
-      if (thumbSrc) {
-        const thumbImg = document.createElement('img');
-        thumbImg.src = thumbSrc;
-        thumbImg.alt = c.title || '';
-        thumbImg.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
-        thumbDiv.appendChild(thumbImg);
-      }
+      const thumbImg = document.createElement('img');
+      thumbImg.src = thumbSrc;
+      thumbImg.alt = c.title || '';
+      thumbImg.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+      thumbDiv.appendChild(thumbImg);
 
       const playOverlay = document.createElement('div');
       playOverlay.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.2);z-index:10;cursor:pointer;';
       playOverlay.innerHTML = '<svg viewBox="0 0 68 48" fill="none" style="width:60px;height:60px;"><rect width="68" height="48" rx="10" fill="rgba(255,0,0,0.85)"/><path d="M28 16l20 8-20 8V16z" fill="#fff"/></svg>';
       thumbDiv.appendChild(playOverlay);
 
+      const iframeWrap = document.createElement('div');
+      iframeWrap.style.cssText = 'width:100%;aspect-ratio:16/9;min-height:200px;display:none;';
+
       playOverlay.addEventListener('click', e => {
         if (adminMode) return;
         e.preventDefault(); e.stopPropagation();
         thumbDiv.style.display = 'none';
-        const iframeWrap = document.createElement('div');
-        iframeWrap.style.cssText = 'width:100%;aspect-ratio:16/9;min-height:200px;';
-        const iframe = document.createElement('iframe');
-        iframe.src = `https://www.youtube.com/embed/${c.ytId}`;
-        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
-        iframe.allowFullscreen = true;
-        iframe.style.cssText = 'width:100%;height:100%;border:none;';
-        iframeWrap.appendChild(iframe);
-        wrap.insertBefore(iframeWrap, thumbDiv.nextSibling);
+        iframeWrap.style.display = 'block';
+        if (!iframeWrap.querySelector('iframe')) {
+          const iframe = document.createElement('iframe');
+          iframe.src = `https://www.youtube.com/embed/${c.ytId}`;
+          iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+          iframe.allowFullscreen = true;
+          iframe.style.cssText = 'width:100%;height:100%;border:none;';
+          iframeWrap.appendChild(iframe);
+        }
       });
 
       wrap.appendChild(thumbDiv);
+      wrap.appendChild(iframeWrap);
 
       // タイトル + YouTubeボタン
       const infoRow = document.createElement('div');
@@ -1821,40 +1823,42 @@ async function downloadHTML() {
       wrap.className = 'yt-card';
 
       // サムネイル（カスタムまたはYouTube自動取得）
-      const thumbSrc = c.thumbB64 || null;
+      const thumbSrc = c.thumbB64 || `https://img.youtube.com/vi/${c.ytId}/hqdefault.jpg`;
 
       const thumbDiv = document.createElement('div');
       thumbDiv.style.cssText = 'width:100%;aspect-ratio:16/9;position:relative;background:#000;overflow:hidden;min-height:200px;';
 
-      if (thumbSrc) {
-        const thumbImg = document.createElement('img');
-        thumbImg.src = thumbSrc;
-        thumbImg.alt = c.title || '';
-        thumbImg.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
-        thumbDiv.appendChild(thumbImg);
-      }
+      const thumbImg = document.createElement('img');
+      thumbImg.src = thumbSrc;
+      thumbImg.alt = c.title || '';
+      thumbImg.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+      thumbDiv.appendChild(thumbImg);
 
       const playOverlay = document.createElement('div');
       playOverlay.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.2);z-index:10;cursor:pointer;';
       playOverlay.innerHTML = '<svg viewBox="0 0 68 48" fill="none" style="width:60px;height:60px;"><rect width="68" height="48" rx="10" fill="rgba(255,0,0,0.85)"/><path d="M28 16l20 8-20 8V16z" fill="#fff"/></svg>';
       thumbDiv.appendChild(playOverlay);
 
+      const iframeWrap = document.createElement('div');
+      iframeWrap.style.cssText = 'width:100%;aspect-ratio:16/9;min-height:200px;display:none;';
+
       playOverlay.addEventListener('click', e => {
         if (adminMode) return;
         e.preventDefault(); e.stopPropagation();
         thumbDiv.style.display = 'none';
-        const iframeWrap = document.createElement('div');
-        iframeWrap.style.cssText = 'width:100%;aspect-ratio:16/9;min-height:200px;';
-        const iframe = document.createElement('iframe');
-        iframe.src = `https://www.youtube.com/embed/${c.ytId}`;
-        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
-        iframe.allowFullscreen = true;
-        iframe.style.cssText = 'width:100%;height:100%;border:none;';
-        iframeWrap.appendChild(iframe);
-        wrap.insertBefore(iframeWrap, thumbDiv.nextSibling);
+        iframeWrap.style.display = 'block';
+        if (!iframeWrap.querySelector('iframe')) {
+          const iframe = document.createElement('iframe');
+          iframe.src = `https://www.youtube.com/embed/${c.ytId}`;
+          iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+          iframe.allowFullscreen = true;
+          iframe.style.cssText = 'width:100%;height:100%;border:none;';
+          iframeWrap.appendChild(iframe);
+        }
       });
 
       wrap.appendChild(thumbDiv);
+      wrap.appendChild(iframeWrap);
 
       // タイトル + YouTubeボタン
       const infoRow = document.createElement('div');
@@ -2055,12 +2059,6 @@ document.querySelectorAll('.yt-iframe-wrap').forEach(el => {
   el.innerHTML = '';
   el.style.display = 'none';
 });
-window.addEventListener('beforeunload', function() {
-  document.querySelectorAll('iframe').forEach(function(iframe) {
-    iframe.src = 'about:blank';
-  });
-});
-
 init();
 </script>
 </body>
