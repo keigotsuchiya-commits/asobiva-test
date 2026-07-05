@@ -2059,6 +2059,12 @@ document.querySelectorAll('.yt-iframe-wrap').forEach(el => {
   el.innerHTML = '';
   el.style.display = 'none';
 });
+window.addEventListener('beforeunload', function() {
+  document.querySelectorAll('iframe').forEach(function(iframe) {
+    iframe.src = 'about:blank';
+  });
+});
+
 init();
 </script>
 </body>
