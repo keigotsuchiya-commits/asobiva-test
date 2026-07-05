@@ -420,7 +420,7 @@ body.admin-mode .html-card-label { display: block; }
   cursor: pointer;
   align-items: center;
   justify-content: center;
-  z-index: 5;
+  z-index: 20;
   transition: background 0.15s;
 }
 .card-del:hover { background: #c0392b; }
@@ -1183,9 +1183,10 @@ function render() {
       thumbReplaceBtn.className = 'card-replace';
       thumbReplaceBtn.title = 'サムネイルを差し替え';
       thumbReplaceBtn.textContent = '🖼';
-      thumbReplaceBtn.style.cssText = 'display:none;position:absolute;top:10px;right:48px;width:30px;height:30px;background:rgba(0,0,0,0.5);color:#fff;border:none;border-radius:50%;font-size:14px;cursor:pointer;align-items:center;justify-content:center;z-index:5;';
+      thumbReplaceBtn.style.cssText = 'display:none;position:absolute;top:10px;right:48px;width:30px;height:30px;background:rgba(0,0,0,0.5);color:#fff;border:none;border-radius:50%;font-size:14px;cursor:pointer;align-items:center;justify-content:center;z-index:20;';
       thumbReplaceBtn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); thumbReplaceInput.click(); });
       wrap.appendChild(thumbReplaceBtn);
+      thumbReplaceBtn.className = 'card-replace';
       if (adminMode) thumbReplaceBtn.style.display = 'flex';
 
       supportsReplace = false;
@@ -1901,9 +1902,10 @@ async function downloadHTML() {
       thumbReplaceBtn.className = 'card-replace';
       thumbReplaceBtn.title = 'サムネイルを差し替え';
       thumbReplaceBtn.textContent = '🖼';
-      thumbReplaceBtn.style.cssText = 'display:none;position:absolute;top:10px;right:48px;width:30px;height:30px;background:rgba(0,0,0,0.5);color:#fff;border:none;border-radius:50%;font-size:14px;cursor:pointer;align-items:center;justify-content:center;z-index:5;';
+      thumbReplaceBtn.style.cssText = 'display:none;position:absolute;top:10px;right:48px;width:30px;height:30px;background:rgba(0,0,0,0.5);color:#fff;border:none;border-radius:50%;font-size:14px;cursor:pointer;align-items:center;justify-content:center;z-index:20;';
       thumbReplaceBtn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); thumbReplaceInput.click(); });
       wrap.appendChild(thumbReplaceBtn);
+      thumbReplaceBtn.className = 'card-replace';
       if (adminMode) thumbReplaceBtn.style.display = 'flex';
 
       supportsReplace = false;
