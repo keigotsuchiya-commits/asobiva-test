@@ -1836,26 +1836,23 @@ async function downloadHTML() {
       playOverlay.innerHTML = '<svg viewBox="0 0 68 48" fill="none" style="width:60px;height:60px;"><rect width="68" height="48" rx="10" fill="rgba(255,0,0,0.85)"/><path d="M28 16l20 8-20 8V16z" fill="#fff"/></svg>';
       thumbDiv.appendChild(playOverlay);
 
-      const iframeWrap = document.createElement('div');
-      iframeWrap.style.cssText = 'width:100%;aspect-ratio:16/9;min-height:200px;display:none;';
-
       playOverlay.addEventListener('click', e => {
         if (adminMode) return;
         e.preventDefault(); e.stopPropagation();
         thumbDiv.style.display = 'none';
-        iframeWrap.style.display = 'block';
-        if (!iframeWrap.querySelector('iframe')) {
-          const iframe = document.createElement('iframe');
-          iframe.src = `https://www.youtube.com/embed/${c.ytId}?autoplay=1`;
-          iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
-          iframe.allowFullscreen = true;
-          iframe.style.cssText = 'width:100%;height:100%;border:none;';
-          iframeWrap.appendChild(iframe);
-        }
+        const iframeWrap = document.createElement('div');
+        iframeWrap.className = 'yt-iframe-wrap';
+        iframeWrap.style.cssText = 'width:100%;aspect-ratio:16/9;min-height:200px;';
+        const iframe = document.createElement('iframe');
+        iframe.src = `https://www.youtube.com/embed/${c.ytId}`;
+        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+        iframe.allowFullscreen = true;
+        iframe.style.cssText = 'width:100%;height:100%;border:none;';
+        iframeWrap.appendChild(iframe);
+        thumbDiv.insertAdjacentElement('afterend', iframeWrap);
       });
 
       wrap.appendChild(thumbDiv);
-      wrap.appendChild(iframeWrap);
 
       // タイトル + YouTubeボタン
       const infoRow = document.createElement('div');
@@ -2021,7 +2018,7 @@ function playYT(thumb, id) {
   thumb.style.display = 'none';
   wrap.style.display = 'block';
   var iframe = document.createElement('iframe');
-  iframe.src = 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1';
+  iframe.src = 'https://www.youtube.com/embed/' + id;
   iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
   iframe.allowFullscreen = true;
   iframe.style.cssText = 'width:100%;height:100%;border:none;';
