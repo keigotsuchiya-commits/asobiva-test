@@ -1133,7 +1133,7 @@ function render() {
         iframe.allowFullscreen = true;
         iframe.style.cssText = 'width:100%;height:100%;border:none;';
         iframeWrap.appendChild(iframe);
-        thumbDiv.insertAdjacentElement('afterend', iframeWrap);
+        wrap.insertBefore(iframeWrap, wrap.firstChild);
       });
 
       wrap.appendChild(thumbDiv);
@@ -1849,7 +1849,7 @@ async function downloadHTML() {
         iframe.allowFullscreen = true;
         iframe.style.cssText = 'width:100%;height:100%;border:none;';
         iframeWrap.appendChild(iframe);
-        thumbDiv.insertAdjacentElement('afterend', iframeWrap);
+        wrap.insertBefore(iframeWrap, wrap.firstChild);
       });
 
       wrap.appendChild(thumbDiv);
