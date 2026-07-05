@@ -2051,6 +2051,10 @@ document.addEventListener('click', function(e){
 }
 
 // ページ読み込み時にiframeを全てリセット
+document.querySelectorAll('iframe').forEach(el => {
+  el.src = 'about:blank';
+  el.remove();
+});
 document.querySelectorAll('.yt-iframe-wrap').forEach(el => {
   el.innerHTML = '';
   el.style.display = 'none';
