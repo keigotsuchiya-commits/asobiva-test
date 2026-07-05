@@ -1102,29 +1102,92 @@ function render() {
     } else if (c.type === 'youtube') {
       wrap = document.createElement('div');
       wrap.className = 'yt-card';
-      wrap.innerHTML = `
-        <div style="width:100%;aspect-ratio:16/9;position:relative;background:#000;overflow:hidden;min-height:200px;">
-          <img src="https://img.youtube.com/vi/${c.ytId}/hqdefault.jpg" alt="${c.title||''}" style="width:100%;height:100%;object-fit:cover;display:block;">
-          <div class="yt-play-btn" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.2);z-index:10;cursor:pointer;">
-            <svg viewBox="0 0 68 48" fill="none" style="width:60px;height:60px;"><rect width="68" height="48" rx="10" fill="rgba(255,0,0,0.85)"/><path d="M28 16l20 8-20 8V16z" fill="#fff"/></svg>
-          </div>
-        </div>
-        <div class="yt-iframe-wrap" style="width:100%;aspect-ratio:16/9;display:none;min-height:200px;"></div>
-        ${c.title ? `<div class="yt-title">${c.title}</div>` : ''}
-      `;
-      wrap.querySelector('.yt-play-btn').addEventListener('click', e => {
+
+      // サムネイル（カスタムまたはYouTube自動取得）
+      const thumbSrc = c.thumbB64 || `https://img.youtube.com/vi/${c.ytId}/hqdefault.jpg`;
+
+      const thumbDiv = document.createElement('div');
+      thumbDiv.style.cssText = 'width:100%;aspect-ratio:16/9;position:relative;background:#000;overflow:hidden;min-height:200px;';
+
+      const thumbImg = document.createElement('img');
+      thumbImg.src = thumbSrc;
+      thumbImg.alt = c.title || '';
+      thumbImg.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+      thumbDiv.appendChild(thumbImg);
+
+      const playOverlay = document.createElement('div');
+      playOverlay.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.2);z-index:10;cursor:pointer;';
+      playOverlay.innerHTML = '<svg viewBox="0 0 68 48" fill="none" style="width:60px;height:60px;"><rect width="68" height="48" rx="10" fill="rgba(255,0,0,0.85)"/><path d="M28 16l20 8-20 8V16z" fill="#fff"/></svg>';
+      thumbDiv.appendChild(playOverlay);
+
+      const iframeWrap = document.createElement('div');
+      iframeWrap.style.cssText = 'width:100%;aspect-ratio:16/9;min-height:200px;display:none;';
+
+      playOverlay.addEventListener('click', e => {
         if (adminMode) return;
         e.preventDefault(); e.stopPropagation();
-        wrap.querySelector('div').style.display = 'none';
-        const iframeWrap = wrap.querySelector('.yt-iframe-wrap');
+        thumbDiv.style.display = 'none';
         iframeWrap.style.display = 'block';
-        const iframe = document.createElement('iframe');
-        iframe.src = `https://www.youtube-nocookie.com/embed/${c.ytId}?autoplay=1`;
-        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
-        iframe.allowFullscreen = true;
-        iframe.style.cssText = 'width:100%;height:100%;border:none;';
-        iframeWrap.appendChild(iframe);
+        if (!iframeWrap.querySelector('iframe')) {
+          const iframe = document.createElement('iframe');
+          iframe.src = `https://www.youtube-nocookie.com/embed/${c.ytId}?autoplay=1`;
+          iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+          iframe.allowFullscreen = true;
+          iframe.style.cssText = 'width:100%;height:100%;border:none;';
+          iframeWrap.appendChild(iframe);
+        }
       });
+
+      wrap.appendChild(thumbDiv);
+      wrap.appendChild(iframeWrap);
+
+      // タイトル + YouTubeボタン
+      const infoRow = document.createElement('div');
+      infoRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--white);';
+      if (c.title) {
+        const titleEl = document.createElement('div');
+        titleEl.className = 'yt-title';
+        titleEl.style.cssText = 'font-size:13px;font-weight:500;color:var(--ink);flex:1;margin:0;padding:0;';
+        titleEl.textContent = c.title;
+        infoRow.appendChild(titleEl);
+      }
+      const ytLink = document.createElement('a');
+      ytLink.href = `https://www.youtube.com/watch?v=${c.ytId}`;
+      ytLink.target = '_blank';
+      ytLink.rel = 'noopener';
+      ytLink.innerHTML = '<svg viewBox="0 0 24 24" fill="none" style="width:28px;height:28px;"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29.94 29.94 0 0 0 1 12a29.94 29.94 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96A29.94 29.94 0 0 0 23 12a29.94 29.94 0 0 0-.46-5.58z" fill="#FF0000"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="#fff"/></svg>';
+      ytLink.style.cssText = 'display:flex;align-items:center;flex-shrink:0;margin-left:8px;';
+      ytLink.addEventListener('click', e => e.stopPropagation());
+      infoRow.appendChild(ytLink);
+      wrap.appendChild(infoRow);
+
+      // 管理モード: サムネイル差し替え
+      const thumbReplaceInput = document.createElement('input');
+      thumbReplaceInput.type = 'file';
+      thumbReplaceInput.accept = 'image/*';
+      thumbReplaceInput.style.display = 'none';
+      thumbReplaceInput.addEventListener('change', async e => {
+        const f = e.target.files[0];
+        if (!f) return;
+        const b64 = await fileToBase64(f);
+        const existing = cards.find(cd => cd.id === c.id);
+        if (existing) {
+          existing.thumbB64 = b64;
+          await dbOp('cards', 'readwrite', s => s.put({ ...existing }));
+          thumbImg.src = b64;
+        }
+      });
+      wrap.appendChild(thumbReplaceInput);
+
+      const thumbReplaceBtn = document.createElement('button');
+      thumbReplaceBtn.className = 'card-replace';
+      thumbReplaceBtn.title = 'サムネイルを差し替え';
+      thumbReplaceBtn.textContent = '🖼';
+      thumbReplaceBtn.style.cssText = 'display:none;position:absolute;top:10px;right:48px;width:30px;height:30px;background:rgba(0,0,0,0.5);color:#fff;border:none;border-radius:50%;font-size:14px;cursor:pointer;align-items:center;justify-content:center;z-index:5;';
+      thumbReplaceBtn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); thumbReplaceInput.click(); });
+      wrap.appendChild(thumbReplaceBtn);
+      if (adminMode) thumbReplaceBtn.style.display = 'flex';
+
       supportsReplace = false;
 
     } else if (c.type === 'carousel') {
@@ -1590,7 +1653,7 @@ async function addYouTubeCard() {
   if (!url) return;
   const ytId = extractYouTubeId(url);
   if (!ytId) { alert('YouTubeのURLを正しく入力してください'); return; }
-  const card = { type: 'youtube', ytId, title, link: url, gap: true };
+  const card = { type: 'youtube', ytId, title, thumbB64: null, link: url, gap: true };
   const id = await dbOp('cards', 'readwrite', s => s.add(card));
   cards.push({ ...card, id });
   document.getElementById('ytUrl').value = '';
@@ -1757,29 +1820,92 @@ async function downloadHTML() {
     } else if (c.type === 'youtube') {
       wrap = document.createElement('div');
       wrap.className = 'yt-card';
-      wrap.innerHTML = `
-        <div style="width:100%;aspect-ratio:16/9;position:relative;background:#000;overflow:hidden;min-height:200px;">
-          <img src="https://img.youtube.com/vi/${c.ytId}/hqdefault.jpg" alt="${c.title||''}" style="width:100%;height:100%;object-fit:cover;display:block;">
-          <div class="yt-play-btn" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.2);z-index:10;cursor:pointer;">
-            <svg viewBox="0 0 68 48" fill="none" style="width:60px;height:60px;"><rect width="68" height="48" rx="10" fill="rgba(255,0,0,0.85)"/><path d="M28 16l20 8-20 8V16z" fill="#fff"/></svg>
-          </div>
-        </div>
-        <div class="yt-iframe-wrap" style="width:100%;aspect-ratio:16/9;display:none;min-height:200px;"></div>
-        ${c.title ? `<div class="yt-title">${c.title}</div>` : ''}
-      `;
-      wrap.querySelector('.yt-play-btn').addEventListener('click', e => {
+
+      // サムネイル（カスタムまたはYouTube自動取得）
+      const thumbSrc = c.thumbB64 || `https://img.youtube.com/vi/${c.ytId}/hqdefault.jpg`;
+
+      const thumbDiv = document.createElement('div');
+      thumbDiv.style.cssText = 'width:100%;aspect-ratio:16/9;position:relative;background:#000;overflow:hidden;min-height:200px;';
+
+      const thumbImg = document.createElement('img');
+      thumbImg.src = thumbSrc;
+      thumbImg.alt = c.title || '';
+      thumbImg.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+      thumbDiv.appendChild(thumbImg);
+
+      const playOverlay = document.createElement('div');
+      playOverlay.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.2);z-index:10;cursor:pointer;';
+      playOverlay.innerHTML = '<svg viewBox="0 0 68 48" fill="none" style="width:60px;height:60px;"><rect width="68" height="48" rx="10" fill="rgba(255,0,0,0.85)"/><path d="M28 16l20 8-20 8V16z" fill="#fff"/></svg>';
+      thumbDiv.appendChild(playOverlay);
+
+      const iframeWrap = document.createElement('div');
+      iframeWrap.style.cssText = 'width:100%;aspect-ratio:16/9;min-height:200px;display:none;';
+
+      playOverlay.addEventListener('click', e => {
         if (adminMode) return;
         e.preventDefault(); e.stopPropagation();
-        wrap.querySelector('div').style.display = 'none';
-        const iframeWrap = wrap.querySelector('.yt-iframe-wrap');
+        thumbDiv.style.display = 'none';
         iframeWrap.style.display = 'block';
-        const iframe = document.createElement('iframe');
-        iframe.src = `https://www.youtube-nocookie.com/embed/${c.ytId}?autoplay=1`;
-        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
-        iframe.allowFullscreen = true;
-        iframe.style.cssText = 'width:100%;height:100%;border:none;';
-        iframeWrap.appendChild(iframe);
+        if (!iframeWrap.querySelector('iframe')) {
+          const iframe = document.createElement('iframe');
+          iframe.src = `https://www.youtube-nocookie.com/embed/${c.ytId}?autoplay=1`;
+          iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+          iframe.allowFullscreen = true;
+          iframe.style.cssText = 'width:100%;height:100%;border:none;';
+          iframeWrap.appendChild(iframe);
+        }
       });
+
+      wrap.appendChild(thumbDiv);
+      wrap.appendChild(iframeWrap);
+
+      // タイトル + YouTubeボタン
+      const infoRow = document.createElement('div');
+      infoRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--white);';
+      if (c.title) {
+        const titleEl = document.createElement('div');
+        titleEl.className = 'yt-title';
+        titleEl.style.cssText = 'font-size:13px;font-weight:500;color:var(--ink);flex:1;margin:0;padding:0;';
+        titleEl.textContent = c.title;
+        infoRow.appendChild(titleEl);
+      }
+      const ytLink = document.createElement('a');
+      ytLink.href = `https://www.youtube.com/watch?v=${c.ytId}`;
+      ytLink.target = '_blank';
+      ytLink.rel = 'noopener';
+      ytLink.innerHTML = '<svg viewBox="0 0 24 24" fill="none" style="width:28px;height:28px;"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29.94 29.94 0 0 0 1 12a29.94 29.94 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96A29.94 29.94 0 0 0 23 12a29.94 29.94 0 0 0-.46-5.58z" fill="#FF0000"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="#fff"/></svg>';
+      ytLink.style.cssText = 'display:flex;align-items:center;flex-shrink:0;margin-left:8px;';
+      ytLink.addEventListener('click', e => e.stopPropagation());
+      infoRow.appendChild(ytLink);
+      wrap.appendChild(infoRow);
+
+      // 管理モード: サムネイル差し替え
+      const thumbReplaceInput = document.createElement('input');
+      thumbReplaceInput.type = 'file';
+      thumbReplaceInput.accept = 'image/*';
+      thumbReplaceInput.style.display = 'none';
+      thumbReplaceInput.addEventListener('change', async e => {
+        const f = e.target.files[0];
+        if (!f) return;
+        const b64 = await fileToBase64(f);
+        const existing = cards.find(cd => cd.id === c.id);
+        if (existing) {
+          existing.thumbB64 = b64;
+          await dbOp('cards', 'readwrite', s => s.put({ ...existing }));
+          thumbImg.src = b64;
+        }
+      });
+      wrap.appendChild(thumbReplaceInput);
+
+      const thumbReplaceBtn = document.createElement('button');
+      thumbReplaceBtn.className = 'card-replace';
+      thumbReplaceBtn.title = 'サムネイルを差し替え';
+      thumbReplaceBtn.textContent = '🖼';
+      thumbReplaceBtn.style.cssText = 'display:none;position:absolute;top:10px;right:48px;width:30px;height:30px;background:rgba(0,0,0,0.5);color:#fff;border:none;border-radius:50%;font-size:14px;cursor:pointer;align-items:center;justify-content:center;z-index:5;';
+      thumbReplaceBtn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); thumbReplaceInput.click(); });
+      wrap.appendChild(thumbReplaceBtn);
+      if (adminMode) thumbReplaceBtn.style.display = 'flex';
+
       supportsReplace = false;
 
     } else if (c.type === 'carousel') {
