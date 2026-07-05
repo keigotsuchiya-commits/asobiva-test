@@ -1113,12 +1113,12 @@ function render() {
       const thumbSrc = c.thumbB64 || `https://img.youtube.com/vi/${c.ytId}/hqdefault.jpg`;
 
       const thumbDiv = document.createElement('div');
-      thumbDiv.style.cssText = 'width:100%;aspect-ratio:16/9;position:relative;background:#000;overflow:hidden;min-height:200px;';
+      thumbDiv.style.cssText = 'width:100%;position:relative;background:#000;overflow:hidden;';
 
       const thumbImg = document.createElement('img');
       thumbImg.src = thumbSrc;
       thumbImg.alt = c.title || '';
-      thumbImg.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+      thumbImg.style.cssText = 'width:100%;height:auto;display:block;';
       thumbDiv.appendChild(thumbImg);
 
       const playOverlay = document.createElement('div');
@@ -1832,12 +1832,12 @@ async function downloadHTML() {
       const thumbSrc = c.thumbB64 || `https://img.youtube.com/vi/${c.ytId}/hqdefault.jpg`;
 
       const thumbDiv = document.createElement('div');
-      thumbDiv.style.cssText = 'width:100%;aspect-ratio:16/9;position:relative;background:#000;overflow:hidden;min-height:200px;';
+      thumbDiv.style.cssText = 'width:100%;position:relative;background:#000;overflow:hidden;';
 
       const thumbImg = document.createElement('img');
       thumbImg.src = thumbSrc;
       thumbImg.alt = c.title || '';
-      thumbImg.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+      thumbImg.style.cssText = 'width:100%;height:auto;display:block;';
       thumbDiv.appendChild(thumbImg);
 
       const playOverlay = document.createElement('div');
