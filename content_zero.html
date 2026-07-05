@@ -995,10 +995,16 @@ async function init() {
       html: r.html,
       base64: r.base64,
       images: r.images,
+      htmls: r.htmls,
       name: r.name || '',
       link: r.link || '',
       gap: r.gap !== undefined ? r.gap : true,
-      order: (r.order ?? r.id)
+      order: (r.order ?? r.id),
+      ytId: r.ytId,
+      title: r.title || '',
+      thumbB64: r.thumbB64 || null,
+      musicUrl: r.musicUrl || '',
+      artist: r.artist || '',
     }));
     cards.sort((a, b) => a.order - b.order);
     setLoadingBar(100);
