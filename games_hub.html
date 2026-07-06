@@ -427,6 +427,46 @@ body.admin-mode .card-replace { display: flex; }
 }
 .add-card-btn:hover { background: #f5f5f5; color: var(--ink); }
 
+/* ── GAME CAROUSEL ── */
+.game-carousel-card {
+  width: 100%;
+  background: var(--white);
+  overflow: hidden;
+}
+.game-carousel-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: var(--white);
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+}
+.game-carousel-footer .game-carousel-title {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: 0.04em;
+  flex: 1;
+  text-align: center;
+}
+.game-carousel-nav {
+  background: none;
+  color: var(--ink);
+  border: none;
+  width: 32px;
+  height: 32px;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.5;
+}
+.game-carousel-nav:hover { opacity: 1; }
+
 /* ── EMPTY STATE ── */
 .empty-section {
   background: var(--bg);
@@ -799,6 +839,10 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
   </label>
   <label class="field-label" for="linkUrl">リンク先URL（任意・ゲーム以外のHTML/画像カード用）</label>
   <input class="field-input" id="linkUrl" type="url" placeholder="https://note.com/...">
+  <div id="gameCarouselSection" style="display:none;margin-bottom:16px;padding:16px;border:1.5px dashed var(--border);border-radius:12px;">
+    <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;color:var(--ink-soft);margin-bottom:12px;">🎮 ゲームカルーセル</div>
+    <div id="gameNameInputs"></div>
+  </div>
   <button class="btn-add" id="addBtn" onclick="addCards()" disabled>追加する</button>
 </div>
 
@@ -1049,6 +1093,69 @@ function render() {
       img.loading = 'lazy';
       wrap.appendChild(img);
       replaceAccept = 'image/*,text/html,.html';
+    } else if (c.type === 'game-carousel') {
+      wrap = document.createElement('div');
+      wrap.className = 'game-carousel-card';
+      wrap.dataset.index = '0';
+
+      // ゲームフレーム
+      const frameWrap = document.createElement('div');
+      frameWrap.className = 'game-card-frame-wrap';
+
+      const iframe = document.createElement('iframe');
+      iframe.srcdoc = c.htmls[0];
+      iframe.sandbox = 'allow-scripts allow-same-origin';
+      iframe.width = CARD_ASPECT_W;
+      iframe.height = CARD_ASPECT_H;
+      frameWrap.appendChild(iframe);
+
+      const tapCatcher = document.createElement('div');
+      tapCatcher.className = 'game-card-tap';
+      tapCatcher.onclick = () => openFullscreenGame(c.htmls[0]);
+      frameWrap.appendChild(tapCatcher);
+      wrap.appendChild(frameWrap);
+
+      // フッター（ナビ）
+      const footer = document.createElement('div');
+      footer.className = 'game-carousel-footer';
+
+      const prevBtn = document.createElement('button');
+      prevBtn.className = 'game-carousel-nav';
+      prevBtn.textContent = '‹';
+
+      const titleSpan = document.createElement('span');
+      titleSpan.className = 'game-carousel-title';
+      titleSpan.textContent = c.names?.[0] || '';
+
+      const nextBtn = document.createElement('button');
+      nextBtn.className = 'game-carousel-nav';
+      nextBtn.textContent = '›';
+
+      footer.appendChild(prevBtn);
+      footer.appendChild(titleSpan);
+      footer.appendChild(nextBtn);
+      wrap.appendChild(footer);
+
+      function updateGame(idx) {
+        wrap.dataset.index = String(idx);
+        iframe.srcdoc = c.htmls[idx];
+        tapCatcher.onclick = () => openFullscreenGame(c.htmls[idx]);
+        titleSpan.textContent = c.names?.[idx] || '';
+      }
+
+      prevBtn.addEventListener('click', e => {
+        e.preventDefault(); e.stopPropagation();
+        const idx = (parseInt(wrap.dataset.index, 10) - 1 + c.htmls.length) % c.htmls.length;
+        updateGame(idx);
+      });
+      nextBtn.addEventListener('click', e => {
+        e.preventDefault(); e.stopPropagation();
+        const idx = (parseInt(wrap.dataset.index, 10) + 1) % c.htmls.length;
+        updateGame(idx);
+      });
+
+      supportsReplace = false;
+
     } else if (c.type === 'carousel') {
       wrap = document.createElement('div');
       wrap.className = 'carousel-card';
@@ -1503,11 +1610,19 @@ function renderPreviews() {
   const imgCount = pendingFiles.filter(f => !isHtmlFile(f)).length;
   const htmlCount = pendingFiles.filter(isHtmlFile).length;
   const toggleWrap = document.getElementById('carouselToggleWrap');
+  const gameCarouselSection = document.getElementById('gameCarouselSection');
   if (imgCount >= 2 && htmlCount === 0) {
     toggleWrap.style.display = 'flex';
+    gameCarouselSection.style.display = 'none';
+  } else if (htmlCount >= 2 && imgCount === 0) {
+    toggleWrap.style.display = 'none';
+    document.getElementById('carouselToggle').checked = false;
+    gameCarouselSection.style.display = 'block';
+    renderGameNameInputs();
   } else {
     toggleWrap.style.display = 'none';
     document.getElementById('carouselToggle').checked = false;
+    gameCarouselSection.style.display = 'none';
   }
 }
 
@@ -1524,10 +1639,22 @@ async function addCards() {
   btn.disabled = true;
   btn.textContent = '保存中…';
 
-  if (isCarousel) {
-    const images = pendingFiles.filter(f => !isHtmlFile(f));
+  const htmlFiles = pendingFiles.filter(isHtmlFile);
+  const imgFiles = pendingFiles.filter(f => !isHtmlFile(f));
+
+  if (htmlFiles.length >= 2 && imgFiles.length === 0) {
+    // ゲームカルーセル
+    const htmlTexts = [];
+    for (const f of htmlFiles) htmlTexts.push(await fileToText(f));
+    const names = htmlFiles.map((f, i) => {
+      const input = document.getElementById(`gameName_${i}`);
+      return input?.value.trim() || f.name;
+    });
+    const id = await dbOp('cards', 'readwrite', s => s.add({ type: 'game-carousel', htmls: htmlTexts, names, link: '', gap: true }));
+    cards.push({ id, type: 'game-carousel', htmls: htmlTexts, names, link: '', gap: true });
+  } else if (isCarousel) {
     const images64 = [];
-    for (const f of images) images64.push(await fileToBase64(f));
+    for (const f of imgFiles) images64.push(await fileToBase64(f));
     const id = await dbOp('cards', 'readwrite', s => s.add({ type: 'carousel', images: images64, link: '' }));
     cards.push({ id, type: 'carousel', images: images64, link: '' });
   } else {
