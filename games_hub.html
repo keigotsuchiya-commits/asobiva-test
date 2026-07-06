@@ -1215,18 +1215,33 @@ function openFullscreenGame(html) {
   frameWrap.innerHTML = '';
 
   const iframe = document.createElement('iframe');
-  iframe.srcdoc = html; // fresh instance so demo restarts cleanly each time
+  iframe.srcdoc = html;
   iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
-  // set explicit px size so the game's 100%/100% CSS resolves to the
-  // actual screen dimensions — avoids ambiguity on iOS Safari
   iframe.style.width = window.innerWidth + 'px';
-  iframe.style.height = (window.innerHeight - 56) + 'px'; // subtract topbar height
+  iframe.style.height = (window.innerHeight - 56) + 'px';
   frameWrap.appendChild(iframe);
 
   overlay.classList.add('open');
 
-  // show "TAP TO START" over the demo until the player taps it; this
-  // makes it clear the fullscreen view is playable, not just a bigger demo
+  // GW版ゲームかどうか判別してTAP TO STARTのスタイルを切り替え
+  const circle = document.querySelector('.tap-to-start-circle');
+  const isGW = html.includes('#8fa888');
+  if (isGW) {
+    circle.style.border = '2px solid #1a2a1a';
+    circle.style.background = '#8fa888';
+    circle.style.color = '#1a2a1a';
+    circle.style.boxShadow = 'none';
+    circle.style.textShadow = 'none';
+    circle.style.animation = 'none';
+  } else {
+    circle.style.border = '2px solid #39ff7a';
+    circle.style.background = 'rgba(10,10,18,0.85)';
+    circle.style.color = '#39ff7a';
+    circle.style.boxShadow = '0 0 22px rgba(57,255,122,0.35)';
+    circle.style.textShadow = '0 0 8px #39ff7a';
+    circle.style.animation = 'pulseRing 1.6s ease-in-out infinite';
+  }
+
   const tapToStart = document.getElementById('tapToStart');
   tapToStart.classList.add('show');
 }
@@ -1693,7 +1708,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .footer-section { background: var(--bg); padding-top:10px; }
 .footer-section.no-gap { padding-top:0; }
 .footer-section.no-gap { padding-top:0; }
-.site-header { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; background:var(--white); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; }
+.site-header { display:flex; align-items:center; justify-content:flex-end; padding:10px 16px; background:var(--white); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; }
 .burger-btn { background:none; border:none; cursor:pointer; padding:4px; display:flex; flex-direction:column; gap:5px; align-items:flex-end; }
 .burger-btn span { display:block; height:1.5px; background:var(--ink); border-radius:1px; }
 .burger-btn span:nth-child(1) { width:20px; }
@@ -1731,14 +1746,12 @@ footer { padding:28px 16px; text-align:center; font-size:10px; letter-spacing:0.
 <body>
 <div class="wrap">
   <div class="site-header">
-    <a href="asobiva.html" class="back-link">← トップへ戻る</a>
-    <div style="position:relative;">
-      <button class="burger-btn" id="burgerBtnStatic" onclick="document.getElementById('burgerMenuStatic').classList.toggle('open')">
-        <span></span><span></span><span></span>
-      </button>
-      <div class="burger-menu" id="burgerMenuStatic">${navLinksHTML}</div>
-    </div>
+    <button class="burger-btn" id="burgerBtnStatic" onclick="document.getElementById('burgerMenuStatic').classList.toggle('open')">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="burger-menu" id="burgerMenuStatic">${navLinksHTML}</div>
   </div>
+  <div class="site-header-back"><a href="asobiva.html" class="back-link">← トップへ戻る</a></div>
   <div class="header-pair">
 ${headerHTML}  </div>
 ${cardsHTML}  <div class="footer-section${footerGapClass}">
@@ -1808,6 +1821,23 @@ function openFullscreenGameStatic(tapEl){
   iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
   frameWrap.appendChild(iframe);
   overlay.classList.add('open');
+  var circle = document.querySelector('.tap-to-start-circle');
+  var isGW = html.indexOf('#8fa888') !== -1;
+  if (isGW) {
+    circle.style.border = '2px solid #1a2a1a';
+    circle.style.background = '#8fa888';
+    circle.style.color = '#1a2a1a';
+    circle.style.boxShadow = 'none';
+    circle.style.textShadow = 'none';
+    circle.style.animation = 'none';
+  } else {
+    circle.style.border = '2px solid #39ff7a';
+    circle.style.background = 'rgba(10,10,18,0.85)';
+    circle.style.color = '#39ff7a';
+    circle.style.boxShadow = '0 0 22px rgba(57,255,122,0.35)';
+    circle.style.textShadow = '0 0 8px #39ff7a';
+    circle.style.animation = 'pulseRing 1.6s ease-in-out infinite';
+  }
   document.getElementById('tapToStart').classList.add('show');
 }
 document.getElementById('tapToStart').addEventListener('click', function(){
