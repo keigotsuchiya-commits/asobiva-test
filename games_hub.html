@@ -1125,7 +1125,7 @@ function render() {
 
       const titleSpan = document.createElement('span');
       titleSpan.className = 'game-carousel-title';
-      titleSpan.textContent = c.names?.[0] || '';
+      titleSpan.textContent = (c.names?.[0] || '') + (c.htmls.length > 1 ? `　1 / ${c.htmls.length}` : '');
 
       const nextBtn = document.createElement('button');
       nextBtn.className = 'game-carousel-nav';
@@ -1141,7 +1141,7 @@ function render() {
         iframe.srcdoc = c.htmls[idx];
         sizeGameIframeToCard(frameWrap, iframe);
         tapCatcher.onclick = () => openFullscreenGame(c.htmls[idx]);
-        titleSpan.textContent = c.names?.[idx] || '';
+        titleSpan.textContent = (c.names?.[idx] || '') + (c.htmls.length > 1 ? `　${idx + 1} / ${c.htmls.length}` : '');
       }
 
       prevBtn.addEventListener('click', e => {
