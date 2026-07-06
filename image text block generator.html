@@ -43,7 +43,8 @@
     flex: 1; min-width: 90px; padding: 10px 8px; font-size: 12.5px;
     border: 1px solid #ccc; background: #fff; border-radius: 6px; font-family: inherit;
   }
-  .posbtn.active { background: #111; color: #fff; border-color: #111; }
+  .posbtn.active, .fontbtn.active { background: #111; color: #fff; border-color: #111; }
+  .fontbtn { flex: 1; min-width: 90px; padding: 10px 8px; font-size: 12.5px; border: 1px solid #ccc; background: #fff; border-radius: 6px; font-family: inherit; }
 
   label.rangelabel { display:flex; justify-content:space-between; }
   input[type="range"] { width: 100%; }
@@ -158,6 +159,14 @@
   </div>
 
   <div class="group">
+    <h2>フォント</h2>
+    <div class="imgbtns">
+      <button class="fontbtn active" data-font="gothic" type="button">ゴシック</button>
+      <button class="fontbtn" data-font="mincho" type="button">明朝</button>
+    </div>
+  </div>
+
+  <div class="group">
     <h2>本文</h2>
     <textarea id="bodyText" maxlength="600"></textarea>
     <div class="hint">太字にしたい部分は <code>**太字**</code>、細字にしたい部分は <code>__細字__</code> のように囲んでください。（例：これは<code>**大事**</code>な話です）</div>
@@ -204,7 +213,12 @@
 </div>
 
 <script>
-let state = { pos: 'left', imgDataUrl: null, imgWidthPct: 38, padTop: 20, padBottom: 20, padLeft: 16, padRight: 16, fontSize: 17, sigImgDataUrl: null, sigImgWidth: 100 };
+let state = { pos: 'left', imgDataUrl: null, imgWidthPct: 38, padTop: 20, padBottom: 20, padLeft: 16, padRight: 16, fontSize: 17, sigImgDataUrl: null, sigImgWidth: 100, fontFamily: 'gothic' };
+
+const FONT_STACKS = {
+  gothic: '"Hiragino Sans","Noto Sans JP",sans-serif',
+  mincho: '"Hiragino Mincho ProN","Noto Serif JP",serif'
+};
 
 const itBlock = document.getElementById('itBlock');
 const itImg = document.getElementById('itImg');
@@ -229,6 +243,7 @@ function parseMarkup(str) {
 }
 
 function updatePreview() {
+  itBlock.style.fontFamily = FONT_STACKS[state.fontFamily];
   itText.innerHTML = parseMarkup(escapeHtmlLive(bodyText.value));
   itText.style.fontSize = state.fontSize + 'px';
   itSig.textContent = sigText.value;
@@ -292,6 +307,15 @@ document.querySelectorAll('.posbtn').forEach(btn => {
     document.querySelectorAll('.posbtn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     state.pos = btn.dataset.pos;
+    updatePreview();
+  });
+});
+
+document.querySelectorAll('.fontbtn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.fontbtn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.fontFamily = btn.dataset.font;
     updatePreview();
   });
 });
@@ -419,6 +443,12 @@ function loadFromSavedHtml(text) {
   } else {
     state.sigImgDataUrl = null;
   }
+  // font family
+  const fontFamilyMatch = text.match(/\.it-block\{[^}]*font-family:([^;]+);/);
+  if (fontFamilyMatch) {
+    state.fontFamily = fontFamilyMatch[1].includes('Mincho') ? 'mincho' : 'gothic';
+    document.querySelectorAll('.fontbtn').forEach(b => b.classList.toggle('active', b.dataset.font === state.fontFamily));
+  }
 
   updatePreview();
 }
@@ -455,7 +485,7 @@ function buildSnippet() {
   const style = `
 <style>
 .${id}.it-wrap{width:100vw;position:relative;left:50%;right:50%;margin-left:-50vw;margin-right:-50vw;}
-.${id} .it-block{width:100%;box-sizing:border-box;padding:${state.padTop}px ${state.padRight}px ${state.padBottom}px ${state.padLeft}px;display:flex;align-items:flex-start;gap:clamp(14px,2.9cqw,30px);font-family:"Hiragino Sans","Noto Sans JP",sans-serif;}
+.${id} .it-block{width:100%;box-sizing:border-box;padding:${state.padTop}px ${state.padRight}px ${state.padBottom}px ${state.padLeft}px;display:flex;align-items:flex-start;gap:clamp(14px,2.9cqw,30px);font-family:${FONT_STACKS[state.fontFamily]};}
 .${id} .it-block.it-right{flex-direction:row-reverse;}
 .${id} .it-block.it-none{display:block;}
 .${id} .it-img{flex:0 0 ${state.imgWidthPct}%;max-width:${state.imgWidthPct}%;}
