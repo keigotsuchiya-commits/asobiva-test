@@ -470,6 +470,15 @@ body.admin-mode .card-replace { display: flex; }
 }
 .add-card-btn:hover { background: #f5f5f5; color: var(--ink); }
 
+/* ── YOKAI CAROUSEL ── */
+.yokai-carousel-card { width:100%; background:var(--white); overflow:hidden; position:relative; }
+.yokai-carousel-img { width:100%; height:auto; display:block; }
+.yokai-carousel-html iframe { display:block; width:100%; height:60px; border:none; background:var(--white); overflow:hidden; }
+.yokai-carousel-footer { display:flex; align-items:center; justify-content:space-between; padding:6px 12px; background:var(--white); border-top:1px solid var(--border); font-size:11px; letter-spacing:0.08em; color:var(--ink-soft); }
+.yokai-carousel-footer span { font-size:11px; letter-spacing:0.08em; color:var(--ink-soft); }
+.yokai-carousel-nav { background:none; color:var(--ink); border:none; width:32px; height:32px; font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; opacity:0.5; }
+.yokai-carousel-nav:hover { opacity:1; }
+
 /* ── EMPTY STATE ── */
 .empty-section {
   background: var(--bg);
@@ -768,6 +777,12 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
   </label>
   <label class="field-label" for="linkUrl">リンク先URL（任意）</label>
   <input class="field-input" id="linkUrl" type="url" placeholder="https://note.com/...">
+  <div id="yokaiSetSection" style="display:none;margin-bottom:16px;padding:16px;border:1.5px dashed var(--border);border-radius:12px;">
+    <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;color:var(--ink-soft);margin-bottom:8px;">🎴 画像+HTMLをセットで追加</div>
+    <div id="yokaiSetStatus" style="font-size:11px;color:var(--ink-soft);margin-bottom:8px;"></div>
+    <button class="tab-edit-btn" id="yokaiSetAddBtn" onclick="addYokaiSet()" style="width:100%;text-align:center;">このセットを追加</button>
+  </div>
+  <div id="yokaiSetsPreview" style="margin-bottom:16px;"></div>
   <button class="btn-add" id="addBtn" onclick="addCards()" disabled>追加する</button>
 </div>
 
@@ -869,6 +884,7 @@ window.addEventListener('message', e => {
 let cards = [];       // [{ id, type: 'image'|'html'|'carousel', html?, base64?, images?, name?, link }]
 let banners = { 1: null }; // base64 strings
 let pendingFiles = [];
+let yokaiSets = [];
 let adminMode = false;
 
 // ── Init ──────────────────────────────────────
@@ -893,6 +909,7 @@ async function init() {
       html: r.html,
       base64: r.base64,
       images: r.images,
+      htmls: r.htmls,
       name: r.name || '',
       link: r.link || '',
       gap: r.gap !== undefined ? r.gap : true
@@ -971,6 +988,68 @@ function render() {
       img.loading = 'lazy';
       wrap.appendChild(img);
       replaceAccept = 'image/*,text/html,.html';
+    } else if (c.type === 'yokai-carousel') {
+      wrap = document.createElement('div');
+      wrap.className = 'yokai-carousel-card';
+      wrap.dataset.index = '0';
+
+      const imgEl = document.createElement('img');
+      imgEl.src = c.images[0];
+      imgEl.alt = '';
+      imgEl.className = 'yokai-carousel-img';
+      wrap.appendChild(imgEl);
+
+      const htmlWrap = document.createElement('div');
+      htmlWrap.className = 'yokai-carousel-html';
+      const iframe = document.createElement('iframe');
+      iframe.srcdoc = injectAutoResize(c.htmls[0]);
+      iframe.loading = 'lazy';
+      iframe.scrolling = 'no';
+      iframe.style.cssText = 'width:100%;border:none;height:60px;display:block;overflow:hidden;';
+      iframe.sandbox = 'allow-scripts allow-popups allow-forms allow-same-origin';
+      iframe.addEventListener('load', function() {
+        try {
+          const h = iframe.contentDocument.documentElement.scrollHeight || iframe.contentDocument.body.scrollHeight;
+          if (h > 0) iframe.style.height = h + 'px';
+        } catch(e) {}
+        iframe.contentWindow.postMessage({ type: 'asobiva-init' }, '*');
+      });
+      htmlWrap.appendChild(iframe);
+      wrap.appendChild(htmlWrap);
+
+      if (c.images.length > 1) {
+        const footer = document.createElement('div');
+        footer.className = 'yokai-carousel-footer';
+        const prevBtn = document.createElement('button');
+        prevBtn.className = 'yokai-carousel-nav';
+        prevBtn.textContent = '‹';
+        const count = document.createElement('span');
+        count.textContent = `1 / ${c.images.length}`;
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'yokai-carousel-nav';
+        nextBtn.textContent = '›';
+        footer.appendChild(prevBtn);
+        footer.appendChild(count);
+        footer.appendChild(nextBtn);
+        wrap.appendChild(footer);
+
+        function updateYokai(idx) {
+          wrap.dataset.index = String(idx);
+          imgEl.src = c.images[idx];
+          iframe.srcdoc = injectAutoResize(c.htmls[idx]);
+          count.textContent = `${idx + 1} / ${c.images.length}`;
+        }
+        prevBtn.addEventListener('click', e => {
+          e.preventDefault(); e.stopPropagation();
+          updateYokai((parseInt(wrap.dataset.index,10) - 1 + c.images.length) % c.images.length);
+        });
+        nextBtn.addEventListener('click', e => {
+          e.preventDefault(); e.stopPropagation();
+          updateYokai((parseInt(wrap.dataset.index,10) + 1) % c.images.length);
+        });
+      }
+      supportsReplace = false;
+
     } else if (c.type === 'carousel') {
       wrap = document.createElement('div');
       wrap.className = 'carousel-card';
@@ -1231,25 +1310,7 @@ async function toggleFooterGap() {
 }
 
 // ── Footer gap toggle ─────────────────────────
-async function loadFooterGap() {
-  try {
-    const row = await dbOp('banners', 'readonly', s => s.get(98));
-    const noGap = row?.footerNoGap === true;
-    const sec = document.getElementById('footerSection');
-    const btn = document.getElementById('footerGapBtn');
-    if (sec) sec.classList.toggle('no-gap', noGap);
-    if (btn) btn.textContent = noGap ? '隙間なし' : '隙間あり';
-  } catch {}
-}
 
-async function toggleFooterGap() {
-  const sec = document.getElementById('footerSection');
-  const btn = document.getElementById('footerGapBtn');
-  const noGap = !sec.classList.contains('no-gap');
-  sec.classList.toggle('no-gap', noGap);
-  btn.textContent = noGap ? '隙間なし' : '隙間あり';
-  await dbOp('banners', 'readwrite', s => s.put({ slot: 98, footerNoGap: noGap }));
-}
 
 // ── Footer editor ─────────────────────────────
 async function loadFooterText() {
@@ -1310,6 +1371,9 @@ function resetForm() {
   document.getElementById('addBtn').disabled = true;
   document.getElementById('carouselToggleWrap').style.display = 'none';
   document.getElementById('carouselToggle').checked = false;
+  yokaiSets = [];
+  if(document.getElementById('yokaiSetsPreview')) document.getElementById('yokaiSetsPreview').innerHTML = '';
+  document.getElementById('addBtn').textContent = '追加する';
 }
 
 // ── File select ───────────────────────────────
@@ -1356,11 +1420,20 @@ function renderPreviews() {
   const imgCount = pendingFiles.filter(f => !isHtmlFile(f)).length;
   const htmlCount = pendingFiles.filter(isHtmlFile).length;
   const toggleWrap = document.getElementById('carouselToggleWrap');
-  if (imgCount >= 2 && htmlCount === 0) {
-    toggleWrap.style.display = 'flex';
-  } else {
+  const yokaiSection = document.getElementById('yokaiSetSection');
+  if (imgCount === 1 && htmlCount === 1) {
     toggleWrap.style.display = 'none';
     document.getElementById('carouselToggle').checked = false;
+    yokaiSection.style.display = 'block';
+    updateYokaiSetStatus();
+  } else {
+    yokaiSection.style.display = 'none';
+    if (imgCount >= 2 && htmlCount === 0) {
+      toggleWrap.style.display = 'flex';
+    } else {
+      toggleWrap.style.display = 'none';
+      document.getElementById('carouselToggle').checked = false;
+    }
   }
 }
 
@@ -1371,7 +1444,88 @@ dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
 dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag-over'); onFileSelect(e.dataTransfer.files); });
 
 // ── Add cards ─────────────────────────────────
+function updateYokaiSetStatus() {
+  const imgFile = pendingFiles.find(f => !isHtmlFile(f));
+  const htmlFile = pendingFiles.find(f => isHtmlFile(f));
+  const status = document.getElementById('yokaiSetStatus');
+  const btn = document.getElementById('yokaiSetAddBtn');
+  if (imgFile && htmlFile) {
+    status.textContent = `📷 ${imgFile.name}  +  📄 ${htmlFile.name}`;
+    btn.disabled = false;
+  } else {
+    status.textContent = '画像1枚とHTMLファイル1つを選択してください';
+    btn.disabled = true;
+  }
+}
+
+async function addYokaiSet() {
+  const imgFile = pendingFiles.find(f => !isHtmlFile(f));
+  const htmlFile = pendingFiles.find(f => isHtmlFile(f));
+  if (!imgFile || !htmlFile) return;
+  const base64 = await fileToBase64(imgFile);
+  const html = await fileToText(htmlFile);
+  yokaiSets.push({ base64, html });
+  renderYokaiSetsPreview();
+  document.getElementById('addBtn').disabled = false;
+  document.getElementById('addBtn').textContent = `妖怪カルーセルを追加（${yokaiSets.length}セット）`;
+  pendingFiles = [];
+  document.getElementById('fileInput').value = '';
+  document.getElementById('previewGrid').innerHTML = '';
+  document.getElementById('yokaiSetSection').style.display = 'none';
+  document.getElementById('carouselToggleWrap').style.display = 'none';
+}
+
+function renderYokaiSetsPreview() {
+  const container = document.getElementById('yokaiSetsPreview');
+  container.innerHTML = '';
+  if (yokaiSets.length === 0) return;
+  const label = document.createElement('div');
+  label.style.cssText = 'font-size:11px;color:var(--ink-soft);margin-bottom:8px;';
+  label.textContent = `追加予定: ${yokaiSets.length}セット`;
+  container.appendChild(label);
+  yokaiSets.forEach((s, i) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);';
+    const img = document.createElement('img');
+    img.src = s.base64;
+    img.style.cssText = 'width:40px;height:40px;object-fit:cover;border-radius:4px;flex-shrink:0;';
+    const lbl = document.createElement('span');
+    lbl.style.cssText = 'font-size:11px;color:var(--ink);flex:1;';
+    lbl.textContent = `セット ${i + 1}`;
+    const del = document.createElement('button');
+    del.className = 'p-del';
+    del.style.cssText = 'position:static;width:20px;height:20px;flex-shrink:0;';
+    del.textContent = '✕';
+    del.onclick = () => {
+      yokaiSets.splice(i, 1);
+      renderYokaiSetsPreview();
+      if (yokaiSets.length === 0) {
+        document.getElementById('addBtn').disabled = true;
+        document.getElementById('addBtn').textContent = '追加する';
+      } else {
+        document.getElementById('addBtn').textContent = `妖怪カルーセルを追加（${yokaiSets.length}セット）`;
+      }
+    };
+    row.appendChild(img); row.appendChild(lbl); row.appendChild(del);
+    container.appendChild(row);
+  });
+}
+
 async function addCards() {
+  // 妖怪カルーセル
+  if (yokaiSets.length > 0) {
+    const images = yokaiSets.map(s => s.base64);
+    const htmls = yokaiSets.map(s => s.html);
+    const id = await dbOp('cards', 'readwrite', s => s.add({ type: 'yokai-carousel', images, htmls, gap: true }));
+    cards.push({ id, type: 'yokai-carousel', images, htmls, gap: true });
+    yokaiSets = [];
+    document.getElementById('yokaiSetsPreview').innerHTML = '';
+    document.getElementById('addBtn').textContent = '追加する';
+    closePanel();
+    render();
+    return;
+  }
+
   const link = document.getElementById('linkUrl').value.trim();
   const isCarousel = document.getElementById('carouselToggle').checked;
   const btn = document.getElementById('addBtn');
