@@ -1105,9 +1105,9 @@ function render() {
       const iframe = document.createElement('iframe');
       iframe.srcdoc = c.htmls[0];
       iframe.sandbox = 'allow-scripts allow-same-origin';
-      iframe.width = CARD_ASPECT_W;
-      iframe.height = CARD_ASPECT_H;
+      iframe.style.cssText = 'border:none;display:block;pointer-events:none;';
       frameWrap.appendChild(iframe);
+      sizeGameIframeToCard(frameWrap, iframe);
 
       const tapCatcher = document.createElement('div');
       tapCatcher.className = 'game-card-tap';
@@ -1139,6 +1139,7 @@ function render() {
       function updateGame(idx) {
         wrap.dataset.index = String(idx);
         iframe.srcdoc = c.htmls[idx];
+        sizeGameIframeToCard(frameWrap, iframe);
         tapCatcher.onclick = () => openFullscreenGame(c.htmls[idx]);
         titleSpan.textContent = c.names?.[idx] || '';
       }
@@ -1632,6 +1633,29 @@ dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
 dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag-over'); onFileSelect(e.dataTransfer.files); });
 
 // ── Add cards ─────────────────────────────────
+function renderGameNameInputs() {
+  const htmlFiles = pendingFiles.filter(isHtmlFile);
+  const container = document.getElementById('gameNameInputs');
+  if (!container) return;
+  container.innerHTML = '';
+  htmlFiles.forEach((f, i) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:8px;';
+    const label = document.createElement('span');
+    label.style.cssText = 'font-size:11px;color:var(--ink-soft);flex-shrink:0;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+    label.textContent = f.name;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'field-input';
+    input.placeholder = 'ゲーム名';
+    input.style.cssText = 'margin:0;flex:1;padding:8px 10px;font-size:13px;';
+    input.id = `gameName_${i}`;
+    row.appendChild(label);
+    row.appendChild(input);
+    container.appendChild(row);
+  });
+}
+
 async function addCards() {
   const link = document.getElementById('linkUrl').value.trim();
   const isCarousel = document.getElementById('carouselToggle').checked;
