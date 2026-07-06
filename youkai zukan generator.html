@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>妖怪図鑑ジェネレーター</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Old+Mincho:wght@400;600&display=swap');
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: #ffffff;
+    font-family: 'Zen Old Mincho', serif;
+    color: #2c2620;
+    padding: 0 0 60px;
+  }
+
+  /* ===== 操作パネル ===== */
+  .panel {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 20px 24px;
+    background: #f6f3ea;
+    border-bottom: 1px solid #cbbf98;
+  }
+
+  .panel h1 {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 18px;
+    margin: 0 0 14px;
+    letter-spacing: 0.05em;
+  }
+
+  .panel-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+
+  .btn {
+    font-family: 'Zen Old Mincho', serif;
+    font-size: 15px;
+    background: #8a7748;
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+  }
+
+  .btn:active { opacity: 0.8; }
+
+  .btn.secondary {
+    background: #ffffff;
+    color: #4a4023;
+    border: 1px solid #8a7748;
+  }
+
+  textarea#pasteArea {
+    width: 100%;
+    min-height: 90px;
+    font-family: 'Zen Old Mincho', serif;
+    font-size: 15px;
+    padding: 10px;
+    border: 1px solid #cbbf98;
+    resize: vertical;
+  }
+
+  .panel-note {
+    font-size: 13px;
+    color: #6b5c3d;
+    margin: 6px 0 0;
+  }
+
+  #fileInput { display: none; }
+
+  .status {
+    font-size: 14px;
+    color: #4a4023;
+    margin-top: 6px;
+    min-height: 18px;
+  }
+
+  /* ===== カード（画像は別途上部に配置する想定なのでここには含めない） ===== */
+  .card {
+    max-width: 640px;
+    margin: 0 auto;
+    background: #ffffff;
+  }
+
+  .card-header {
+    padding: 14px 24px 14px;
+    border-bottom: 2px solid #8a7748;
+  }
+
+  .name-block {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 4px;
+  }
+
+  .name-main {
+    font-family: 'Shippori Mincho', serif;
+    font-weight: 700;
+    font-size: 30px;
+    letter-spacing: 0.08em;
+  }
+
+  .name-kana {
+    font-size: 15px;
+    color: #6b5c3d;
+    letter-spacing: 0.05em;
+  }
+
+  .aliases {
+    font-size: 15px;
+    color: #6b5c3d;
+  }
+
+  .aliases .lbl { color: #8a7748; }
+
+  .tag-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    font-size: 15px;
+    border: 1px solid #8a7748;
+    padding: 2px 10px;
+    color: #4a4023;
+    letter-spacing: 0.05em;
+  }
+
+  .tag .lbl { color: #8a7748; }
+
+  .block {
+    padding: 14px 24px;
+    border-bottom: 1px solid #cbbf98;
+  }
+
+  .block:last-child { border-bottom: none; }
+
+  .block-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Shippori Mincho', serif;
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 0.15em;
+    color: #4a4023;
+    margin: 0 0 8px;
+  }
+
+  .block-title::before {
+    content: "";
+    display: inline-block;
+    width: 4px;
+    height: 16px;
+    background: #8a7748;
+  }
+
+  .item {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 2px 12px;
+    padding: 7px 0;
+    border-top: 1px dotted #cbbf98;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .item:first-child { border-top: none; }
+
+  .item-label {
+    color: #8a7748;
+    font-size: 15px;
+    letter-spacing: 0.05em;
+    padding-top: 2px;
+  }
+
+  .item-value {
+    color: #2c2620;
+    outline: none;
+  }
+
+  .item-value[contenteditable="true"]:focus,
+  .name-main[contenteditable="true"]:focus,
+  .name-kana[contenteditable="true"]:focus,
+  .alias-value[contenteditable="true"]:focus,
+  .tag-value[contenteditable="true"]:focus {
+    background: #fff7df;
+  }
+
+  .block.source { background: #faf7ee; }
+  .source .item-value { color: #4a4023; }
+
+  @media (max-width: 420px) {
+    .item { grid-template-columns: 1fr; }
+  }
+
+  .empty-state {
+    max-width: 640px;
+    margin: 40px auto;
+    padding: 0 24px;
+    font-size: 15px;
+    color: #6b5c3d;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+  <div class="panel">
+    <h1>妖怪図鑑ジェネレーター</h1>
+
+    <div class="panel-row">
+      <button class="btn" id="pickFileBtn">テンプレートtxtを選択</button>
+      <input type="file" id="fileInput" accept=".txt">
+      <button class="btn secondary" id="loadPasteBtn">下の欄から読み込む</button>
+    </div>
+
+    <textarea id="pasteArea" placeholder="テンプレート形式のテキストをここに貼り付けても読み込めます"></textarea>
+    <p class="panel-note">読み込み後、カード内のテキストは直接タップして編集できます。</p>
+    <div class="status" id="statusMsg"></div>
+
+    <div class="panel-row" style="margin-top:10px;">
+      <button class="btn secondary" id="downloadBtn" disabled>編集内容をHTMLとして保存</button>
+    </div>
+  </div>
+
+  <div id="emptyState" class="empty-state">テンプレートを読み込むと、ここに図鑑カードが表示されます。</div>
+
+  <div class="card" id="card" style="display:none;">
+
+    <div class="card-header">
+      <div class="name-block">
+        <span class="name-main" contenteditable="true" data-field="名称"></span>
+        <span class="name-kana" contenteditable="true" data-field="よみ"></span>
+      </div>
+      <div class="aliases"><span class="lbl">異名：</span><span class="alias-value" contenteditable="true" data-field="異名・別称"></span></div>
+
+      <div class="tag-row">
+        <span class="tag"><span class="lbl">分類：</span><span class="tag-value" contenteditable="true" data-field="分類"></span></span>
+        <span class="tag"><span class="lbl">伝承地域：</span><span class="tag-value" contenteditable="true" data-field="伝承地域"></span></span>
+      </div>
+    </div>
+
+    <div class="block">
+      <p class="block-title">形態・生態</p>
+      <div class="item">
+        <div class="item-label">姿形</div>
+        <div class="item-value" contenteditable="true" data-field="姿形"></div>
+      </div>
+      <div class="item">
+        <div class="item-label">体格</div>
+        <div class="item-value" contenteditable="true" data-field="体格"></div>
+      </div>
+      <div class="item">
+        <div class="item-label">生息環境</div>
+        <div class="item-value" contenteditable="true" data-field="生息環境"></div>
+      </div>
+    </div>
+
+    <div class="block">
+      <p class="block-title">伝承内容</p>
+      <div class="item">
+        <div class="item-label">性格・気質</div>
+        <div class="item-value" contenteditable="true" data-field="性格・気質"></div>
+      </div>
+      <div class="item">
+        <div class="item-label">伝承される行動</div>
+        <div class="item-value" contenteditable="true" data-field="伝承される行動"></div>
+      </div>
+      <div class="item">
+        <div class="item-label">弱点・対処法</div>
+        <div class="item-value" contenteditable="true" data-field="弱点・対処法"></div>
+      </div>
+      <div class="item">
+        <div class="item-label">関連風習</div>
+        <div class="item-value" contenteditable="true" data-field="関連風習"></div>
+      </div>
+    </div>
+
+    <div class="block source">
+      <p class="block-title">出典・考証</p>
+      <div class="item">
+        <div class="item-label">初出・文献</div>
+        <div class="item-value" contenteditable="true" data-field="初出・文献"></div>
+      </div>
+      <div class="item">
+        <div class="item-label">類似妖怪</div>
+        <div class="item-value" contenteditable="true" data-field="類似妖怪"></div>
+      </div>
+      <div class="item">
+        <div class="item-label">備考</div>
+        <div class="item-value" contenteditable="true" data-field="備考"></div>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+(function () {
+  const fileInput = document.getElementById('fileInput');
+  const pickFileBtn = document.getElementById('pickFileBtn');
+  const pasteArea = document.getElementById('pasteArea');
+  const loadPasteBtn = document.getElementById('loadPasteBtn');
+  const statusMsg = document.getElementById('statusMsg');
+  const card = document.getElementById('card');
+  const emptyState = document.getElementById('emptyState');
+  const downloadBtn = document.getElementById('downloadBtn');
+
+  // iOSでネイティブinput[type=file]が反応しない場合があるため、
+  // 見た目のボタンから programmatic に click() する
+  pickFileBtn.addEventListener('click', () => fileInput.click());
+
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      applyTemplate(ev.target.result);
+      statusMsg.textContent = `「${file.name}」を読み込みました。`;
+    };
+    reader.onerror = () => {
+      statusMsg.textContent = '読み込みに失敗しました。';
+    };
+    reader.readAsText(file);
+  });
+
+  loadPasteBtn.addEventListener('click', () => {
+    if (!pasteArea.value.trim()) {
+      statusMsg.textContent = 'テキストが空です。';
+      return;
+    }
+    applyTemplate(pasteArea.value);
+    statusMsg.textContent = '貼り付けたテキストを読み込みました。';
+  });
+
+  function parseTemplate(text) {
+    const fields = {};
+    const regex = /【(.+?)】([\s\S]*?)(?=【|$)/g;
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+      const label = match[1].trim();
+      let value = match[2].trim();
+      fields[label] = value;
+    }
+    return fields;
+  }
+
+  function applyTemplate(text) {
+    const fields = parseTemplate(text);
+    const nodes = card.querySelectorAll('[data-field]');
+    nodes.forEach((node) => {
+      const key = node.getAttribute('data-field');
+      if (key === 'よみ') return; // テンプレートに読み仮名項目はないため空のまま
+      if (fields[key] !== undefined) {
+        node.textContent = fields[key];
+      } else {
+        node.textContent = '';
+      }
+    });
+    card.style.display = 'block';
+    emptyState.style.display = 'none';
+    downloadBtn.disabled = false;
+  }
+
+  downloadBtn.addEventListener('click', () => {
+    const clone = card.cloneNode(true);
+    clone.querySelectorAll('[contenteditable]').forEach((el) => el.removeAttribute('contenteditable'));
+
+    const nameMain = card.querySelector('.name-main').textContent.trim() || '無題';
+
+    const styleTag = document.querySelector('style').outerHTML;
+    const fontImport = document.querySelector('link[rel="preconnect"]') ? '' : '';
+
+    const outputHtml = `<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${nameMain} - 妖怪図鑑</title>
+${styleTag}
+</head>
+<body>
+${clone.outerHTML}
+</body>
+</html>`;
+
+    const blob = new Blob([outputHtml], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `youkai_${nameMain}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+})();
+</script>
+
+</body>
+</html>
