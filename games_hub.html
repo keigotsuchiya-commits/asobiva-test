@@ -686,9 +686,6 @@ footer {
 }
 
 .fullscreen-frame-wrap iframe {
-  width: 100%;
-  height: 100%;
-  max-width: 480px;
   border: none;
   background: #0a0a12;
 }
@@ -861,7 +858,8 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
 // Used for: (1) the fixed preview-card aspect ratio in the card list, and
 // (2) the initial iframe size for the static download snapshot's markup
 // (a real value is needed there since it has no live JS measurement pass
-// before first paint). Not used for fullscreen play — that's always 100%.
+// before first paint), and (3) fullscreen play, so the game is always
+// shown at the same aspect ratio regardless of device screen height.
 const CARD_ASPECT_W = 320;
 const CARD_ASPECT_H = 460;
 
@@ -1318,6 +1316,33 @@ function sizeGameIframeToCard(frameWrap, iframe) {
 }
 
 // ── フルスクリーン再生 ──────────────────────────
+// カード一覧と同じ CARD_ASPECT_W/H 比率でサイズを決める。画面の高さに
+// 引きずられて中のゲーム(固定サイズ・伸縮しない設計)の周りに余白が
+// 不規則に生まれるのを防ぎ、常に同じ縦横比の箱の中で表示する。
+let _fullscreenResizeHandler = null;
+
+function sizeFullscreenIframe(frameWrap, iframe) {
+  const apply = () => {
+    const maxW = frameWrap.clientWidth || window.innerWidth;
+    const maxH = frameWrap.clientHeight || (window.innerHeight - 56);
+    if (!maxW || !maxH) return;
+    let w = maxW;
+    let h = Math.round(w * (CARD_ASPECT_H / CARD_ASPECT_W));
+    if (h > maxH) {
+      h = maxH;
+      w = Math.round(h * (CARD_ASPECT_W / CARD_ASPECT_H));
+    }
+    iframe.style.width = w + 'px';
+    iframe.style.height = h + 'px';
+  };
+  apply();
+  requestAnimationFrame(apply);
+  setTimeout(apply, 150);
+  if (_fullscreenResizeHandler) window.removeEventListener('resize', _fullscreenResizeHandler);
+  _fullscreenResizeHandler = apply;
+  window.addEventListener('resize', apply);
+}
+
 function openFullscreenGame(html) {
   const overlay = document.getElementById('fullscreenOverlay');
   const frameWrap = document.getElementById('fullscreenFrameWrap');
@@ -1326,9 +1351,8 @@ function openFullscreenGame(html) {
   const iframe = document.createElement('iframe');
   iframe.srcdoc = html;
   iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
-  iframe.style.width = window.innerWidth + 'px';
-  iframe.style.height = (window.innerHeight - 56) + 'px';
   frameWrap.appendChild(iframe);
+  sizeFullscreenIframe(frameWrap, iframe);
 
   overlay.classList.add('open');
 
@@ -1876,7 +1900,7 @@ footer { padding:28px 16px; text-align:center; font-size:10px; letter-spacing:0.
 .fullscreen-topbar { flex-shrink:0; display:flex; justify-content:flex-end; padding:10px 12px; background:#0a0a12; }
 .close-btn { width:36px; height:36px; border-radius:50%; border:1px solid rgba(255,255,255,0.25); background:rgba(255,255,255,0.06); color:#fff; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 .fullscreen-frame-wrap { flex:1; min-height:0; display:flex; align-items:center; justify-content:center; }
-.fullscreen-frame-wrap iframe { width:100%; height:100%; max-width:480px; border:none; background:#0a0a12; }
+.fullscreen-frame-wrap iframe { border:none; background:#0a0a12; }
 .tap-to-start { position:absolute; top:56px; left:0; right:0; bottom:0; z-index:10; display:none; align-items:center; justify-content:center; background:rgba(10,10,18,0.35); cursor:pointer; }
 .tap-to-start.show { display:flex; }
 .tap-to-start-circle { width:132px; height:132px; border-radius:50%; border:2px solid #39ff7a; background:rgba(10,10,18,0.85); color:#39ff7a; font-size:15px; font-weight:700; letter-spacing:0.08em; line-height:1.5; text-align:center; display:flex; align-items:center; justify-content:center; text-shadow:0 0 8px #39ff7a; box-shadow:0 0 22px rgba(57,255,122,0.35); animation:pulseRing 1.6s ease-in-out infinite; }
@@ -1935,10 +1959,9 @@ function cyclerCarousel(el){
   var count = el.querySelector('.carousel-count');
   if (count) count.textContent = (idx + 1) + ' / ' + images.length;
 }
+var CARD_ASPECT_W = 320;
+var CARD_ASPECT_H = 460;
 (function(){
-  var CARD_ASPECT_W = 320;
-  var CARD_ASPECT_H = 460;
-
   function sizeFrame(wrap, iframe){
     var w = wrap.clientWidth;
     if (!w) return;
@@ -1963,6 +1986,28 @@ function cyclerCarousel(el){
   setTimeout(fitGameFrames, 100);
   setTimeout(fitGameFrames, 400);
 })();
+var _fullscreenResizeHandlerStatic = null;
+function sizeFullscreenIframeStatic(frameWrap, iframe){
+  function apply(){
+    var maxW = frameWrap.clientWidth || window.innerWidth;
+    var maxH = frameWrap.clientHeight || (window.innerHeight - 56);
+    if (!maxW || !maxH) return;
+    var w = maxW;
+    var h = Math.round(w * (CARD_ASPECT_H / CARD_ASPECT_W));
+    if (h > maxH) {
+      h = maxH;
+      w = Math.round(h * (CARD_ASPECT_W / CARD_ASPECT_H));
+    }
+    iframe.style.width = w + 'px';
+    iframe.style.height = h + 'px';
+  }
+  apply();
+  requestAnimationFrame(apply);
+  setTimeout(apply, 150);
+  if (_fullscreenResizeHandlerStatic) window.removeEventListener('resize', _fullscreenResizeHandlerStatic);
+  _fullscreenResizeHandlerStatic = apply;
+  window.addEventListener('resize', apply);
+}
 function openFullscreenGameStatic(tapEl){
   var html = tapEl.getAttribute('data-html');
   var overlay = document.getElementById('fullscreenOverlay');
@@ -1972,6 +2017,7 @@ function openFullscreenGameStatic(tapEl){
   iframe.srcdoc = html;
   iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
   frameWrap.appendChild(iframe);
+  sizeFullscreenIframeStatic(frameWrap, iframe);
   overlay.classList.add('open');
   var circle = document.querySelector('.tap-to-start-circle');
   var isGW = html.indexOf('#8fa888') !== -1;
