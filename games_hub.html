@@ -350,10 +350,11 @@ body.admin-mode .html-card-label { display: block; }
   display: block;
   border: none;
   pointer-events: none !important;
-  /* width/height are set inline via JS (px), sized directly to the card's
-     real display size. The games use 100vw/100vh internally, so they
-     naturally fit this box with no transform/zoom involved — frameWrap's
-     height is simply the iframe's own box height via normal flow. */
+  /* iframe is always rendered at its native CARD_ASPECT_W x CARD_ASPECT_H
+     size, then scaled down via CSS transform to fit the card's actual
+     display width. This keeps the GW games' internal fixed-size layout
+     (no reflow at odd widths) and just shrinks the whole rendered frame
+     like a thumbnail. transform-origin/scale are set inline via JS. */
 }
 .game-card-tap {
   position: absolute;
@@ -1299,9 +1300,12 @@ function sizeGameIframeToCard(frameWrap, iframe) {
     // use parentElement width as fallback if frameWrap itself has no width yet
     const w = frameWrap.clientWidth || frameWrap.parentElement?.clientWidth || 0;
     if (!w) return;
-    const h = Math.round(w * (CARD_ASPECT_H / CARD_ASPECT_W));
-    iframe.style.width = w + 'px';
-    iframe.style.height = h + 'px';
+    const scale = w / CARD_ASPECT_W;
+    iframe.style.width = CARD_ASPECT_W + 'px';
+    iframe.style.height = CARD_ASPECT_H + 'px';
+    iframe.style.transform = `scale(${scale})`;
+    iframe.style.transformOrigin = 'top left';
+    frameWrap.style.height = Math.round(CARD_ASPECT_H * scale) + 'px';
   };
   apply();
   requestAnimationFrame(apply);
@@ -1965,9 +1969,12 @@ var CARD_ASPECT_H = 520;
   function sizeFrame(wrap, iframe){
     var w = wrap.clientWidth;
     if (!w) return;
-    var h = Math.round(w * (CARD_ASPECT_H / CARD_ASPECT_W));
-    iframe.style.width = w + 'px';
-    iframe.style.height = h + 'px';
+    var scale = w / CARD_ASPECT_W;
+    iframe.style.width = CARD_ASPECT_W + 'px';
+    iframe.style.height = CARD_ASPECT_H + 'px';
+    iframe.style.transform = 'scale(' + scale + ')';
+    iframe.style.transformOrigin = 'top left';
+    wrap.style.height = Math.round(CARD_ASPECT_H * scale) + 'px';
   }
 
   function fitGameFrames(){
