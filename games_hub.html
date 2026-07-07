@@ -1295,28 +1295,21 @@ function render() {
 // 実機(iOS Safari)でズレることが確認されたため、この方式に統一した。
 // CARD_ASPECT_W/H は上部で定義済み（プレビューカードの固定縦横比）。
 
+const CARD_SCALE = 0.5; // カード表示は常にこの倍率で固定縮小(カード幅には合わせない)
+
 function sizeGameIframeToCard(frameWrap, iframe) {
   const apply = () => {
-    // use parentElement width as fallback if frameWrap itself has no width yet
-    const w = frameWrap.clientWidth || frameWrap.parentElement?.clientWidth || 0;
-    if (!w) return;
-    const scale = w / CARD_ASPECT_W;
     iframe.style.width = CARD_ASPECT_W + 'px';
     iframe.style.height = CARD_ASPECT_H + 'px';
-    iframe.style.transform = `scale(${scale})`;
+    iframe.style.transform = `scale(${CARD_SCALE})`;
     iframe.style.transformOrigin = 'top left';
-    frameWrap.style.height = Math.round(CARD_ASPECT_H * scale) + 'px';
+    frameWrap.style.width = Math.round(CARD_ASPECT_W * CARD_SCALE) + 'px';
+    frameWrap.style.height = Math.round(CARD_ASPECT_H * CARD_SCALE) + 'px';
   };
   apply();
   requestAnimationFrame(apply);
   setTimeout(apply, 150);
   setTimeout(apply, 500);
-  if (window.ResizeObserver) {
-    const ro = new ResizeObserver(() => {
-      if (frameWrap.clientWidth > 0) apply();
-    });
-    ro.observe(frameWrap);
-  }
 }
 
 // ── フルスクリーン再生 ──────────────────────────
