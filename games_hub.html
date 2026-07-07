@@ -1295,7 +1295,7 @@ function render() {
 // 実機(iOS Safari)でズレることが確認されたため、この方式に統一した。
 // CARD_ASPECT_W/H は上部で定義済み（プレビューカードの固定縦横比）。
 
-const CARD_SCALE = 0.5; // カード表示は常にこの倍率で固定縮小(カード幅には合わせない)
+const CARD_SCALE = 0.8; // カード表示は常にこの倍率で固定縮小(カード幅には合わせない)
 
 function sizeGameIframeToCard(frameWrap, iframe) {
   const apply = () => {
@@ -1959,7 +1959,7 @@ function cyclerCarousel(el){
 }
 var CARD_ASPECT_W = 320;
 var CARD_ASPECT_H = 520;
-var CARD_SCALE = 0.5;
+var CARD_SCALE = 0.8;
 (function(){
   function sizeFrame(wrap, iframe){
     iframe.style.width = CARD_ASPECT_W + 'px';
