@@ -1305,6 +1305,7 @@ function sizeGameIframeToCard(frameWrap, iframe) {
     iframe.style.transformOrigin = 'top left';
     frameWrap.style.width = Math.round(CARD_ASPECT_W * CARD_SCALE) + 'px';
     frameWrap.style.height = Math.round(CARD_ASPECT_H * CARD_SCALE) + 'px';
+    frameWrap.style.margin = '20px auto';
   };
   apply();
   requestAnimationFrame(apply);
@@ -1958,16 +1959,16 @@ function cyclerCarousel(el){
 }
 var CARD_ASPECT_W = 320;
 var CARD_ASPECT_H = 520;
+var CARD_SCALE = 0.5;
 (function(){
   function sizeFrame(wrap, iframe){
-    var w = wrap.clientWidth;
-    if (!w) return;
-    var scale = w / CARD_ASPECT_W;
     iframe.style.width = CARD_ASPECT_W + 'px';
     iframe.style.height = CARD_ASPECT_H + 'px';
-    iframe.style.transform = 'scale(' + scale + ')';
+    iframe.style.transform = 'scale(' + CARD_SCALE + ')';
     iframe.style.transformOrigin = 'top left';
-    wrap.style.height = Math.round(CARD_ASPECT_H * scale) + 'px';
+    wrap.style.width = Math.round(CARD_ASPECT_W * CARD_SCALE) + 'px';
+    wrap.style.height = Math.round(CARD_ASPECT_H * CARD_SCALE) + 'px';
+    wrap.style.margin = '20px auto';
   }
 
   function fitGameFrames(){
