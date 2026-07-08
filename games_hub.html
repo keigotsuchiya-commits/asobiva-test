@@ -1298,8 +1298,6 @@ function render() {
 
 const CARD_SCALE = 0.8; // カード表示は常にこの倍率で固定縮小(カード幅には合わせない)
 
-const CARD_PREVIEW_HEIGHT = 220; // カードの表示枠の高さ。ゲーム本体はGAME_CONTENT_HEIGHT(591px)のまま変えず、はみ出した下側を隠す。
-
 function sizeGameIframeToCard(frameWrap, iframe) {
   const apply = () => {
     const w = frameWrap.clientWidth || frameWrap.parentElement?.clientWidth || 0;
@@ -1308,8 +1306,6 @@ function sizeGameIframeToCard(frameWrap, iframe) {
     iframe.style.zoom = '';
     iframe.style.width = w + 'px';
     iframe.style.height = GAME_CONTENT_HEIGHT + 'px';
-    frameWrap.style.height = CARD_PREVIEW_HEIGHT + 'px';
-    frameWrap.style.overflow = 'hidden';
   };
   apply();
   requestAnimationFrame(apply);
