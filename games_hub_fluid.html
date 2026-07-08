@@ -1297,7 +1297,7 @@ function render() {
 // 実機(iOS Safari)でズレることが確認されたため、この方式に統一した。
 // CARD_ASPECT_W/H は上部で定義済み（プレビューカードの固定縦横比）。
 
-const CARD_SCALE = 0.67; // カード表示は常にこの倍率で固定縮小(iframeの実サイズを縮小)
+const CARD_SCALE = 0.6; // カード表示は常にこの倍率で固定縮小(iframeの実サイズを縮小)
 const FLUID_RATIO = 584 / 320; // fluid版ゲームの基準比率(320px幅の時の高さ584px)
 
 function sizeGameIframeToCard(frameWrap, iframe) {
@@ -1311,7 +1311,7 @@ function sizeGameIframeToCard(frameWrap, iframe) {
     iframe.style.width = scaledW + 'px';
     iframe.style.height = scaledH + 'px';
     iframe.style.display = 'block';
-    iframe.style.margin = '24px auto';
+    iframe.style.margin = '40px auto';
   };
   apply();
   requestAnimationFrame(apply);
@@ -1354,6 +1354,11 @@ function openFullscreenGame(html) {
   sizeFullscreenIframe(frameWrap, iframe);
 
   overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  document.body.style.position = 'fixed';
+  document.body.style.width = '100%';
+  document.body.dataset.scrollY = String(window.scrollY);
+  document.body.style.top = '-' + window.scrollY + 'px';
 
   // GW版ゲームかどうか判別してTAP TO STARTのスタイルを切り替え
   const circle = document.querySelector('.tap-to-start-circle');
@@ -1408,6 +1413,12 @@ function closeFullscreenGame() {
   overlay.classList.remove('open');
   frameWrap.innerHTML = '';
   document.getElementById('tapToStart').classList.remove('show');
+  const y = parseInt(document.body.dataset.scrollY || '0', 10);
+  document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.width = '';
+  document.body.style.top = '';
+  window.scrollTo(0, y);
 }
 document.getElementById('closeFullscreenBtn').addEventListener('click', closeFullscreenGame);
 
@@ -1961,7 +1972,7 @@ function cyclerCarousel(el){
 var CARD_ASPECT_W = 320;
 var CARD_ASPECT_H = 591;
 var GAME_CONTENT_HEIGHT = 586;
-var CARD_SCALE = 0.67;
+var CARD_SCALE = 0.6;
 var FLUID_RATIO = 584 / 320;
 (function(){
   function sizeFrame(wrap, iframe){
@@ -1974,7 +1985,7 @@ var FLUID_RATIO = 584 / 320;
     iframe.style.width = scaledW + 'px';
     iframe.style.height = scaledH + 'px';
     iframe.style.display = 'block';
-    iframe.style.margin = '24px auto';
+    iframe.style.margin = '40px auto';
   }
 
   function fitGameFrames(){
@@ -2022,6 +2033,11 @@ function openFullscreenGameStatic(tapEl){
   frameWrap.appendChild(iframe);
   sizeFullscreenIframeStatic(frameWrap, iframe);
   overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  document.body.style.position = 'fixed';
+  document.body.style.width = '100%';
+  document.body.dataset.scrollY = String(window.scrollY);
+  document.body.style.top = '-' + window.scrollY + 'px';
   var circle = document.querySelector('.tap-to-start-circle');
   var isGW = html.indexOf('#8fa888') !== -1;
   if (isGW) {
@@ -2059,6 +2075,12 @@ document.getElementById('closeFullscreenBtn').addEventListener('click', function
   document.getElementById('fullscreenOverlay').classList.remove('open');
   document.getElementById('fullscreenFrameWrap').innerHTML = '';
   document.getElementById('tapToStart').classList.remove('show');
+  var y = parseInt(document.body.dataset.scrollY || '0', 10);
+  document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.width = '';
+  document.body.style.top = '';
+  window.scrollTo(0, y);
 });
 </scr` + `ipt>
 <scr` + `ipt>
