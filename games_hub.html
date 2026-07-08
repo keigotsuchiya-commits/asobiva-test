@@ -1299,13 +1299,13 @@ const CARD_SCALE = 0.8; // カード表示は常にこの倍率で固定縮小(�
 
 function sizeGameIframeToCard(frameWrap, iframe) {
   const apply = () => {
-    const w = frameWrap.clientWidth || frameWrap.parentElement?.clientWidth || 0;
-    if (!w) return;
-    const h = Math.round(w * (CARD_ASPECT_H / CARD_ASPECT_W));
+    iframe.style.width = CARD_ASPECT_W + 'px';
+    iframe.style.height = CARD_ASPECT_H + 'px';
     iframe.style.transform = '';
-    iframe.style.zoom = '';
-    iframe.style.width = w + 'px';
-    iframe.style.height = h + 'px';
+    iframe.style.zoom = String(CARD_SCALE);
+    frameWrap.style.width = Math.round(CARD_ASPECT_W * CARD_SCALE) + 'px';
+    frameWrap.style.height = Math.round(CARD_ASPECT_H * CARD_SCALE) + 'px';
+    frameWrap.style.margin = '20px auto';
   };
   apply();
   requestAnimationFrame(apply);
@@ -1963,13 +1963,13 @@ var CARD_ASPECT_H = 600;
 var CARD_SCALE = 0.8;
 (function(){
   function sizeFrame(wrap, iframe){
-    var w = wrap.clientWidth;
-    if (!w) return;
-    var h = Math.round(w * (CARD_ASPECT_H / CARD_ASPECT_W));
+    iframe.style.width = CARD_ASPECT_W + 'px';
+    iframe.style.height = CARD_ASPECT_H + 'px';
     iframe.style.transform = '';
-    iframe.style.zoom = '';
-    iframe.style.width = w + 'px';
-    iframe.style.height = h + 'px';
+    iframe.style.zoom = String(CARD_SCALE);
+    wrap.style.width = Math.round(CARD_ASPECT_W * CARD_SCALE) + 'px';
+    wrap.style.height = Math.round(CARD_ASPECT_H * CARD_SCALE) + 'px';
+    wrap.style.margin = '20px auto';
   }
 
   function fitGameFrames(){
