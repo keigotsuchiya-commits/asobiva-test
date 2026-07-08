@@ -660,6 +660,8 @@ footer {
   padding: 10px 12px;
   padding-top: max(10px, env(safe-area-inset-top));
   background: #0a0a12;
+  position: relative;
+  z-index: 20;
 }
 
 .close-btn {
@@ -697,7 +699,7 @@ footer {
    close (✕) button stays clickable even while this prompt is showing */
 .tap-to-start {
   position: absolute;
-  top: max(56px, calc(46px + env(safe-area-inset-top))); /* トップバーの実際の高さ(セーフエリア対応)に合わせる */
+  top: 0;
   left: 0;
   right: 0;
   bottom: 0;
@@ -1907,11 +1909,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 footer { padding:28px 16px; text-align:center; font-size:10px; letter-spacing:0.1em; color:var(--ink-soft); background:var(--white); }
 .fullscreen-overlay { position:fixed; inset:0; background:#0a0a12; z-index:500; display:none; flex-direction:column; }
 .fullscreen-overlay.open { display:flex; }
-.fullscreen-topbar { flex-shrink:0; display:flex; justify-content:flex-end; padding:10px 12px; padding-top:max(10px, env(safe-area-inset-top)); background:#0a0a12; }
+.fullscreen-topbar { flex-shrink:0; display:flex; justify-content:flex-end; padding:10px 12px; padding-top:max(10px, env(safe-area-inset-top)); background:#0a0a12; position:relative; z-index:20; }
 .close-btn { width:36px; height:36px; border-radius:50%; border:1px solid rgba(255,255,255,0.25); background:rgba(255,255,255,0.06); color:#fff; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 .fullscreen-frame-wrap { flex:1; min-height:0; display:flex; align-items:center; justify-content:center; }
 .fullscreen-frame-wrap iframe { border:none; background:#0a0a12; }
-.tap-to-start { position:absolute; top:max(56px, calc(46px + env(safe-area-inset-top))); left:0; right:0; bottom:0; z-index:10; display:none; align-items:center; justify-content:center; background:rgba(10,10,18,0.35); cursor:pointer; }
+.tap-to-start { position:absolute; top:0; left:0; right:0; bottom:0; z-index:10; display:none; align-items:center; justify-content:center; background:rgba(10,10,18,0.35); cursor:pointer; }
 .tap-to-start.show { display:flex; }
 .tap-to-start-circle { width:132px; height:132px; border-radius:50%; border:2px solid #39ff7a; background:rgba(10,10,18,0.85); color:#39ff7a; font-size:15px; font-weight:700; letter-spacing:0.08em; line-height:1.5; text-align:center; display:flex; align-items:center; justify-content:center; text-shadow:0 0 8px #39ff7a; box-shadow:0 0 22px rgba(57,255,122,0.35); animation:pulseRing 1.6s ease-in-out infinite; }
 @keyframes pulseRing { 0%,100% { transform:scale(1); } 50% { transform:scale(1.06); } }
