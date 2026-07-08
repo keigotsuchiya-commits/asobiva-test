@@ -862,7 +862,7 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
 // before first paint), and (3) fullscreen play, so the game is always
 // shown at the same aspect ratio regardless of device screen height.
 const CARD_ASPECT_W = 320;
-const CARD_ASPECT_H = 620;
+const CARD_ASPECT_H = 600;
 
 // ── IndexedDB (Base64ストレージ) ──────────────
 const DB_NAME = 'asobiva_games_b64';
@@ -1301,8 +1301,8 @@ function sizeGameIframeToCard(frameWrap, iframe) {
   const apply = () => {
     iframe.style.width = CARD_ASPECT_W + 'px';
     iframe.style.height = CARD_ASPECT_H + 'px';
-    iframe.style.transform = `scale(${CARD_SCALE})`;
-    iframe.style.transformOrigin = 'top left';
+    iframe.style.transform = '';
+    iframe.style.zoom = String(CARD_SCALE);
     frameWrap.style.width = Math.round(CARD_ASPECT_W * CARD_SCALE) + 'px';
     frameWrap.style.height = Math.round(CARD_ASPECT_H * CARD_SCALE) + 'px';
     frameWrap.style.margin = '20px auto';
@@ -1314,9 +1314,12 @@ function sizeGameIframeToCard(frameWrap, iframe) {
 }
 
 // ── フルスクリーン再生 ──────────────────────────
-// カード一覧と同じ CARD_ASPECT_W/H 比率でサイズを決める。画面の高さに
-// 引きずられて中のゲーム(固定サイズ・伸縮しない設計)の周りに余白が
-// 不規則に生まれるのを防ぎ、常に同じ縦横比の箱の中で表示する。
+// カードプレビューと全く同じ方式(iframeは常にCARD_ASPECT_W×H=320×600の
+// ネイティブ解像度のまま、zoomで見た目だけ拡大する)に統一する。中身が
+// 伸縮しない固定サイズ設計なので、iframe自体をリサイズする方式だと
+// 幅が変わるたびに中身と箱の余白比率がズレて「カードと見え方が変わる」
+// 原因になっていた。zoom方式なら常に同じネイティブ座標系なので、
+// カードでもフルスクリーンでも寸分違わず同じ配置になる。
 let _fullscreenResizeHandler = null;
 
 function sizeFullscreenIframe(frameWrap, iframe) {
@@ -1324,14 +1327,11 @@ function sizeFullscreenIframe(frameWrap, iframe) {
     const maxW = frameWrap.clientWidth || window.innerWidth;
     const maxH = frameWrap.clientHeight || (window.innerHeight - 56);
     if (!maxW || !maxH) return;
-    let w = maxW;
-    let h = Math.round(w * (CARD_ASPECT_H / CARD_ASPECT_W));
-    if (h > maxH) {
-      h = maxH;
-      w = Math.round(h * (CARD_ASPECT_W / CARD_ASPECT_H));
-    }
-    iframe.style.width = w + 'px';
-    iframe.style.height = h + 'px';
+    const zoom = Math.min(maxW / CARD_ASPECT_W, maxH / CARD_ASPECT_H);
+    iframe.style.width = CARD_ASPECT_W + 'px';
+    iframe.style.height = CARD_ASPECT_H + 'px';
+    iframe.style.transform = '';
+    iframe.style.zoom = String(zoom);
   };
   apply();
   requestAnimationFrame(apply);
@@ -1958,14 +1958,14 @@ function cyclerCarousel(el){
   if (count) count.textContent = (idx + 1) + ' / ' + images.length;
 }
 var CARD_ASPECT_W = 320;
-var CARD_ASPECT_H = 620;
+var CARD_ASPECT_H = 600;
 var CARD_SCALE = 0.8;
 (function(){
   function sizeFrame(wrap, iframe){
     iframe.style.width = CARD_ASPECT_W + 'px';
     iframe.style.height = CARD_ASPECT_H + 'px';
-    iframe.style.transform = 'scale(' + CARD_SCALE + ')';
-    iframe.style.transformOrigin = 'top left';
+    iframe.style.transform = '';
+    iframe.style.zoom = String(CARD_SCALE);
     wrap.style.width = Math.round(CARD_ASPECT_W * CARD_SCALE) + 'px';
     wrap.style.height = Math.round(CARD_ASPECT_H * CARD_SCALE) + 'px';
     wrap.style.margin = '20px auto';
@@ -1993,14 +1993,11 @@ function sizeFullscreenIframeStatic(frameWrap, iframe){
     var maxW = frameWrap.clientWidth || window.innerWidth;
     var maxH = frameWrap.clientHeight || (window.innerHeight - 56);
     if (!maxW || !maxH) return;
-    var w = maxW;
-    var h = Math.round(w * (CARD_ASPECT_H / CARD_ASPECT_W));
-    if (h > maxH) {
-      h = maxH;
-      w = Math.round(h * (CARD_ASPECT_W / CARD_ASPECT_H));
-    }
-    iframe.style.width = w + 'px';
-    iframe.style.height = h + 'px';
+    var zoom = Math.min(maxW / CARD_ASPECT_W, maxH / CARD_ASPECT_H);
+    iframe.style.width = CARD_ASPECT_W + 'px';
+    iframe.style.height = CARD_ASPECT_H + 'px';
+    iframe.style.transform = '';
+    iframe.style.zoom = String(zoom);
   }
   apply();
   requestAnimationFrame(apply);
