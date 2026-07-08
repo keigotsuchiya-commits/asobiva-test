@@ -1309,7 +1309,8 @@ function sizeGameIframeToCard(frameWrap, iframe) {
     iframe.style.zoom = '';
     iframe.style.width = scaledW + 'px';
     iframe.style.height = scaledH + 'px';
-    frameWrap.style.margin = '0 auto';
+    iframe.style.display = 'block';
+    iframe.style.margin = '0 auto';
   };
   apply();
   requestAnimationFrame(apply);
@@ -1970,7 +1971,8 @@ var FLUID_RATIO = 584 / 320;
     iframe.style.zoom = '';
     iframe.style.width = scaledW + 'px';
     iframe.style.height = scaledH + 'px';
-    wrap.style.margin = '0 auto';
+    iframe.style.display = 'block';
+    iframe.style.margin = '0 auto';
   }
 
   function fitGameFrames(){
