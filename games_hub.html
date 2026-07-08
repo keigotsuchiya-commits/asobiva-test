@@ -1299,13 +1299,13 @@ const CARD_SCALE = 0.8; // カード表示は常にこの倍率で固定縮小(�
 
 function sizeGameIframeToCard(frameWrap, iframe) {
   const apply = () => {
-    iframe.style.width = CARD_ASPECT_W + 'px';
-    iframe.style.height = CARD_ASPECT_H + 'px';
+    const w = frameWrap.clientWidth || frameWrap.parentElement?.clientWidth || 0;
+    if (!w) return;
+    const h = Math.round(w * (CARD_ASPECT_H / CARD_ASPECT_W));
     iframe.style.transform = '';
-    iframe.style.zoom = String(CARD_SCALE);
-    frameWrap.style.width = Math.round(CARD_ASPECT_W * CARD_SCALE) + 'px';
-    frameWrap.style.height = Math.round(CARD_ASPECT_H * CARD_SCALE) + 'px';
-    frameWrap.style.margin = '20px auto';
+    iframe.style.zoom = '';
+    iframe.style.width = w + 'px';
+    iframe.style.height = h + 'px';
   };
   apply();
   requestAnimationFrame(apply);
