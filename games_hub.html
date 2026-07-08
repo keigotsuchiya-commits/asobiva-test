@@ -862,7 +862,8 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
 // before first paint), and (3) fullscreen play, so the game is always
 // shown at the same aspect ratio regardless of device screen height.
 const CARD_ASPECT_W = 320;
-const CARD_ASPECT_H = 600;
+const CARD_ASPECT_H = 591;
+const GAME_CONTENT_HEIGHT = 584; // invader/breakerの実寸(5ゲーム中もっとも一般的な高さ)。幅に関わらずこの高さで固定する。
 
 // ── IndexedDB (Base64ストレージ) ──────────────
 const DB_NAME = 'asobiva_games_b64';
@@ -1297,15 +1298,18 @@ function render() {
 
 const CARD_SCALE = 0.8; // カード表示は常にこの倍率で固定縮小(カード幅には合わせない)
 
+const CARD_PREVIEW_HEIGHT = 220; // カードの表示枠の高さ。ゲーム本体はGAME_CONTENT_HEIGHT(591px)のまま変えず、はみ出した下側を隠す。
+
 function sizeGameIframeToCard(frameWrap, iframe) {
   const apply = () => {
     const w = frameWrap.clientWidth || frameWrap.parentElement?.clientWidth || 0;
     if (!w) return;
-    const h = Math.round(w * (CARD_ASPECT_H / CARD_ASPECT_W));
     iframe.style.transform = '';
     iframe.style.zoom = '';
     iframe.style.width = w + 'px';
-    iframe.style.height = h + 'px';
+    iframe.style.height = GAME_CONTENT_HEIGHT + 'px';
+    frameWrap.style.height = CARD_PREVIEW_HEIGHT + 'px';
+    frameWrap.style.overflow = 'hidden';
   };
   apply();
   requestAnimationFrame(apply);
@@ -1314,20 +1318,18 @@ function sizeGameIframeToCard(frameWrap, iframe) {
 }
 
 // ── フルスクリーン再生 ──────────────────────────
-// 320:600の比率は必ず固定する。幅は常に使える範囲いっぱいにし、高さは
-// その比率で決まった値をそのまま使う(高さが足りなくても幅は縮めない)。
+// 幅は常に使える範囲いっぱいにする。高さはゲームの中身の実寸
+// (GAME_CONTENT_HEIGHT)で固定する(比率で幅に応じて拡大しない)。
 let _fullscreenResizeHandler = null;
 
 function sizeFullscreenIframe(frameWrap, iframe) {
   const apply = () => {
     const maxW = frameWrap.clientWidth || window.innerWidth;
     if (!maxW) return;
-    const w = maxW;
-    const h = Math.round(w * (CARD_ASPECT_H / CARD_ASPECT_W));
     iframe.style.zoom = '';
     iframe.style.transform = '';
-    iframe.style.width = w + 'px';
-    iframe.style.height = h + 'px';
+    iframe.style.width = maxW + 'px';
+    iframe.style.height = GAME_CONTENT_HEIGHT + 'px';
   };
   apply();
   requestAnimationFrame(apply);
@@ -1954,17 +1956,16 @@ function cyclerCarousel(el){
   if (count) count.textContent = (idx + 1) + ' / ' + images.length;
 }
 var CARD_ASPECT_W = 320;
-var CARD_ASPECT_H = 600;
-var CARD_SCALE = 0.8;
+var CARD_ASPECT_H = 591;
+var GAME_CONTENT_HEIGHT = 584;
 (function(){
   function sizeFrame(wrap, iframe){
-    iframe.style.width = CARD_ASPECT_W + 'px';
-    iframe.style.height = CARD_ASPECT_H + 'px';
+    var w = wrap.clientWidth;
+    if (!w) return;
     iframe.style.transform = '';
-    iframe.style.zoom = String(CARD_SCALE);
-    wrap.style.width = Math.round(CARD_ASPECT_W * CARD_SCALE) + 'px';
-    wrap.style.height = Math.round(CARD_ASPECT_H * CARD_SCALE) + 'px';
-    wrap.style.margin = '20px auto';
+    iframe.style.zoom = '';
+    iframe.style.width = w + 'px';
+    iframe.style.height = GAME_CONTENT_HEIGHT + 'px';
   }
 
   function fitGameFrames(){
@@ -1988,12 +1989,10 @@ function sizeFullscreenIframeStatic(frameWrap, iframe){
   function apply(){
     var maxW = frameWrap.clientWidth || window.innerWidth;
     if (!maxW) return;
-    var w = maxW;
-    var h = Math.round(w * (CARD_ASPECT_H / CARD_ASPECT_W));
     iframe.style.zoom = '';
     iframe.style.transform = '';
-    iframe.style.width = w + 'px';
-    iframe.style.height = h + 'px';
+    iframe.style.width = maxW + 'px';
+    iframe.style.height = GAME_CONTENT_HEIGHT + 'px';
   }
   apply();
   requestAnimationFrame(apply);
