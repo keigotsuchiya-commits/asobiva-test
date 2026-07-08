@@ -1314,21 +1314,16 @@ function sizeGameIframeToCard(frameWrap, iframe) {
 }
 
 // ── フルスクリーン再生 ──────────────────────────
-// カードプレビューと同じ CARD_ASPECT_W:H(320:600)比率で、iframeの実サイズ
-// (width/height)を直接計算する。zoomはSafariでの信頼性が低いため使わない。
+// 320:600の比率は必ず固定する。幅は常に使える範囲いっぱいにし、高さは
+// その比率で決まった値をそのまま使う(高さが足りなくても幅は縮めない)。
 let _fullscreenResizeHandler = null;
 
 function sizeFullscreenIframe(frameWrap, iframe) {
   const apply = () => {
     const maxW = frameWrap.clientWidth || window.innerWidth;
-    const maxH = frameWrap.clientHeight || (window.innerHeight - 56);
-    if (!maxW || !maxH) return;
-    let w = maxW;
-    let h = Math.round(w * (CARD_ASPECT_H / CARD_ASPECT_W));
-    if (h > maxH) {
-      h = maxH;
-      w = Math.round(h * (CARD_ASPECT_W / CARD_ASPECT_H));
-    }
+    if (!maxW) return;
+    const w = maxW;
+    const h = Math.round(w * (CARD_ASPECT_H / CARD_ASPECT_W));
     iframe.style.zoom = '';
     iframe.style.transform = '';
     iframe.style.width = w + 'px';
@@ -1992,14 +1987,9 @@ var _fullscreenResizeHandlerStatic = null;
 function sizeFullscreenIframeStatic(frameWrap, iframe){
   function apply(){
     var maxW = frameWrap.clientWidth || window.innerWidth;
-    var maxH = frameWrap.clientHeight || (window.innerHeight - 56);
-    if (!maxW || !maxH) return;
+    if (!maxW) return;
     var w = maxW;
     var h = Math.round(w * (CARD_ASPECT_H / CARD_ASPECT_W));
-    if (h > maxH) {
-      h = maxH;
-      w = Math.round(h * (CARD_ASPECT_W / CARD_ASPECT_H));
-    }
     iframe.style.zoom = '';
     iframe.style.transform = '';
     iframe.style.width = w + 'px';
