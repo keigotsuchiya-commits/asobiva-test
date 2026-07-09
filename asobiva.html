@@ -1504,7 +1504,7 @@ function downloadEditHTML() {
   const initScript = `
 <scr` + `ipt>
 // ── 埋め込み初期データ ──
-window.__ASOBIVA_INIT__ = ${JSON.stringify(initData)};
+window.__ASOBIVA_INIT__ = ${JSON.stringify(initData).replace(/\\n/g, '')};
 </scr` + `ipt>`;
 
   // </head>の直前に初期データを挿入
