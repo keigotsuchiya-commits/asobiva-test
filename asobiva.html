@@ -1008,7 +1008,7 @@ function render() {
 
       replaceInput = document.createElement('input');
       replaceInput.type = 'file';
-      replaceInput.accept = 'text/html,.html,text/plain';
+      replaceInput.accept = 'text/html,.html';
       replaceInput.className = 'card-replace-input';
       replaceInput.addEventListener('change', e => {
         e.preventDefault(); e.stopPropagation();
@@ -1668,19 +1668,6 @@ document.addEventListener('click', function(e){
   a.click();
   a.remove();
 }
-
-document.addEventListener('visibilitychange', async function() {
-  if (document.visibilityState === 'visible') {
-    try {
-      const rows = await dbOp('cards', 'readonly', s => s.getAll());
-      if (rows && rows.length > 0) {
-        cards = rows.map(r => ({ id: r.id, type: r.type || 'image', base64: r.base64, html: r.html, name: r.name || '', link: r.link || '', order: (r.order ?? r.id), gap: r.gap !== false }));
-        cards.sort((a, b) => a.order - b.order);
-      }
-    } catch(e) {}
-    render();
-  }
-});
 
 init();
 </script>
