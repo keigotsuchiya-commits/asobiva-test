@@ -670,9 +670,8 @@ document.getElementById('btn_download').addEventListener('click', ()=>{
   const full = `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>図鑑カード</title></head><body style="margin:0;padding:20px;background:#ffffff;display:flex;justify-content:center;"><div style="width:100%;max-width:640px;">${html}</div></body></html>`;
   const blob = new Blob([full], {type:'text/html'});
   const a = document.createElement('a');
-  const no = document.getElementById('f_no').value || 'card';
   a.href = URL.createObjectURL(blob);
-  a.download = `zukan_card_${no}.html`;
+  a.download = `zukan_card.html`;
   a.click();
   document.getElementById('status').textContent = 'ダウンロードしました。';
 });
