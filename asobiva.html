@@ -848,9 +848,17 @@ async function init() {
     cards = [];
     let order = 1;
     for (const c of (data.cards || [])) {
-      const record = { base64: c.base64, link: c.link || '', order: c.order ?? order++ };
+      const record = { 
+        type: c.type || (c.base64 ? 'image' : 'html'),
+        base64: c.base64,
+        html: c.html,
+        name: c.name || '',
+        link: c.link || '',
+        gap: c.gap !== false,
+        order: c.order ?? order++
+      };
       const id = await dbOp('cards', 'readwrite', s => s.add(record));
-      cards.push({ id, base64: c.base64, link: c.link || '', order: record.order });
+      cards.push({ id, ...record });
     }
     cards.sort((a, b) => a.order - b.order);
     window.__ASOBIVA_INIT__ = null;
