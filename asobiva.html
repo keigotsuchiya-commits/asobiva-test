@@ -666,6 +666,7 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
       <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
       <button class="burger-menu-item admin-only" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
       <button class="burger-menu-item admin-only" id="downloadHtmlBtn" onclick="handleDownloadClick()">公開用保存</button>
+        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v1.1</div>
     </div>
   </div>
   <div class="header-pair">
@@ -990,18 +991,19 @@ function render() {
       label.textContent = c.name || '(無題)';
 
       const iframe = document.createElement('iframe');
-      iframe.srcdoc = injectAutoResize(c.html);
-      iframe.loading = 'lazy';
       iframe.scrolling = 'no';
       iframe.style.cssText = 'width:100%;border:none;height:60px;display:block;overflow:hidden;';
-      iframe.sandbox = 'allow-scripts allow-popups allow-forms allow-same-origin';
       iframe.addEventListener('load', function() {
         try {
-          const h = iframe.contentDocument.documentElement.scrollHeight || iframe.contentDocument.body.scrollHeight;
+          const doc = iframe.contentDocument;
+          doc.open();
+          doc.write(injectAutoResize(c.html));
+          doc.close();
+          const h = doc.documentElement.scrollHeight || doc.body.scrollHeight;
           if (h > 0) iframe.style.height = h + 'px';
         } catch(e) {}
-        iframe.contentWindow.postMessage({ type: 'asobiva-init' }, '*');
       });
+      iframe.src = 'about:blank';
 
       wrap.appendChild(label);
       wrap.appendChild(iframe);
