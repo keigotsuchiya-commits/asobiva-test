@@ -1008,7 +1008,7 @@ function render() {
 
       replaceInput = document.createElement('input');
       replaceInput.type = 'file';
-      replaceInput.accept = 'text/html,.html';
+      replaceInput.accept = 'text/html,.html,text/plain';
       replaceInput.className = 'card-replace-input';
       replaceInput.addEventListener('change', e => {
         e.preventDefault(); e.stopPropagation();
@@ -1668,6 +1668,17 @@ document.addEventListener('click', function(e){
   a.click();
   a.remove();
 }
+
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'visible') {
+    document.querySelectorAll('.html-card iframe').forEach(function(iframe) {
+      const card = cards.find(function(c) {
+        return c.type === 'html' && iframe.closest('.card-section');
+      });
+    });
+    render();
+  }
+});
 
 init();
 </script>
