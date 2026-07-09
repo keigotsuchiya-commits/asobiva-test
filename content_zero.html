@@ -978,6 +978,23 @@ async function init() {
   try {
     setLoadingBar(10);
     await openDB();
+  // 編集用保存データの読み込み
+  if (window.__ASOBIVA_INIT__) {
+    const d = window.__ASOBIVA_INIT__;
+    if (d.banners) {
+      for (const [slot, val] of Object.entries(d.banners)) {
+        if (val) { try { await dbOp('banners', 'readwrite', s => s.put({ slot: parseInt(slot), base64: val })); } catch {} }
+      }
+    }
+    if (d.cards && d.cards.length > 0) {
+      cards = d.cards;
+      for (const c of cards) {
+        try { await dbOp('cards', 'readwrite', s => s.put(c)); } catch {}
+      }
+    }
+    window.__ASOBIVA_INIT__ = null;
+  }
+
     setLoadingBar(30);
 
     // banner (single header)

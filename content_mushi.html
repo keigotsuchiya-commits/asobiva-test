@@ -718,6 +718,24 @@ function setLoadingBar(pct) {
 async function init() {
   setLoadingBar(10);
   await openDB();
+  // 編集用保存データの読み込み
+  if (window.__MUSHI_INIT__) {
+    const d = window.__MUSHI_INIT__;
+    if (d.banners) {
+      if (d.banners[1]) { bannerB64 = d.banners[1]; applyBanner(d.banners[1]); }
+    }
+    if (d.mainTabs) mainTabs = d.mainTabs;
+    if (d.subTabs) subTabs = d.subTabs;
+    if (d.cards) {
+      cards = d.cards;
+      // IndexedDBにも保存
+      for (const c of cards) {
+        try { await dbOp('cards', 'readwrite', s => s.put(c)); } catch {}
+      }
+    }
+    window.__MUSHI_INIT__ = null;
+  }
+
   setLoadingBar(30);
 
   // Load tabs
