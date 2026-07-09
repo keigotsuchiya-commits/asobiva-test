@@ -991,19 +991,18 @@ function render() {
       label.textContent = c.name || '(無題)';
 
       const iframe = document.createElement('iframe');
+      iframe.srcdoc = injectAutoResize(c.html);
+      iframe.loading = 'lazy';
       iframe.scrolling = 'no';
       iframe.style.cssText = 'width:100%;border:none;height:60px;display:block;overflow:hidden;';
+      iframe.sandbox = 'allow-scripts allow-popups allow-forms';
       iframe.addEventListener('load', function() {
         try {
-          const doc = iframe.contentDocument;
-          doc.open();
-          doc.write(injectAutoResize(c.html));
-          doc.close();
-          const h = doc.documentElement.scrollHeight || doc.body.scrollHeight;
+          const h = iframe.contentDocument.documentElement.scrollHeight || iframe.contentDocument.body.scrollHeight;
           if (h > 0) iframe.style.height = h + 'px';
         } catch(e) {}
+        iframe.contentWindow.postMessage({ type: 'asobiva-init' }, '*');
       });
-      iframe.src = 'about:blank';
 
       wrap.appendChild(label);
       wrap.appendChild(iframe);
