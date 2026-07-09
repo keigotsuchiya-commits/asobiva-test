@@ -375,10 +375,6 @@
       <legend>基本情報</legend>
       <div class="row2">
         <div>
-          <label>図鑑No.</label>
-          <input type="text" id="f_no" value="001">
-        </div>
-        <div>
           <label>分類</label>
           <input type="text" id="f_classification" value="架空昆虫網 ナナフシ目（仮）">
         </div>
@@ -471,7 +467,6 @@
         <div class="zc-header">
           <div class="zc-classification" id="o_classification">架空昆虫網 ナナフシ目（仮）</div>
           <div class="zc-namerow">
-            <span class="zc-no">No.<b id="o_no">001</b></span>
             <span class="zc-name" id="o_name">ヨアケミノムシ</span>
           </div>
           <div class="zc-yomi" id="o_yomi">よあけみのむし</div>
@@ -507,15 +502,15 @@
 </div>
 
 <script>
-const fields = ['no','classification','name_ja','yomi','latin','length','active','distribution','habitat','diet','reproduction','defense','predator','feature','note','desc'];
+const fields = ['classification','name_ja','yomi','latin','length','active','distribution','habitat','diet','reproduction','defense','predator','feature','note','desc'];
 const map = {
-  no:'f_no', classification:'f_classification', name_ja:'f_name_ja', yomi:'f_yomi', latin:'f_latin',
+  classification:'f_classification', name_ja:'f_name_ja', yomi:'f_yomi', latin:'f_latin',
   length:'f_length', active:'f_active', distribution:'f_distribution', habitat:'f_habitat',
   diet:'f_diet', reproduction:'f_reproduction', defense:'f_defense', predator:'f_predator',
   feature:'f_feature', note:'f_note', desc:'f_desc'
 };
 const outMap = {
-  no:'o_no', classification:'o_classification', name_ja:'o_name', yomi:'o_yomi', latin:'o_latin',
+  classification:'o_classification', name_ja:'o_name', yomi:'o_yomi', latin:'o_latin',
   length:'o_length', active:'o_active', distribution:'o_distribution', habitat:'o_habitat',
   diet:'o_diet', reproduction:'o_reproduction', defense:'o_defense', predator:'o_predator',
   feature:'o_feature', note:'o_note', desc:'o_desc'
@@ -548,7 +543,6 @@ document.getElementById('f_image').addEventListener('change', (e)=>{
 });
 
 const keyMap = {
-  '図鑑No.': 'f_no',
   '和名': 'f_name_ja',
   '読み': 'f_yomi',
   '学名': 'f_latin',
