@@ -293,6 +293,11 @@ body.admin-mode .banner-slot .banner-edit { display: flex; }
   background: var(--white);
   padding-top: 0;
 }
+.card-section.dot-gap {
+  background: var(--white);
+  padding-top: 0;
+  border-top: 1px dashed rgba(0,0,0,0.2);
+}
 .card-section.line-gap {
   background: var(--white);
   padding-top: 0;
@@ -343,7 +348,6 @@ body.admin-mode .card:hover img { transform: none; }
   position: relative;
   background: var(--white);
   overflow: hidden;
-  padding: 10px 0;
 }
 .html-card iframe {
   display: block;
@@ -718,7 +722,7 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
         <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
         <button class="burger-menu-item admin-only" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
         <button class="burger-menu-item admin-only" id="downloadHtmlBtn" onclick="handleDownloadClick()">公開用保存</button>
-        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v1.5</div>
+        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v1.6</div>
       </div>
     </div>
   </div>
@@ -835,7 +839,7 @@ function injectAutoResize(html) {
 <scr` + `ipt>
 (function(){
   function reportHeight(){
-    var h = document.documentElement.scrollHeight;
+    var h = document.body.offsetHeight;
     parent.postMessage({ type: 'asobiva-resize', height: h }, '*');
   }
   window.addEventListener('message', function(e){
@@ -954,7 +958,7 @@ function render() {
 
   cards.forEach(c => {
     const sec = document.createElement('div');
-    const gapClass = c.gap === false || c.gap === 'nogap' ? ' no-gap' : c.gap === 'line' ? ' line-gap' : '';
+    const gapClass = c.gap === false || c.gap === 'nogap' ? ' no-gap' : c.gap === 'line' ? ' line-gap' : c.gap === 'dot' ? ' dot-gap' : '';
     sec.className = 'card-section' + gapClass;
 
     let wrap, replaceAccept, supportsReplace = true;
@@ -1069,7 +1073,7 @@ function render() {
 
     const gapBtn = document.createElement('button');
     gapBtn.className = 'card-gap-btn';
-    const gapLabels = { true: '隙間あり', false: '隙間なし', nogap: '隙間なし', line: 'ライン' };
+    const gapLabels = { true: '隙間あり', false: '隙間なし', nogap: '隙間なし', line: 'ライン', dot: '点線' };
     gapBtn.textContent = gapLabels[c.gap] ?? '隙間あり';
     gapBtn.addEventListener('click', e => {
       e.preventDefault(); e.stopPropagation();
@@ -1429,7 +1433,8 @@ async function toggleGap(id) {
   if (!c) return;
   // 隙間あり → ライン → 隙間なし → 隙間あり
   if (c.gap === true || c.gap === undefined) c.gap = 'line';
-  else if (c.gap === 'line') c.gap = false;
+  else if (c.gap === 'line') c.gap = 'dot';
+  else if (c.gap === 'dot') c.gap = false;
   else c.gap = true;
   await dbOp('cards', 'readwrite', s => s.put({
     id: c.id, type: c.type, html: c.html, base64: c.base64,
@@ -1516,7 +1521,7 @@ async function downloadHTML() {
     cardsHTML = `  <div class="empty-section"><div class="empty-state"><strong>まだカードがありません</strong></div></div>\n`;
   } else {
     for (const c of cards) {
-      const gapClass = c.gap === false || c.gap === 'nogap' ? ' no-gap' : c.gap === 'line' ? ' line-gap' : '';
+      const gapClass = c.gap === false || c.gap === 'nogap' ? ' no-gap' : c.gap === 'line' ? ' line-gap' : c.gap === 'dot' ? ' dot-gap' : '';
       if (c.type === 'image') {
         const compressedB64 = await compressImage(c.base64);
         const tag = c.link
@@ -1550,6 +1555,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .card-section { background: var(--bg); padding-top:10px; }
 .card-section.no-gap { background: var(--white); padding-top:0; }
 .card-section.line-gap { background: var(--white); padding-top:0; border-top:1px solid var(--ink); }
+.card-section.dot-gap { background: var(--white); padding-top:0; border-top:1px dashed rgba(0,0,0,0.2); }
 .card { width:100%; display:block; text-decoration:none; background:var(--white); overflow:hidden; }
 .card img { width:100%; height:auto; display:block; }
 .html-card { width:100%; position:relative; background:var(--white); overflow:hidden; }
