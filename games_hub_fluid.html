@@ -793,7 +793,7 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
         <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
         <button class="burger-menu-item admin-only" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
         <button class="burger-menu-item admin-only" id="downloadHtmlBtn" onclick="handleDownloadClick()">公開用保存</button>
-        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v1.9</div>
+        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v2.1</div>
       </div>
     </div>
   </div>
@@ -1003,11 +1003,13 @@ async function init() {
     } catch {}
     setLoadingBar(60);
 
-    const rows = await dbOp('cards', 'readonly', s => s.getAll());
-    cards = (rows || []).map(r => ({
+    const rows = await dbOp('cards', 'readonly', s => s.getAll()) || [];
+    cards = rows.map(r => ({
       id: r.id,
       type: r.type || 'html',
       html: r.html,
+      htmls: r.htmls,
+      names: r.names,
       base64: r.base64,
       images: r.images,
       name: r.name || '',
