@@ -793,7 +793,7 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
         <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
         <button class="burger-menu-item admin-only" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
         <button class="burger-menu-item admin-only" id="downloadHtmlBtn" onclick="handleDownloadClick()">公開用保存</button>
-        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v2.1</div>
+        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v2.2</div>
       </div>
     </div>
   </div>
@@ -1356,12 +1356,15 @@ function sizeFullscreenIframe(frameWrap, iframe) {
     if (isEdge) {
       const topbar = document.querySelector('.fullscreen-topbar');
       const topbarH = topbar ? topbar.offsetHeight : 56;
-      // Edgeはvisual viewportを使って実際の表示領域を取得
       const vvh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-      const availH = vvh - topbarH - 83; // Edge iOS navigation bar height
-      const availW = window.visualViewport ? window.visualViewport.width : window.innerWidth;
-      const wByH = Math.floor(availH / FLUID_RATIO);
-      maxW = Math.min(wByH, availW);
+      const availH = vvh - topbarH;
+      // 幅は画面幅いっぱい、高さをそれに合わせる
+      maxW = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+      // 高さが足りない場合は幅を縮小
+      const maxH = Math.round(maxW * FLUID_RATIO);
+      if (maxH > availH) {
+        maxW = Math.floor(availH / FLUID_RATIO);
+      }
     } else {
       maxW = frameWrap.clientWidth || window.innerWidth;
     }
