@@ -1172,9 +1172,14 @@ function applyIntro(html) {
 }
 
 function openCommonPanel() {
+  pendingCommonFiles = [];
+  document.getElementById('commonFileInput').value = '';
+  document.getElementById('commonPreviewGrid').innerHTML = '';
+  document.getElementById('commonAddBtn').disabled = true;
   document.getElementById('commonPanelOverlay').classList.add('open');
   document.getElementById('commonPanel').classList.add('open');
 }
+
 function closeCommonPanel() {
   document.getElementById('commonPanelOverlay').classList.remove('open');
   document.getElementById('commonPanel').classList.remove('open');
@@ -1182,6 +1187,57 @@ function closeCommonPanel() {
   document.getElementById('commonFileInput').value = '';
   document.getElementById('commonPreviewGrid').innerHTML = '';
   document.getElementById('commonAddBtn').disabled = true;
+}
+
+function onCommonFileSelect(files) {
+  for (const f of files) {
+    if (f.type.startsWith('image/') || isHtmlFile(f)) pendingCommonFiles.push(f);
+  }
+  const grid = document.getElementById('commonPreviewGrid');
+  grid.innerHTML = '';
+  pendingCommonFiles.forEach((f, i) => {
+    const div = document.createElement('div');
+    div.className = 'p-thumb';
+    if (isHtmlFile(f)) {
+      const lbl = document.createElement('div');
+      lbl.style.cssText = 'font-size:10px;color:#888;padding:4px;text-align:center;';
+      lbl.textContent = f.name;
+      div.appendChild(lbl);
+    } else {
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(f); img.alt = '';
+      div.appendChild(img);
+    }
+    const del = document.createElement('button');
+    del.className = 'p-del'; del.textContent = '✕';
+    del.onclick = () => { pendingCommonFiles.splice(i, 1); onCommonFileSelect([]); };
+    div.appendChild(del);
+    grid.appendChild(div);
+  });
+  document.getElementById('commonAddBtn').disabled = pendingCommonFiles.length === 0;
+}
+
+async function addCommonCards() {
+  const link = document.getElementById('commonLinkUrl').value.trim();
+  const btn = document.getElementById('commonAddBtn');
+  btn.disabled = true; btn.textContent = '保存中…';
+  try {
+    for (const f of pendingCommonFiles) {
+      if (isHtmlFile(f)) {
+        const html = await fileToText(f);
+        const name = f.name;
+        const id = await dbOp('cards', 'readwrite', s => s.add({ type: 'html', html, name, link, gap: true, mainTab: 'common', subTab: null }));
+        cards.push({ id, type: 'html', html, name, link, gap: true, mainTab: 'common', subTab: null });
+      } else {
+        const base64 = await fileToBase64(f);
+        const id = await dbOp('cards', 'readwrite', s => s.add({ type: 'image', base64, link, gap: true, mainTab: 'common', subTab: null }));
+        cards.push({ id, type: 'image', base64, link, gap: true, mainTab: 'common', subTab: null });
+      }
+    }
+  } catch(err) { console.error(err); }
+  btn.textContent = '追加する';
+  closeCommonPanel();
+  render();
 }
 
 // ── Cards ─────────────────────────────────────
