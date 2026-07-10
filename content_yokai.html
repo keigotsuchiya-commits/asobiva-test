@@ -472,7 +472,7 @@ body.admin-mode .card-replace { display: flex; }
 /* ── YOKAI CAROUSEL ── */
 .yokai-carousel-card { width:100%; background:var(--white); overflow:hidden; position:relative; }
 .yokai-carousel-img { width:100%; height:auto; display:block; }
-.yokai-carousel-html iframe { display:block; width:100%; height:60px; border:none; background:var(--white); overflow:hidden; }
+.yokai-carousel-html { line-height:0; } .yokai-carousel-html iframe { display:block; width:100%; height:60px; border:none; background:var(--white); overflow:hidden; }
 .yokai-carousel-footer { display:flex; align-items:center; justify-content:space-between; padding:6px 12px; background:var(--white); border-top:1px solid var(--border); font-size:11px; letter-spacing:0.08em; color:var(--ink-soft); }
 .yokai-carousel-footer span { font-size:11px; letter-spacing:0.08em; color:var(--ink-soft); }
 .yokai-carousel-nav { background:none; color:var(--ink); border:none; width:32px; height:32px; font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; opacity:0.5; }
@@ -726,7 +726,7 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
         <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
         <button class="burger-menu-item admin-only" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
         <button class="burger-menu-item admin-only" id="downloadHtmlBtn" onclick="handleDownloadClick()">公開用保存</button>
-        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v1.7</div>
+        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v1.8</div>
       </div>
     </div>
   </div>
@@ -1033,7 +1033,12 @@ function render() {
       iframe.sandbox = 'allow-scripts allow-popups allow-forms allow-same-origin';
       iframe.addEventListener('load', function() {
         try {
-          const h = iframe.contentDocument.body.clientHeight || iframe.contentDocument.documentElement.clientHeight;
+          const doc = iframe.contentDocument;
+          const body = doc.body;
+          const style = doc.defaultView.getComputedStyle(body);
+          const marginTop = parseFloat(style.marginTop) || 0;
+          const marginBottom = parseFloat(style.marginBottom) || 0;
+          const h = body.offsetHeight + marginTop + marginBottom;
           if (h > 0) iframe.style.height = h + 'px';
         } catch(e) {}
         iframe.contentWindow.postMessage({ type: 'asobiva-init' }, '*');
@@ -1126,7 +1131,12 @@ function render() {
       iframe.sandbox = 'allow-scripts allow-popups allow-forms allow-same-origin';
       iframe.addEventListener('load', function() {
         try {
-          const h = iframe.contentDocument.body.clientHeight || iframe.contentDocument.documentElement.clientHeight;
+          const doc = iframe.contentDocument;
+          const body = doc.body;
+          const style = doc.defaultView.getComputedStyle(body);
+          const marginTop = parseFloat(style.marginTop) || 0;
+          const marginBottom = parseFloat(style.marginBottom) || 0;
+          const h = body.offsetHeight + marginTop + marginBottom;
           if (h > 0) iframe.style.height = h + 'px';
         } catch(e) {}
         iframe.contentWindow.postMessage({ type: 'asobiva-init' }, '*');
