@@ -793,7 +793,7 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
         <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
         <button class="burger-menu-item admin-only" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
         <button class="burger-menu-item admin-only" id="downloadHtmlBtn" onclick="handleDownloadClick()">公開用保存</button>
-        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v1.8</div>
+        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v1.9</div>
       </div>
     </div>
   </div>
@@ -1348,7 +1348,7 @@ const FULLSCREEN_SCALE = 0.9;
 let _fullscreenResizeHandler = null;
 
 function sizeFullscreenIframe(frameWrap, iframe) {
-  const isEdge = /Edg\//.test(navigator.userAgent);
+  const isEdge = /Edg\/|EdgA\/|EdgiOS\//.test(navigator.userAgent);
   const apply = () => {
     let maxW;
     if (isEdge) {
