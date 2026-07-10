@@ -726,7 +726,7 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
         <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
         <button class="burger-menu-item admin-only" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
         <button class="burger-menu-item admin-only" id="downloadHtmlBtn" onclick="handleDownloadClick()">公開用保存</button>
-        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v1.8</div>
+        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v2.4</div>
       </div>
     </div>
   </div>
@@ -849,7 +849,7 @@ function injectAutoResize(html) {
 <scr` + `ipt>
 (function(){
   function reportHeight(){
-    var h = document.documentElement.scrollHeight;
+    var h = document.body.offsetHeight;
     parent.postMessage({ type: 'asobiva-resize', height: h }, '*');
   }
   window.addEventListener('message', function(e){
@@ -1804,7 +1804,7 @@ ${cardsHTML}  <div class="footer-section${footerGapClass}">
 window.addEventListener('message', function(e){
   if (e.data && e.data.type === 'asobiva-resize') {
     document.querySelectorAll('.html-card iframe').forEach(function(f){
-      if (f.contentWindow === e.source) f.style.height = Math.max(60, e.data.height) + 'px';
+      if (f.contentWindow === e.source) f.style.height = e.data.height + 'px';
     });
   }
 });
