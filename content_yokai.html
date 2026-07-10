@@ -726,7 +726,7 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
         <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
         <button class="burger-menu-item admin-only" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
         <button class="burger-menu-item admin-only" id="downloadHtmlBtn" onclick="handleDownloadClick()">公開用保存</button>
-        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v2.4</div>
+        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v2.5</div>
       </div>
     </div>
   </div>
@@ -849,7 +849,13 @@ function injectAutoResize(html) {
 <scr` + `ipt>
 (function(){
   function reportHeight(){
-    var h = document.body.offsetHeight;
+    var els = document.body.children;
+    var h = 0;
+    for (var i = 0; i < els.length; i++) {
+      var r = els[i].getBoundingClientRect();
+      if (r.bottom > h) h = r.bottom;
+    }
+    if (h === 0) h = document.body.offsetHeight;
     parent.postMessage({ type: 'asobiva-resize', height: h }, '*');
   }
   window.addEventListener('message', function(e){
