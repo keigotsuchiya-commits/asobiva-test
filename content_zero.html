@@ -814,7 +814,7 @@ body.admin-mode .card-move { display: flex; }
         <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
         <button class="burger-menu-item admin-only" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
         <button class="burger-menu-item admin-only" id="downloadHtmlBtn" onclick="handleDownloadClick()">公開用保存</button>
-        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v1.7</div>
+        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v1.8</div>
       </div>
     </div>
   </div>
@@ -2082,14 +2082,26 @@ document.addEventListener('click', function(e){
 }
 
 // ページ読み込み時にiframeを全てリセット
-document.querySelectorAll('iframe').forEach(el => {
-  el.src = 'about:blank';
-  el.remove();
+// ページ読み込み時・bfcache復帰時にYouTube iframeをリセット
+function resetYouTubeIframes() {
+  document.querySelectorAll('.yt-iframe-wrap').forEach(el => {
+    el.innerHTML = '';
+    el.style.display = 'none';
+  });
+  document.querySelectorAll('.yt-thumb').forEach(el => {
+    el.style.display = '';
+  });
+}
+
+window.addEventListener('pageshow', function(e) {
+  resetYouTubeIframes();
+  if (e.persisted) {
+    // bfcacheから復帰した場合はinitを再実行
+    init();
+  }
 });
-document.querySelectorAll('.yt-iframe-wrap').forEach(el => {
-  el.innerHTML = '';
-  el.style.display = 'none';
-});
+
+resetYouTubeIframes();
 init();
 </script>
 </body>
