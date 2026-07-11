@@ -1269,11 +1269,16 @@ function moveNavItem(i, dir) {
 async function loadFooterGap() {
   try {
     const row = await dbOp('banners', 'readonly', s => s.get(98));
-    const noGap = row?.footerNoGap === true;
+    const gap = row?.footerGap || (row?.footerNoGap === true ? 'nogap' : 'gap');
     const sec = document.getElementById('footerSection');
     const btn = document.getElementById('footerGapBtn');
-    if (sec) sec.classList.toggle('no-gap', noGap);
-    if (btn) btn.textContent = noGap ? '隙間なし' : '隙間あり';
+    if (sec) {
+      sec.classList.remove('no-gap','line-gap','dot-gap');
+      if (gap === 'nogap') sec.classList.add('no-gap');
+      else if (gap === 'line') sec.classList.add('line-gap');
+      else if (gap === 'dot') sec.classList.add('dot-gap');
+    }
+    if (btn) btn.textContent = gap === 'gap' ? '隙間あり' : gap === 'line' ? 'ライン' : gap === 'dot' ? '点線' : '隙間なし';
   } catch {}
 }
 
@@ -1622,6 +1627,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .empty-state strong { display:block; font-size:14px; font-weight:600; color:var(--ink); margin-bottom:6px; }
 .footer-section { background: var(--bg); padding-top:10px; }
 .footer-section.no-gap { padding-top:0; }
+.footer-section.line-gap { border-top: 1px solid var(--ink); }
+.footer-section.dot-gap { border-top: 1px dashed rgba(0,0,0,0.2); }
 .site-header { display:flex; align-items:center; justify-content:flex-end; padding:10px 16px; background:var(--white); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; }
 .burger-btn { background:none; border:none; cursor:pointer; padding:4px; display:flex; flex-direction:column; gap:5px; align-items:flex-end; }
 .burger-btn span { display:block; height:1.5px; background:var(--ink); border-radius:1px; }

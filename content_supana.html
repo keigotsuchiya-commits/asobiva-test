@@ -1273,6 +1273,19 @@ function renderTab(tab) {
       e.preventDefault(); e.stopPropagation();
       deleteCard(c.id);
     });
+    const moveWrap = document.createElement('div');
+    moveWrap.className = 'card-move';
+    const upBtn = document.createElement('button');
+    upBtn.textContent = '↑';
+    upBtn.disabled = idx === 0;
+    upBtn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); moveCard(idx, idx - 1); });
+    const downBtn = document.createElement('button');
+    downBtn.textContent = '↓';
+    downBtn.disabled = idx === cards.length - 1;
+    downBtn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); moveCard(idx, idx + 1); });
+    moveWrap.appendChild(upBtn);
+    moveWrap.appendChild(downBtn);
+    wrap.appendChild(moveWrap);
 
     const gapBtn = document.createElement('button');
     gapBtn.className = 'card-gap-btn';
@@ -1421,11 +1434,16 @@ function moveNavItem(i, dir) {
 async function loadFooterGap() {
   try {
     const row = await dbOp('banners', 'readonly', s => s.get(98));
-    const noGap = row?.footerNoGap === true;
+    const gap = row?.footerGap || (row?.footerNoGap === true ? 'nogap' : 'gap');
     const sec = document.getElementById('footerSection');
     const btn = document.getElementById('footerGapBtn');
-    if (sec) sec.classList.toggle('no-gap', noGap);
-    if (btn) btn.textContent = noGap ? '隙間なし' : '隙間あり';
+    if (sec) {
+      sec.classList.remove('no-gap','line-gap','dot-gap');
+      if (gap === 'nogap') sec.classList.add('no-gap');
+      else if (gap === 'line') sec.classList.add('line-gap');
+      else if (gap === 'dot') sec.classList.add('dot-gap');
+    }
+    if (btn) btn.textContent = gap === 'gap' ? '隙間あり' : gap === 'line' ? 'ライン' : gap === 'dot' ? '点線' : '隙間なし';
   } catch {}
 }
 
@@ -1831,6 +1849,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .empty-state strong { display:block; font-size:14px; font-weight:600; color:var(--ink); margin-bottom:6px; }
 .footer-section { background:var(--bg); padding-top:10px; }
 .footer-section.no-gap { padding-top:0; }
+.footer-section.line-gap { border-top: 1px solid var(--ink); }
+.footer-section.dot-gap { border-top: 1px dashed rgba(0,0,0,0.2); }
 footer { padding:28px 16px; text-align:center; font-size:10px; letter-spacing:0.1em; color:var(--ink-soft); background:var(--white); }
 `;
 
