@@ -824,7 +824,7 @@ body.admin-mode .card-move { display: flex; }
         <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
         <button class="burger-menu-item admin-only" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
         <button class="burger-menu-item admin-only" id="downloadHtmlBtn" onclick="handleDownloadClick()">公開用保存</button>
-        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v2.9</div>
+        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v3.2</div>
       </div>
     </div>
   </div>
@@ -1155,7 +1155,7 @@ function render() {
       const thumbImg = document.createElement('img');
       thumbImg.src = thumbSrc;
       thumbImg.alt = c.title || '';
-      thumbImg.style.cssText = 'width:100%;height:auto;display:block;';
+
       thumbDiv.appendChild(thumbImg);
 
       const playOverlay = document.createElement('div');
@@ -1185,22 +1185,22 @@ function render() {
 
       // タイトル + YouTubeボタン
       const infoRow = document.createElement('div');
-      infoRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--white);';
-      if (c.title) {
-        const titleEl = document.createElement('div');
-        titleEl.className = 'yt-title';
-        titleEl.style.cssText = 'font-size:13px;font-weight:500;color:var(--ink);flex:1;margin:0;padding:0;';
-        titleEl.textContent = c.title;
-        infoRow.appendChild(titleEl);
-      }
+      infoRow.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:12px;padding:10px 16px;background:var(--white);';
       const ytLink = document.createElement('a');
       ytLink.href = `https://www.youtube.com/watch?v=${c.ytId}`;
       ytLink.target = '_blank';
       ytLink.rel = 'noopener';
       ytLink.innerHTML = '<svg viewBox="0 0 24 24" fill="none" style="width:28px;height:28px;"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29.94 29.94 0 0 0 1 12a29.94 29.94 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96A29.94 29.94 0 0 0 23 12a29.94 29.94 0 0 0-.46-5.58z" stroke="#000" stroke-width="1.8"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="#000"/></svg>';
-      ytLink.style.cssText = 'display:flex;align-items:center;flex-shrink:0;margin-left:8px;';
+      ytLink.style.cssText = 'display:flex;align-items:center;flex-shrink:0;';
       ytLink.addEventListener('click', e => e.stopPropagation());
       infoRow.appendChild(ytLink);
+      if (c.title) {
+        const titleEl = document.createElement('div');
+        titleEl.className = 'yt-title';
+        titleEl.style.cssText = 'font-size:13px;font-weight:500;color:var(--ink);margin:0;padding:0;';
+        titleEl.textContent = c.title;
+        infoRow.appendChild(titleEl);
+      }
       wrap.appendChild(infoRow);
 
       // 管理モード: サムネイル差し替え
@@ -1243,9 +1243,11 @@ function render() {
         const m = url.match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
         if (!m) { alert('正しいYouTube URLを入力してください'); return; }
         const newYtId = m[1];
+        const newTitle = prompt('タイトルを入力', c.title || '');
         const existing = cards.find(cd => cd.id === c.id);
         if (existing) {
           existing.ytId = newYtId;
+          if (newTitle !== null) existing.title = newTitle;
           await dbOp('cards', 'readwrite', s => s.put({ ...existing }));
           render();
         }
@@ -1906,7 +1908,7 @@ async function downloadHTML() {
       const thumbImg = document.createElement('img');
       thumbImg.src = thumbSrc;
       thumbImg.alt = c.title || '';
-      thumbImg.style.cssText = 'width:100%;height:auto;display:block;';
+
       thumbDiv.appendChild(thumbImg);
 
       const playOverlay = document.createElement('div');
@@ -1936,22 +1938,22 @@ async function downloadHTML() {
 
       // タイトル + YouTubeボタン
       const infoRow = document.createElement('div');
-      infoRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--white);';
-      if (c.title) {
-        const titleEl = document.createElement('div');
-        titleEl.className = 'yt-title';
-        titleEl.style.cssText = 'font-size:13px;font-weight:500;color:var(--ink);flex:1;margin:0;padding:0;';
-        titleEl.textContent = c.title;
-        infoRow.appendChild(titleEl);
-      }
+      infoRow.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:12px;padding:10px 16px;background:var(--white);';
       const ytLink = document.createElement('a');
       ytLink.href = `https://www.youtube.com/watch?v=${c.ytId}`;
       ytLink.target = '_blank';
       ytLink.rel = 'noopener';
       ytLink.innerHTML = '<svg viewBox="0 0 24 24" fill="none" style="width:28px;height:28px;"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29.94 29.94 0 0 0 1 12a29.94 29.94 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96A29.94 29.94 0 0 0 23 12a29.94 29.94 0 0 0-.46-5.58z" stroke="#000" stroke-width="1.8"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="#000"/></svg>';
-      ytLink.style.cssText = 'display:flex;align-items:center;flex-shrink:0;margin-left:8px;';
+      ytLink.style.cssText = 'display:flex;align-items:center;flex-shrink:0;';
       ytLink.addEventListener('click', e => e.stopPropagation());
       infoRow.appendChild(ytLink);
+      if (c.title) {
+        const titleEl = document.createElement('div');
+        titleEl.className = 'yt-title';
+        titleEl.style.cssText = 'font-size:13px;font-weight:500;color:var(--ink);margin:0;padding:0;';
+        titleEl.textContent = c.title;
+        infoRow.appendChild(titleEl);
+      }
       wrap.appendChild(infoRow);
 
       // 管理モード: サムネイル差し替え
@@ -1994,9 +1996,11 @@ async function downloadHTML() {
         const m = url.match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
         if (!m) { alert('正しいYouTube URLを入力してください'); return; }
         const newYtId = m[1];
+        const newTitle = prompt('タイトルを入力', c.title || '');
         const existing = cards.find(cd => cd.id === c.id);
         if (existing) {
           existing.ytId = newYtId;
+          if (newTitle !== null) existing.title = newTitle;
           await dbOp('cards', 'readwrite', s => s.put({ ...existing }));
           render();
         }
