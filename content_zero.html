@@ -824,7 +824,7 @@ body.admin-mode .card-move { display: flex; }
         <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
         <button class="burger-menu-item admin-only" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
         <button class="burger-menu-item admin-only" id="downloadHtmlBtn" onclick="handleDownloadClick()">公開用保存</button>
-        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v2.6</div>
+        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v2.8</div>
       </div>
     </div>
   </div>
@@ -1149,6 +1149,7 @@ function render() {
       const thumbSrc = c.thumbB64 || `https://img.youtube.com/vi/${c.ytId}/hqdefault.jpg`;
 
       const thumbDiv = document.createElement('div');
+      thumbDiv.className = 'yt-thumb';
       thumbDiv.style.cssText = 'width:100%;position:relative;background:#000;overflow:hidden;';
 
       const thumbImg = document.createElement('img');
@@ -1229,6 +1230,28 @@ function render() {
       wrap.appendChild(thumbReplaceBtn);
       thumbReplaceBtn.className = 'card-replace';
       if (adminMode) thumbReplaceBtn.style.display = 'flex';
+
+      // YouTube URL編集ボタン
+      const ytEditBtn = document.createElement('button');
+      ytEditBtn.title = 'YouTube URLを編集';
+      ytEditBtn.textContent = '✎';
+      ytEditBtn.style.cssText = 'display:none;position:absolute;top:10px;right:88px;width:30px;height:30px;background:rgba(0,0,0,0.5);color:#fff;border:none;border-radius:50%;font-size:14px;cursor:pointer;align-items:center;justify-content:center;z-index:20;';
+      ytEditBtn.addEventListener('click', async e => {
+        e.preventDefault(); e.stopPropagation();
+        const url = prompt('YouTube URLを入力', `https://www.youtube.com/watch?v=${c.ytId}`);
+        if (!url) return;
+        const m = url.match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+        if (!m) { alert('正しいYouTube URLを入力してください'); return; }
+        const newYtId = m[1];
+        const existing = cards.find(cd => cd.id === c.id);
+        if (existing) {
+          existing.ytId = newYtId;
+          await dbOp('cards', 'readwrite', s => s.put({ ...existing }));
+          render();
+        }
+      });
+      wrap.appendChild(ytEditBtn);
+      if (adminMode) ytEditBtn.style.display = 'flex';
 
       supportsReplace = false;
 
@@ -1877,6 +1900,7 @@ async function downloadHTML() {
       const thumbSrc = c.thumbB64 || `https://img.youtube.com/vi/${c.ytId}/hqdefault.jpg`;
 
       const thumbDiv = document.createElement('div');
+      thumbDiv.className = 'yt-thumb';
       thumbDiv.style.cssText = 'width:100%;position:relative;background:#000;overflow:hidden;';
 
       const thumbImg = document.createElement('img');
@@ -1957,6 +1981,28 @@ async function downloadHTML() {
       wrap.appendChild(thumbReplaceBtn);
       thumbReplaceBtn.className = 'card-replace';
       if (adminMode) thumbReplaceBtn.style.display = 'flex';
+
+      // YouTube URL編集ボタン
+      const ytEditBtn = document.createElement('button');
+      ytEditBtn.title = 'YouTube URLを編集';
+      ytEditBtn.textContent = '✎';
+      ytEditBtn.style.cssText = 'display:none;position:absolute;top:10px;right:88px;width:30px;height:30px;background:rgba(0,0,0,0.5);color:#fff;border:none;border-radius:50%;font-size:14px;cursor:pointer;align-items:center;justify-content:center;z-index:20;';
+      ytEditBtn.addEventListener('click', async e => {
+        e.preventDefault(); e.stopPropagation();
+        const url = prompt('YouTube URLを入力', `https://www.youtube.com/watch?v=${c.ytId}`);
+        if (!url) return;
+        const m = url.match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+        if (!m) { alert('正しいYouTube URLを入力してください'); return; }
+        const newYtId = m[1];
+        const existing = cards.find(cd => cd.id === c.id);
+        if (existing) {
+          existing.ytId = newYtId;
+          await dbOp('cards', 'readwrite', s => s.put({ ...existing }));
+          render();
+        }
+      });
+      wrap.appendChild(ytEditBtn);
+      if (adminMode) ytEditBtn.style.display = 'flex';
 
       supportsReplace = false;
 
