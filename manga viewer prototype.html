@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>きょうの田中さん - ウェブ漫画プロトタイプ</title>
+<style>
+  :root{
+    --paper:#eee9df;
+    --ink:#1c1a17;
+    --accent:#b3402c;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0;padding:0;
+    width:100%;height:100%;
+    background:var(--paper);
+    overscroll-behavior:none;
+    font-family:"Hiragino Mincho ProN","Yu Mincho",serif;
+    color:var(--ink);
+  }
+  #app{
+    position:fixed;inset:0;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    overflow:hidden;
+  }
+
+  /* header */
+  .topbar{
+    position:absolute;top:0;left:0;right:0;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 18px;
+    z-index:20;
+    font-size:12px;
+    letter-spacing:.08em;
+    color:var(--ink);
+    opacity:.75;
+    pointer-events:none;
+  }
+  .topbar .title{font-weight:600;}
+  .topbar .counter{font-variant-numeric:tabular-nums;}
+
+  /* stage: the cropped-koma viewport */
+  .stage{
+    position:relative;
+    width:100%;
+    max-width:560px;
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .slide{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:92%;
+    box-shadow:0 10px 30px rgba(0,0,0,.18);
+    background:#fff;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .45s ease;
+  }
+  .slide.active{
+    opacity:1;
+    pointer-events:auto;
+  }
+  .cropBox{
+    overflow:hidden;
+    width:100%;
+    position:relative;
+  }
+  .cropBox img{
+    display:block;
+    width:100%;
+    position:relative;
+  }
+
+  /* entrance + ambient motion, only while active */
+  .slide.active .cropBox img{
+    animation: settleZoom 5.5s ease-out forwards;
+  }
+  .slide.active{
+    animation: slideIn .5s ease-out;
+  }
+  @keyframes slideIn{
+    from{ transform:translate(-50%,-50%) translateX(26px); opacity:0; }
+    to{ transform:translate(-50%,-50%) translateX(0); opacity:1; }
+  }
+  @keyframes settleZoom{
+    from{ transform:scale(1.045); }
+    to{ transform:scale(1); }
+  }
+  @media (prefers-reduced-motion:reduce){
+    .slide.active{ animation:none; opacity:1; }
+    .slide.active .cropBox img{ animation:none; }
+  }
+
+  /* nav dots */
+  .dots{
+    position:absolute;bottom:22px;left:0;right:0;
+    display:flex;gap:7px;align-items:center;justify-content:center;
+    z-index:20;
+  }
+  .dot{
+    width:6px;height:6px;border-radius:50%;
+    background:var(--ink);opacity:.25;
+    transition:opacity .25s, transform .25s;
+  }
+  .dot.on{opacity:.9;transform:scale(1.3);background:var(--accent);}
+
+  /* tap zones (invisible) */
+  .tapzone{
+    position:absolute;top:0;bottom:0;width:38%;z-index:15;
+  }
+  .tapzone.left{left:0;}
+  .tapzone.right{right:0;}
+
+  .hint{
+    position:absolute;
+    bottom:46px;left:0;right:0;
+    text-align:center;
+    font-size:11px;
+    letter-spacing:.15em;
+    color:var(--ink);
+    opacity:0;
+    animation:hintFade 3.5s ease forwards;
+    pointer-events:none;
+  }
+  @keyframes hintFade{
+    0%{opacity:0;}
+    15%{opacity:.55;}
+    75%{opacity:.55;}
+    100%{opacity:0;}
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div class="topbar">
+    <div class="title">きょうの田中さん（タイパの巻）</div>
+    <div class="counter"><span id="cur">1</span> / <span id="total">4</span></div>
+  </div>
+
+  <div class="stage" id="stage"></div>
+
+  <div class="tapzone left" id="prevZone"></div>
+  <div class="tapzone right" id="nextZone"></div>
+
+  <div class="hint">タップ・スワイプで次へ →</div>
+
+  <div class="dots" id="dots"></div>
+</div>
+
+<script>
+const IMG_SRC = "tanaka_ep1.jpg";
+const NATURAL_W = 808;
+const NATURAL_H = 1592;
+
+// 検出したコマの縦座標(px, 元画像基準)。
+// panel3/4間に明確な余白が見つからなかったため、暫定で1枚として扱っています。
+const panels = [
+  { label: "表紙",  top: 0,    bottom: 578  },
+  { label: "コマ1", top: 584,  bottom: 906  },
+  { label: "コマ2", top: 906,  bottom: 1242 },
+  { label: "コマ3", top: 1242, bottom: 1592 }
+];
+
+const stage = document.getElementById('stage');
+const dotsEl = document.getElementById('dots');
+const curEl = document.getElementById('cur');
+const totalEl = document.getElementById('total');
+
+totalEl.textContent = panels.length;
+
+let current = 0;
+let slides = [];
+
+function buildSlides(){
+  const baseWidth = Math.min(window.innerWidth * 0.92, 560 * 0.92);
+  const scale = baseWidth / NATURAL_W;
+
+  stage.innerHTML = '';
+  dotsEl.innerHTML = '';
+  slides = [];
+
+  panels.forEach((p, i) => {
+    const cropH = (p.bottom - p.top) * scale;
+    const marginTop = -(p.top * scale);
+
+    const slide = document.createElement('div');
+    slide.className = 'slide';
+    slide.style.width = baseWidth + 'px';
+
+    const cropBox = document.createElement('div');
+    cropBox.className = 'cropBox';
+    cropBox.style.height = cropH + 'px';
+
+    const img = document.createElement('img');
+    img.src = IMG_SRC;
+    img.style.width = baseWidth + 'px';
+    img.style.marginTop = marginTop + 'px';
+    img.draggable = false;
+
+    cropBox.appendChild(img);
+    slide.appendChild(cropBox);
+    stage.appendChild(slide);
+    slides.push(slide);
+
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    dotsEl.appendChild(dot);
+  });
+
+  show(current, true);
+}
+
+function show(index, silent){
+  index = Math.max(0, Math.min(panels.length - 1, index));
+  slides.forEach((s, i) => {
+    // retrigger animation
+    s.classList.remove('active');
+    void s.offsetWidth;
+    if (i === index) s.classList.add('active');
+  });
+  [...dotsEl.children].forEach((d, i) => d.classList.toggle('on', i === index));
+  current = index;
+  curEl.textContent = index + 1;
+}
+
+function next(){ if (current < panels.length - 1) show(current + 1); }
+function prev(){ if (current > 0) show(current - 1); }
+
+document.getElementById('nextZone').addEventListener('click', next);
+document.getElementById('prevZone').addEventListener('click', prev);
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight') next();
+  if (e.key === 'ArrowLeft') prev();
+});
+
+// swipe
+let touchStartX = null;
+document.addEventListener('touchstart', (e) => {
+  touchStartX = e.touches[0].clientX;
+}, { passive: true });
+document.addEventListener('touchend', (e) => {
+  if (touchStartX === null) return;
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (dx < -40) next();
+  if (dx > 40) prev();
+  touchStartX = null;
+}, { passive: true });
+
+window.addEventListener('resize', buildSlides);
+buildSlides();
+</script>
+
+</body>
+</html>
