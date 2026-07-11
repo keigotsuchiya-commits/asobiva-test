@@ -508,9 +508,13 @@ body.admin-mode .card-replace { display: flex; }
   padding-top: 0;
 }
 .footer-section.line-gap {
+  padding-top: 0;
+  background: var(--white);
   border-top: 1px solid var(--ink);
 }
 .footer-section.dot-gap {
+  padding-top: 0;
+  background: var(--white);
   border-top: 1px dashed rgba(0,0,0,0.2);
 }
 .footer-gap-btn {
@@ -1855,8 +1859,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .empty-state strong { display:block; font-size:14px; font-weight:600; color:var(--ink); margin-bottom:6px; }
 .footer-section { background:var(--bg); padding-top:10px; }
 .footer-section.no-gap { padding-top:0; }
-.footer-section.line-gap { border-top: 1px solid var(--ink); }
-.footer-section.dot-gap { border-top: 1px dashed rgba(0,0,0,0.2); }
+.footer-section.line-gap { padding-top:0; background:var(--white); border-top:1px solid var(--ink); }
+.footer-section.dot-gap { padding-top:0; background:var(--white); border-top:1px dashed rgba(0,0,0,0.2); }
 footer { padding:28px 16px; text-align:center; font-size:10px; letter-spacing:0.1em; color:var(--ink-soft); background:var(--white); }
 `;
 
