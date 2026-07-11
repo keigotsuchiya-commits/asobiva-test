@@ -429,6 +429,31 @@ body.admin-mode .html-card-label { display: block; }
 }
 .card-del:hover { background: #c0392b; }
 body.admin-mode .card-del { display: flex; }
+.card-move {
+  display: none;
+  position: absolute;
+  bottom: 10px; right: 50px;
+  flex-direction: row;
+  gap: 6px;
+  z-index: 5;
+}
+.card-move button {
+  width: 30px; height: 30px;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.card-move button:hover { background: #444; }
+.card-move button:disabled { opacity: 0.3; cursor: default; }
+body.admin-mode .card-move { display: flex; }
+
 
 .card-replace {
   display: none;
@@ -731,7 +756,7 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
         <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
         <button class="burger-menu-item admin-only" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
         <button class="burger-menu-item admin-only" id="downloadHtmlBtn" onclick="handleDownloadClick()">公開用保存</button>
-        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v2.9</div>
+        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v3.0</div>
       </div>
     </div>
   </div>
@@ -1348,10 +1373,14 @@ async function loadFooterGap() {
 async function toggleFooterGap() {
   const sec = document.getElementById('footerSection');
   const btn = document.getElementById('footerGapBtn');
-  const noGap = !sec.classList.contains('no-gap');
-  sec.classList.toggle('no-gap', noGap);
-  btn.textContent = noGap ? '隙間なし' : '隙間あり';
-  await dbOp('banners', 'readwrite', s => s.put({ slot: 98, footerNoGap: noGap }));
+  const cur = sec.classList.contains('no-gap') ? 'nogap' : sec.classList.contains('line-gap') ? 'line' : sec.classList.contains('dot-gap') ? 'dot' : 'gap';
+  const next = cur === 'gap' ? 'line' : cur === 'line' ? 'dot' : cur === 'dot' ? 'nogap' : 'gap';
+  sec.classList.remove('no-gap','line-gap','dot-gap');
+  if (next === 'nogap') sec.classList.add('no-gap');
+  else if (next === 'line') sec.classList.add('line-gap');
+  else if (next === 'dot') sec.classList.add('dot-gap');
+  btn.textContent = next === 'gap' ? '隙間あり' : next === 'line' ? 'ライン' : next === 'dot' ? '点線' : '隙間なし';
+  await dbOp('banners', 'readwrite', s => s.put({ slot: 98, footerGap: next }));
 }
 
 // ── Footer gap toggle ─────────────────────────
@@ -1638,6 +1667,18 @@ async function toggleGap(id) {
 }
 
 // ── Delete ────────────────────────────────────
+async function moveCard(fromIdx, toIdx) {
+  if (toIdx < 0 || toIdx >= cards.length) return;
+  const tmp = cards[fromIdx];
+  cards[fromIdx] = cards[toIdx];
+  cards[toIdx] = tmp;
+  cards.forEach((c, i) => { c.order = i + 1; });
+  for (const card of cards) {
+    try { await dbOp('cards', 'readwrite', s => s.put({ ...card })); } catch {}
+  }
+  render();
+}
+
 async function deleteCard(id) {
   await dbOp('cards', 'readwrite', s => s.delete(id));
   const i = cards.findIndex(c => c.id === id);
@@ -1657,7 +1698,7 @@ function downloadEditHTML() {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
-  a.download = `edit_${ts}.html`;
+  a.download = `content_yokai_edit_${ts}.html`;
   document.body.appendChild(a);
   a.click();
   a.remove();
