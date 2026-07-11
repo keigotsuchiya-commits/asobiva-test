@@ -135,7 +135,7 @@ body.admin-mode .download-btn { display: inline-block; }
   box-shadow: 0 4px 16px rgba(0,0,0,0.1);
   overflow: hidden;
   z-index: 200;
-  min-width: 120px;
+  min-width: 200px;
 }
 .burger-menu.open { display: block; }
 .burger-menu-item {
@@ -824,7 +824,7 @@ body.admin-mode .card-move { display: flex; }
         <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
         <button class="burger-menu-item admin-only" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
         <button class="burger-menu-item admin-only" id="downloadHtmlBtn" onclick="handleDownloadClick()">公開用保存</button>
-        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v2.8</div>
+        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v2.9</div>
       </div>
     </div>
   </div>
@@ -1173,7 +1173,7 @@ function render() {
         iframeWrap.innerHTML = '';
         iframeWrap.style.display = 'block';
         const iframe = document.createElement('iframe');
-        iframe.src = `https://www.youtube.com/embed/${c.ytId}?autoplay=1`;
+        iframe.src = `https://www.youtube.com/embed/${c.ytId}`;
         iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
         iframe.allowFullscreen = true;
         iframe.style.cssText = 'width:100%;height:100%;border:none;';
@@ -1796,7 +1796,7 @@ function downloadEditHTML() {
   const source = document.documentElement.outerHTML.replace(' class="admin-mode"', '').replace(' admin-mode', '');
   const initData = { banners: banners, cards: cards };
   const initScript = `<scr` + `ipt>window.__ASOBIVA_INIT__ = ${JSON.stringify(initData).split('\n').join(' ').split('\r').join(' ').split('\t').join(' ')};</scr` + `ipt>`;
-  const output = source.replace('</head>', initScript + '\n</head>');
+  const output = '<!DOCTYPE html>\n' + source.replace('</head>', initScript + '\n</head>');
   const blob = new Blob([output], { type: 'text/html;charset=utf-8' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -1924,7 +1924,7 @@ async function downloadHTML() {
         iframeWrap.innerHTML = '';
         iframeWrap.style.display = 'block';
         const iframe = document.createElement('iframe');
-        iframe.src = `https://www.youtube.com/embed/${c.ytId}?autoplay=1`;
+        iframe.src = `https://www.youtube.com/embed/${c.ytId}`;
         iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
         iframe.allowFullscreen = true;
         iframe.style.cssText = 'width:100%;height:100%;border:none;';
