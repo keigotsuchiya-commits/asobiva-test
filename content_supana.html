@@ -1906,10 +1906,7 @@ ${tabContents}${commonHTML}  <div class="footer-section${footerGapClass}">
   </div>
 </div>
 <scr` + `ipt>
-function switchTab(tab) {
-  document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.tab === tab); });
-  document.querySelectorAll('.tab-content').forEach(function(el){ el.style.display = el.id === 'tabContent-' + tab ? '' : 'none'; });
-}
+
 
 window.addEventListener('message', function(e){
   if(e.data && e.data.type === 'asobiva-resize'){
