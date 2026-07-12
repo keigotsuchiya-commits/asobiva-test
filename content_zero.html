@@ -821,7 +821,7 @@ body.admin-mode .card-move { display: flex; }
         <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
         <button class="burger-menu-item admin-only" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
         <button class="burger-menu-item admin-only" id="downloadHtmlBtn" onclick="handleDownloadClick()">公開用保存</button>
-        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v3.4</div>
+        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v3.5</div>
       </div>
     </div>
   </div>
@@ -1156,8 +1156,7 @@ function render() {
       thumbDiv.appendChild(thumbImg);
 
       const playOverlay = document.createElement('div');
-      playOverlay.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.2);z-index:10;cursor:pointer;';
-      playOverlay.innerHTML = '<svg viewBox="0 0 68 48" fill="none" style="width:60px;height:60px;"><rect width="68" height="48" rx="10" fill="rgba(255,0,0,0.85)"/><path d="M28 16l20 8-20 8V16z" fill="#fff"/></svg>';
+      playOverlay.style.cssText = 'position:absolute;inset:0;z-index:10;cursor:pointer;';
       thumbDiv.appendChild(playOverlay);
 
       const iframeWrap = document.createElement('div');
@@ -1909,8 +1908,7 @@ async function downloadHTML() {
       thumbDiv.appendChild(thumbImg);
 
       const playOverlay = document.createElement('div');
-      playOverlay.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.2);z-index:10;cursor:pointer;';
-      playOverlay.innerHTML = '<svg viewBox="0 0 68 48" fill="none" style="width:60px;height:60px;"><rect width="68" height="48" rx="10" fill="rgba(255,0,0,0.85)"/><path d="M28 16l20 8-20 8V16z" fill="#fff"/></svg>';
+      playOverlay.style.cssText = 'position:absolute;inset:0;z-index:10;cursor:pointer;';
       thumbDiv.appendChild(playOverlay);
 
       const iframeWrap = document.createElement('div');
