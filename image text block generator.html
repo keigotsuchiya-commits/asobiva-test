@@ -43,8 +43,9 @@
     flex: 1; min-width: 90px; padding: 10px 8px; font-size: 12.5px;
     border: 1px solid #ccc; background: #fff; border-radius: 6px; font-family: inherit;
   }
-  .posbtn.active, .fontbtn.active { background: #111; color: #fff; border-color: #111; }
+  .posbtn.active, .fontbtn.active, .framebtn.active { background: #111; color: #fff; border-color: #111; }
   .fontbtn { flex: 1; min-width: 90px; padding: 10px 8px; font-size: 12.5px; border: 1px solid #ccc; background: #fff; border-radius: 6px; font-family: inherit; }
+  .framebtn { flex: 1; min-width: 90px; padding: 10px 8px; font-size: 12.5px; border: 1px solid #ccc; background: #fff; border-radius: 6px; font-family: inherit; }
 
   label.rangelabel { display:flex; justify-content:space-between; }
   input[type="range"] { width: 100%; }
@@ -70,6 +71,7 @@
 
   /* ---- block template (scoped, safe to paste into any page) ---- */
   .it-wrap { width: 100vw; position: relative; left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw; }
+  .it-frame-outer { box-sizing: border-box; }
   .it-block {
     width: 100%; box-sizing: border-box;
     display: flex; align-items: flex-start; gap: clamp(14px, 2.9cqw, 30px);
@@ -79,9 +81,10 @@
   .it-img { flex: 0 0 38%; max-width: 38%; }
   .it-img img { display: block; width: 100%; height: auto; }
   .it-text { flex: 1; min-width: 0; }
-  .it-text p {
+  .it-text p, .it-text > div {
     margin: 0; line-height: 1.8; white-space: pre-wrap;
   }
+  .it-text .it-line { margin: 0; white-space: pre-wrap; }
   .it-text p.it-sig {
     text-align: right; margin-top: 0.8em; white-space: normal;
   }
@@ -99,13 +102,14 @@
 <div class="preview-wrap">
   <div class="preview-frame">
     <div class="it-wrap">
-      <div class="it-block it-left" id="itBlock">
+      <div class="it-frame-outer" id="itFrameOuter">
+        <div class="it-block it-left" id="itBlock">
         <div class="it-img" id="itImgWrap">
           <img id="itImg" src="" alt="" style="display:none;">
           <div id="itPlaceholder" style="background:#eee;border:1px solid #ddd;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:13px;">画像未設定</div>
         </div>
         <div class="it-text">
-          <p id="itText"></p>
+          <div id="itText"></div>
           <div id="itSigWrap" class="it-sig-wrap">
             <p id="itSig" class="it-sig"></p>
             <img id="itSigImg" class="it-sig-img" src="" alt="" style="display:none;">
@@ -169,7 +173,7 @@
   <div class="group">
     <h2>本文</h2>
     <textarea id="bodyText" maxlength="600"></textarea>
-    <div class="hint">太字にしたい部分は <code>**太字**</code>、細字にしたい部分は <code>__細字__</code> のように囲んでください。（例：これは<code>**大事**</code>な話です）</div>
+    <div class="hint">太字にしたい部分は <code>**太字**</code>、細字にしたい部分は <code>__細字__</code> のように囲んでください。（例：これは<code>**大事**</code>な話です）行の先頭に <code>::</code> を付けると、その行だけ中央揃えになります。</div>
     <label class="rangelabel"><span>文字サイズ</span><span id="fontSizeVal">17px</span></label>
     <input type="range" id="fontSizeRange" min="12" max="32" value="17">
     <label>署名（右寄せ・任意）</label>
@@ -186,7 +190,7 @@
   </div>
 
   <div class="group">
-    <h2>余白</h2>
+    <h2>余白（内側）</h2>
     <label class="rangelabel"><span>上</span><span id="padTopVal">20px</span></label>
     <input type="range" id="padTop" min="0" max="60" value="20">
     <label class="rangelabel"><span>下</span><span id="padBottomVal">20px</span></label>
@@ -195,6 +199,33 @@
     <input type="range" id="padLeft" min="0" max="60" value="16">
     <label class="rangelabel"><span>右</span><span id="padRightVal">16px</span></label>
     <input type="range" id="padRight" min="0" max="60" value="16">
+  </div>
+
+  <div class="group">
+    <h2>枠線</h2>
+    <div class="imgbtns">
+      <button class="framebtn active" data-frame="off" type="button">オフ</button>
+      <button class="framebtn" data-frame="on" type="button">オン</button>
+    </div>
+
+    <div id="frameOptions" style="display:none;">
+      <label>線の色</label>
+      <input type="color" id="frameColor" value="#111111">
+
+      <label class="rangelabel"><span>線の太さ</span><span id="frameWidthVal">1px</span></label>
+      <input type="range" id="frameWidthRange" min="1" max="8" value="1">
+
+      <label class="rangelabel"><span>外側の余白・上</span><span id="outTopVal">16px</span></label>
+      <input type="range" id="outTop" min="0" max="60" value="16">
+      <label class="rangelabel"><span>外側の余白・下</span><span id="outBottomVal">16px</span></label>
+      <input type="range" id="outBottom" min="0" max="60" value="16">
+      <label class="rangelabel"><span>外側の余白・左</span><span id="outLeftVal">16px</span></label>
+      <input type="range" id="outLeft" min="0" max="60" value="16">
+      <label class="rangelabel"><span>外側の余白・右</span><span id="outRightVal">16px</span></label>
+      <input type="range" id="outRight" min="0" max="60" value="16">
+      <div class="hint">外側の余白は、枠線とページ(隣のブロック)との間の余白です。内側の余白は、枠線と文字の間の余白です。</div>
+    </div>
+  </div>
   </div>
 
   <div class="group">
@@ -213,7 +244,8 @@
 </div>
 
 <script>
-let state = { pos: 'left', imgDataUrl: null, imgWidthPct: 38, padTop: 20, padBottom: 20, padLeft: 16, padRight: 16, fontSize: 17, sigImgDataUrl: null, sigImgWidth: 100, fontFamily: 'gothic' };
+let state = { pos: 'left', imgDataUrl: null, imgWidthPct: 38, padTop: 20, padBottom: 20, padLeft: 16, padRight: 16, fontSize: 17, sigImgDataUrl: null, sigImgWidth: 100, fontFamily: 'gothic',
+  frameOn: false, frameColor: '#111111', frameWidth: 1, outTop: 16, outBottom: 16, outLeft: 16, outRight: 16 };
 
 const FONT_STACKS = {
   gothic: '"Hiragino Sans","Noto Sans JP",sans-serif',
@@ -224,6 +256,7 @@ const itBlock = document.getElementById('itBlock');
 const itImg = document.getElementById('itImg');
 const itPlaceholder = document.getElementById('itPlaceholder');
 const itImgWrap = document.getElementById('itImgWrap');
+const itFrameOuter = document.getElementById('itFrameOuter');
 const itText = document.getElementById('itText');
 const bodyText = document.getElementById('bodyText');
 const sigText = document.getElementById('sigText');
@@ -241,10 +274,30 @@ function parseMarkup(str) {
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/__(.+?)__/g, '<span style="font-weight:300">$1</span>');
 }
+function renderBodyLines(raw, escapeFn) {
+  return raw.split('\n').map(line => {
+    let centered = false;
+    let content = line;
+    if (content.startsWith('::') || content.startsWith('：：')) {
+      centered = true;
+      content = content.slice(2);
+    }
+    const html = parseMarkup(escapeFn(content)) || '&nbsp;';
+    const style = centered ? ' style="text-align:center"' : '';
+    return `<div class="it-line"${style}>${html}</div>`;
+  }).join('');
+}
 
 function updatePreview() {
   itBlock.style.fontFamily = FONT_STACKS[state.fontFamily];
-  itText.innerHTML = parseMarkup(escapeHtmlLive(bodyText.value));
+  if (state.frameOn) {
+    itBlock.style.border = `${state.frameWidth}px solid ${state.frameColor}`;
+    itFrameOuter.style.padding = `${state.outTop}px ${state.outRight}px ${state.outBottom}px ${state.outLeft}px`;
+  } else {
+    itBlock.style.border = 'none';
+    itFrameOuter.style.padding = '0';
+  }
+  itText.innerHTML = renderBodyLines(bodyText.value, escapeHtmlLive);
   itText.style.fontSize = state.fontSize + 'px';
   itSig.textContent = sigText.value;
   itSig.style.fontSize = state.fontSize + 'px';
@@ -375,6 +428,37 @@ sigImgWidthRange.addEventListener('input', () => {
   updatePreview();
 });
 
+// ---- frame (border + outer margin) ----
+const frameOptions = document.getElementById('frameOptions');
+document.querySelectorAll('.framebtn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.framebtn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.frameOn = btn.dataset.frame === 'on';
+    frameOptions.style.display = state.frameOn ? '' : 'none';
+    updatePreview();
+  });
+});
+
+document.getElementById('frameColor').addEventListener('input', (e) => {
+  state.frameColor = e.target.value;
+  updatePreview();
+});
+document.getElementById('frameWidthRange').addEventListener('input', (e) => {
+  state.frameWidth = Number(e.target.value);
+  document.getElementById('frameWidthVal').textContent = state.frameWidth + 'px';
+  updatePreview();
+});
+[['outTop','outTopVal'],['outBottom','outBottomVal'],['outLeft','outLeftVal'],['outRight','outRightVal']].forEach(([sliderId,valId]) => {
+  const slider = document.getElementById(sliderId);
+  const valEl = document.getElementById(valId);
+  slider.addEventListener('input', () => {
+    state[sliderId] = Number(slider.value);
+    valEl.textContent = slider.value + 'px';
+    updatePreview();
+  });
+});
+
 // ---- load & re-edit a previously saved/copied HTML ----
 function unescapeHtml(str) {
   return str.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
@@ -416,7 +500,7 @@ function loadFromSavedHtml(text) {
     imgWidthVal.textContent = state.imgWidthPct + '%';
   }
   // font size
-  const fontMatch = text.match(/\.it-text p\{[^}]*font-size:(\d+(?:\.\d+)?)px/);
+  const fontMatch = text.match(/\.it-text p, \.it-text > div\{[^}]*font-size:(\d+(?:\.\d+)?)px/);
   if (fontMatch) {
     state.fontSize = Math.round(parseFloat(fontMatch[1]));
     fontSizeRange.value = state.fontSize;
@@ -426,9 +510,19 @@ function loadFromSavedHtml(text) {
   const imgSrcMatch = text.match(/<img src="(data:image\/[^"]+)"/);
   state.imgDataUrl = imgSrcMatch ? imgSrcMatch[1] : null;
   // body text
-  const bodyMatch = text.match(/<div class="it-text"><p[^>]*>([\s\S]*?)<\/p>(?:<p class="it-sig"|<\/div>)/);
-  if (bodyMatch) {
-    bodyText.value = unescapeHtml(markupFromHtml(bodyMatch[1]));
+  const textStart = text.indexOf('<div class="it-text">');
+  if (textStart !== -1) {
+    let searchArea = text.slice(textStart);
+    const sigIdx = searchArea.indexOf('<div class="it-sig-wrap">');
+    if (sigIdx !== -1) searchArea = searchArea.slice(0, sigIdx);
+    const lineDivs = [...searchArea.matchAll(/<div class="it-line"( style="text-align:center")?>([\s\S]*?)<\/div>/g)];
+    if (lineDivs.length) {
+      bodyText.value = lineDivs.map(m => {
+        const centered = !!m[1];
+        let content = m[2] === '&nbsp;' ? '' : unescapeHtml(markupFromHtml(m[2]));
+        return (centered ? '::' : '') + content;
+      }).join('\n');
+    }
   }
   // signature
   const sigMatch = text.match(/<p class="it-sig"[^>]*>([\s\S]*?)<\/p>/);
@@ -448,6 +542,34 @@ function loadFromSavedHtml(text) {
   if (fontFamilyMatch) {
     state.fontFamily = fontFamilyMatch[1].includes('Mincho') ? 'mincho' : 'gothic';
     document.querySelectorAll('.fontbtn').forEach(b => b.classList.toggle('active', b.dataset.font === state.fontFamily));
+  }
+
+  // frame (border + outer margin)
+  const borderMatch = text.match(/class="it-block[^"]*"\s+style="\s*border:(\d+(?:\.\d+)?)px solid (#[0-9a-fA-F]{3,6})/);
+  state.frameOn = !!borderMatch;
+  document.querySelectorAll('.framebtn').forEach(b => b.classList.toggle('active', (b.dataset.frame === 'on') === state.frameOn));
+  frameOptions.style.display = state.frameOn ? '' : 'none';
+  if (borderMatch) {
+    state.frameWidth = Math.round(parseFloat(borderMatch[1]));
+    state.frameColor = borderMatch[2];
+    document.getElementById('frameWidthRange').value = state.frameWidth;
+    document.getElementById('frameWidthVal').textContent = state.frameWidth + 'px';
+    document.getElementById('frameColor').value = state.frameColor;
+  }
+  const outerMatch = text.match(/class="it-frame-outer"\s+style="padding:(\d+(?:\.\d+)?)px (\d+(?:\.\d+)?)px (\d+(?:\.\d+)?)px (\d+(?:\.\d+)?)px"/);
+  if (outerMatch) {
+    state.outTop = Math.round(parseFloat(outerMatch[1]));
+    state.outRight = Math.round(parseFloat(outerMatch[2]));
+    state.outBottom = Math.round(parseFloat(outerMatch[3]));
+    state.outLeft = Math.round(parseFloat(outerMatch[4]));
+    document.getElementById('outTop').value = state.outTop;
+    document.getElementById('outTopVal').textContent = state.outTop + 'px';
+    document.getElementById('outRight').value = state.outRight;
+    document.getElementById('outRightVal').textContent = state.outRight + 'px';
+    document.getElementById('outBottom').value = state.outBottom;
+    document.getElementById('outBottomVal').textContent = state.outBottom + 'px';
+    document.getElementById('outLeft').value = state.outLeft;
+    document.getElementById('outLeftVal').textContent = state.outLeft + 'px';
   }
 
   updatePreview();
@@ -485,13 +607,15 @@ function buildSnippet() {
   const style = `
 <style>
 .${id}.it-wrap{width:100vw;position:relative;left:50%;right:50%;margin-left:-50vw;margin-right:-50vw;}
+.${id} .it-frame-outer{box-sizing:border-box;}
 .${id} .it-block{width:100%;box-sizing:border-box;padding:${state.padTop}px ${state.padRight}px ${state.padBottom}px ${state.padLeft}px;display:flex;align-items:flex-start;gap:clamp(14px,2.9cqw,30px);font-family:${FONT_STACKS[state.fontFamily]};}
 .${id} .it-block.it-right{flex-direction:row-reverse;}
 .${id} .it-block.it-none{display:block;}
 .${id} .it-img{flex:0 0 ${state.imgWidthPct}%;max-width:${state.imgWidthPct}%;}
 .${id} .it-img img{display:block;width:100%;height:auto;}
 .${id} .it-text{flex:1;min-width:0;}
-.${id} .it-text p{margin:0;font-size:${state.fontSize}px;line-height:1.8;color:#111;white-space:pre-wrap;}
+.${id} .it-text p, .${id} .it-text > div{margin:0;font-size:${state.fontSize}px;line-height:1.8;color:#111;white-space:pre-wrap;}
+.${id} .it-text .it-line{margin:0;white-space:pre-wrap;}
 .${id} .it-text p.it-sig{text-align:right;margin-top:0.8em;white-space:normal;}
 .${id} .it-sig-wrap{text-align:right;}
 .${id} .it-sig-wrap .it-sig-img{display:inline-block;height:auto;margin-top:0.4em;}
@@ -511,10 +635,19 @@ function buildSnippet() {
     ? `<div class="it-sig-wrap">${sigTextBlock}${sigImgBlock}</div>`
     : '';
 
+  const outerStyle = state.frameOn
+    ? ` style="padding:${state.outTop}px ${state.outRight}px ${state.outBottom}px ${state.outLeft}px"`
+    : '';
+  const borderStyle = state.frameOn
+    ? ` border:${state.frameWidth}px solid ${state.frameColor};`
+    : '';
+
   const html = `
 <div class="it-wrap ${id}">
-  <div class="it-block ${posClass}">${imgBlock}
-    <div class="it-text"><p style="font-size:${state.fontSize}px">${parseMarkup(escapeHtml(bodyText.value))}</p>${sigWrapBlock}</div>
+  <div class="it-frame-outer"${outerStyle}>
+    <div class="it-block ${posClass}" style="${borderStyle}">${imgBlock}
+      <div class="it-text"><div style="font-size:${state.fontSize}px">${renderBodyLines(bodyText.value, escapeHtml)}</div>${sigWrapBlock}</div>
+    </div>
   </div>
 </div>`.trim();
 
