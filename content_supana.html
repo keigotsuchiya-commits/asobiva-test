@@ -787,7 +787,7 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
         <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
         <button class="burger-menu-item admin-only" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
         <button class="burger-menu-item admin-only" id="downloadHtmlBtn" onclick="handleDownloadClick()">公開用保存</button>
-        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v3.7</div>
+        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v3.8</div>
       </div>
     </div>
   </div>
@@ -1637,18 +1637,23 @@ async function addCards() {
 
 // ── Replace ───────────────────────────────────
 async function replaceCard(id, file) {
-  const link = cards.find(c => c.id === id)?.link || '';
+  const existing = cards.find(c => c.id === id) || {};
+  const link = existing.link || '';
+  const tab = existing.tab || 'chara';
+  const gap = existing.gap;
   const i = cards.findIndex(c => c.id === id);
 
   if (isHtmlFile(file)) {
     const html = await fileToText(file);
     const name = file.name;
-    await dbOp('cards', 'readwrite', s => s.put({ id, type: 'html', html, name, link }));
-    if (i !== -1) { cards[i] = { id, type: 'html', html, name, link }; }
+    const record = { id, type: 'html', html, name, link, tab, gap };
+    await dbOp('cards', 'readwrite', s => s.put(record));
+    if (i !== -1) { cards[i] = record; }
   } else {
     const base64 = await fileToBase64(file);
-    await dbOp('cards', 'readwrite', s => s.put({ id, type: 'image', base64, link }));
-    if (i !== -1) { cards[i] = { id, type: 'image', base64, link }; }
+    const record = { id, type: 'image', base64, link, tab, gap };
+    await dbOp('cards', 'readwrite', s => s.put(record));
+    if (i !== -1) { cards[i] = record; }
   }
   render();
 }
