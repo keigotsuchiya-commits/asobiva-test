@@ -1760,7 +1760,8 @@ async function toggleGap(id) {
   else c.gap = true;
   await dbOp('cards', 'readwrite', s => s.put({
     id: c.id, type: c.type, html: c.html, base64: c.base64,
-    images: c.images, name: c.name, link: c.link, gap: c.gap, order: c.order
+    images: c.images, name: c.name, link: c.link, gap: c.gap, order: c.order,
+    ytId: c.ytId, thumbB64: c.thumbB64, musicUrl: c.musicUrl, artist: c.artist, title: c.title
   }));
   render();
 }
@@ -1775,7 +1776,8 @@ async function moveCard(fromIdx, toIdx) {
   for (const c of cards) {
     await dbOp('cards', 'readwrite', s => s.put({
       id: c.id, type: c.type, html: c.html, base64: c.base64,
-      images: c.images, name: c.name, link: c.link, gap: c.gap, order: c.order
+      images: c.images, name: c.name, link: c.link, gap: c.gap, order: c.order,
+      ytId: c.ytId, thumbB64: c.thumbB64, musicUrl: c.musicUrl, artist: c.artist, title: c.title
     }));
   }
   render();
