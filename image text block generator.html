@@ -43,7 +43,8 @@
     flex: 1; min-width: 90px; padding: 10px 8px; font-size: 12.5px;
     border: 1px solid #ccc; background: #fff; border-radius: 6px; font-family: inherit;
   }
-  .posbtn.active, .fontbtn.active, .framebtn.active { background: #111; color: #fff; border-color: #111; }
+  .posbtn.active, .fontbtn.active, .framebtn.active, .bgbtn.active { background: #111; color: #fff; border-color: #111; }
+  .bgbtn { flex: 1; min-width: 90px; padding: 10px 8px; font-size: 12.5px; border: 1px solid #ccc; background: #fff; border-radius: 6px; font-family: inherit; }
   .fontbtn { flex: 1; min-width: 90px; padding: 10px 8px; font-size: 12.5px; border: 1px solid #ccc; background: #fff; border-radius: 6px; font-family: inherit; }
   .framebtn { flex: 1; min-width: 90px; padding: 10px 8px; font-size: 12.5px; border: 1px solid #ccc; background: #fff; border-radius: 6px; font-family: inherit; }
 
@@ -195,6 +196,19 @@
   </div>
 
   <div class="group">
+    <h2>背景色</h2>
+    <div class="imgbtns">
+      <button class="bgbtn active" data-bg="off" type="button">なし</button>
+      <button class="bgbtn" data-bg="on" type="button">あり</button>
+    </div>
+    <div id="bgOptions" style="display:none;">
+      <label>背景色</label>
+      <input type="color" id="bgColor" value="#f4f4f2">
+      <div class="hint">フッターなど、周囲と区別したいブロックに使えます。</div>
+    </div>
+  </div>
+
+  <div class="group">
     <h2>枠線</h2>
     <div class="imgbtns">
       <button class="framebtn active" data-frame="off" type="button">オフ</button>
@@ -238,7 +252,8 @@
 
 <script>
 let state = { pos: 'left', imgDataUrl: null, imgWidthPct: 38, padTop: 20, padBottom: 20, padLeft: 16, padRight: 16, fontSize: 17, sigImgDataUrl: null, sigImgWidth: 100, fontFamily: 'gothic',
-  frameOn: false, frameColor: '#111111', frameWidth: 1, outTop: 16, outBottom: 16, outLeft: 16, outRight: 16, lineHeight: 1.8 };
+  frameOn: false, frameColor: '#111111', frameWidth: 1, outTop: 16, outBottom: 16, outLeft: 16, outRight: 16, lineHeight: 1.8,
+  bgOn: false, bgColor: '#f4f4f2' };
 
 const FONT_STACKS = {
   gothic: '"Hiragino Sans","Noto Sans JP",sans-serif',
@@ -290,6 +305,7 @@ function updatePreview() {
     itBlock.style.border = 'none';
     itFrameOuter.style.padding = '0';
   }
+  itFrameOuter.style.background = state.bgOn ? state.bgColor : 'transparent';
   itText.innerHTML = renderBodyLines(bodyText.value, escapeHtmlLive);
   itText.style.fontSize = state.fontSize + 'px';
   itText.style.lineHeight = state.lineHeight;
@@ -427,6 +443,22 @@ const sigImgWidthVal = document.getElementById('sigImgWidthVal');
 sigImgWidthRange.addEventListener('input', () => {
   state.sigImgWidth = Number(sigImgWidthRange.value);
   sigImgWidthVal.textContent = state.sigImgWidth + 'px';
+  updatePreview();
+});
+
+// ---- background color ----
+const bgOptions = document.getElementById('bgOptions');
+document.querySelectorAll('.bgbtn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.bgbtn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.bgOn = btn.dataset.bg === 'on';
+    bgOptions.style.display = state.bgOn ? '' : 'none';
+    updatePreview();
+  });
+});
+document.getElementById('bgColor').addEventListener('input', (e) => {
+  state.bgColor = e.target.value;
   updatePreview();
 });
 
@@ -571,7 +603,9 @@ function loadFromSavedHtml(text) {
     document.getElementById('frameWidthVal').textContent = state.frameWidth + 'px';
     document.getElementById('frameColor').value = state.frameColor;
   }
-  const outerMatch = text.match(/class="it-frame-outer"\s+style="padding:(\d+(?:\.\d+)?)px (\d+(?:\.\d+)?)px (\d+(?:\.\d+)?)px (\d+(?:\.\d+)?)px"/);
+  const outerStyleMatch = text.match(/class="it-frame-outer"\s+style="([^"]*)"/);
+  const outerStyleStr = outerStyleMatch ? outerStyleMatch[1] : '';
+  const outerMatch = outerStyleStr.match(/padding:(\d+(?:\.\d+)?)px (\d+(?:\.\d+)?)px (\d+(?:\.\d+)?)px (\d+(?:\.\d+)?)px/);
   if (outerMatch) {
     state.outTop = Math.round(parseFloat(outerMatch[1]));
     state.outRight = Math.round(parseFloat(outerMatch[2]));
@@ -585,6 +619,15 @@ function loadFromSavedHtml(text) {
     document.getElementById('outBottomVal').textContent = state.outBottom + 'px';
     document.getElementById('outLeft').value = state.outLeft;
     document.getElementById('outLeftVal').textContent = state.outLeft + 'px';
+  }
+  // background color
+  const bgMatch = outerStyleStr.match(/background:(#[0-9a-fA-F]{3,6})/);
+  state.bgOn = !!bgMatch;
+  document.querySelectorAll('.bgbtn').forEach(b => b.classList.toggle('active', (b.dataset.bg === 'on') === state.bgOn));
+  bgOptions.style.display = state.bgOn ? '' : 'none';
+  if (bgMatch) {
+    state.bgColor = bgMatch[1];
+    document.getElementById('bgColor').value = state.bgColor;
   }
 
   updatePreview();
@@ -650,9 +693,14 @@ function buildSnippet() {
     ? `<div class="it-sig-wrap">${sigTextBlock}${sigImgBlock}</div>`
     : '';
 
-  const outerStyle = state.frameOn
-    ? ` style="padding:${state.outTop}px ${state.outRight}px ${state.outBottom}px ${state.outLeft}px"`
-    : '';
+  const outerStyleParts = [];
+  if (state.frameOn) {
+    outerStyleParts.push(`padding:${state.outTop}px ${state.outRight}px ${state.outBottom}px ${state.outLeft}px`);
+  }
+  if (state.bgOn) {
+    outerStyleParts.push(`background:${state.bgColor}`);
+  }
+  const outerStyle = outerStyleParts.length ? ` style="${outerStyleParts.join(';')}"` : '';
   const borderStyle = state.frameOn
     ? ` border:${state.frameWidth}px solid ${state.frameColor};`
     : '';
