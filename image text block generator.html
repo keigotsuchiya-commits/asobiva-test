@@ -167,6 +167,8 @@
     <div class="hint">太字にしたい部分は <code>**太字**</code>、細字にしたい部分は <code>__細字__</code> のように囲んでください。（例：これは<code>**大事**</code>な話です）行の先頭に <code>::</code> を付けると、その行だけ中央揃えになります。</div>
     <label class="rangelabel"><span>文字サイズ</span><span id="fontSizeVal">17px</span></label>
     <input type="range" id="fontSizeRange" min="12" max="32" value="17">
+    <label class="rangelabel"><span>行間</span><span id="lineHeightVal">1.8</span></label>
+    <input type="range" id="lineHeightRange" min="1.0" max="2.6" step="0.1" value="1.8">
     <label>署名（右寄せ・任意）</label>
     <textarea id="sigText" maxlength="80" style="min-height:44px;"></textarea>
 
@@ -236,7 +238,7 @@
 
 <script>
 let state = { pos: 'left', imgDataUrl: null, imgWidthPct: 38, padTop: 20, padBottom: 20, padLeft: 16, padRight: 16, fontSize: 17, sigImgDataUrl: null, sigImgWidth: 100, fontFamily: 'gothic',
-  frameOn: false, frameColor: '#111111', frameWidth: 1, outTop: 16, outBottom: 16, outLeft: 16, outRight: 16 };
+  frameOn: false, frameColor: '#111111', frameWidth: 1, outTop: 16, outBottom: 16, outLeft: 16, outRight: 16, lineHeight: 1.8 };
 
 const FONT_STACKS = {
   gothic: '"Hiragino Sans","Noto Sans JP",sans-serif',
@@ -290,6 +292,7 @@ function updatePreview() {
   }
   itText.innerHTML = renderBodyLines(bodyText.value, escapeHtmlLive);
   itText.style.fontSize = state.fontSize + 'px';
+  itText.style.lineHeight = state.lineHeight;
   itSig.textContent = sigText.value;
   itSig.style.fontSize = state.fontSize + 'px';
   itSig.style.display = sigText.value.trim() ? '' : 'none';
@@ -343,6 +346,14 @@ const fontSizeVal = document.getElementById('fontSizeVal');
 fontSizeRange.addEventListener('input', () => {
   state.fontSize = Number(fontSizeRange.value);
   fontSizeVal.textContent = state.fontSize + 'px';
+  updatePreview();
+});
+
+const lineHeightRange = document.getElementById('lineHeightRange');
+const lineHeightVal = document.getElementById('lineHeightVal');
+lineHeightRange.addEventListener('input', () => {
+  state.lineHeight = Number(lineHeightRange.value);
+  lineHeightVal.textContent = state.lineHeight.toFixed(1);
   updatePreview();
 });
 
@@ -491,11 +502,18 @@ function loadFromSavedHtml(text) {
     imgWidthVal.textContent = state.imgWidthPct + '%';
   }
   // font size
-  const fontMatch = text.match(/\.it-text p, \.it-text > div\{[^}]*font-size:(\d+(?:\.\d+)?)px/);
+  const fontMatch = text.match(/\.it-text > div\{[^}]*font-size:(\d+(?:\.\d+)?)px/) || text.match(/\.it-text p\{[^}]*font-size:(\d+(?:\.\d+)?)px/);
   if (fontMatch) {
     state.fontSize = Math.round(parseFloat(fontMatch[1]));
     fontSizeRange.value = state.fontSize;
     fontSizeVal.textContent = state.fontSize + 'px';
+  }
+  // line height
+  const lineHeightMatch = text.match(/\.it-text > div\{[^}]*line-height:(\d+(?:\.\d+)?)/) || text.match(/\.it-text p\{[^}]*line-height:(\d+(?:\.\d+)?)/);
+  if (lineHeightMatch) {
+    state.lineHeight = parseFloat(lineHeightMatch[1]);
+    lineHeightRange.value = state.lineHeight;
+    lineHeightVal.textContent = state.lineHeight.toFixed(1);
   }
   // image src
   const imgSrcMatch = text.match(/<img src="(data:image\/[^"]+)"/);
@@ -611,7 +629,7 @@ function buildSnippet() {
 .${id} .it-img{flex:0 0 ${state.imgWidthPct}%;max-width:${state.imgWidthPct}%;}
 .${id} .it-img img{display:block;width:100%;height:auto;}
 .${id} .it-text{flex:1;min-width:0;}
-.${id} .it-text p, .${id} .it-text > div{margin:0;font-size:${state.fontSize}px;line-height:1.8;color:#111;white-space:pre-wrap;}
+.${id} .it-text p, .${id} .it-text > div{margin:0;font-size:${state.fontSize}px;line-height:${state.lineHeight};color:#111;white-space:pre-wrap;}
 .${id} .it-text .it-line{margin:0;white-space:pre-wrap;}
 .${id} .it-text p.it-sig{text-align:right;margin-top:0.8em;white-space:normal;}
 .${id} .it-sig-wrap{text-align:right;}
@@ -643,7 +661,7 @@ function buildSnippet() {
 <div class="it-wrap ${id}">
   <div class="it-frame-outer"${outerStyle}>
     <div class="it-block ${posClass}" style="${borderStyle}">${imgBlock}
-      <div class="it-text"><div style="font-size:${state.fontSize}px">${renderBodyLines(bodyText.value, escapeHtml)}</div>${sigWrapBlock}</div>
+      <div class="it-text"><div style="font-size:${state.fontSize}px;line-height:${state.lineHeight}">${renderBodyLines(bodyText.value, escapeHtml)}</div>${sigWrapBlock}</div>
     </div>
   </div>
 </div>`.trim();
