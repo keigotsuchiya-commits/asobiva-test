@@ -271,6 +271,11 @@ body.admin-mode .banner-slot .banner-edit { display: flex; }
   background: var(--white);
   padding-top: 0;
 }
+.card-section.line-gap {
+  background: var(--white);
+  padding-top: 0;
+  border-top: 1px solid var(--ink);
+}
 .card-section.dot-gap {
   background: var(--white);
   padding-top: 0;
@@ -327,7 +332,6 @@ body.admin-mode .card:hover img { transform: none; }
 .html-card iframe {
   display: block;
   width: 100%;
-  height: 60px;
   border: none;
   background: var(--white);
   overflow: hidden;
@@ -538,50 +542,11 @@ footer {
   background: var(--white);
 }
 
-/* ── INTRO SECTION ── */
-.intro-section {
-  position: relative;
-  background: var(--white);
-  border-bottom: 1px solid var(--border);
+/* ── TOP SECTION (タブ上部・独立カードエリア) ── */
+.top-section-wrap {
+  margin-top: 0;
+  background: var(--bg);
 }
-.intro-content {
-  width: 100%;
-  min-height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-}
-.intro-content iframe {
-  display: block;
-  width: 100%;
-  border: none;
-  background: var(--white);
-  min-height: 60px;
-  overflow: hidden;
-}
-.intro-edit {
-  display: none;
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.25);
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 2;
-}
-.intro-edit span {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  color: #fff;
-  background: rgba(0,0,0,0.45);
-  padding: 8px 18px;
-  border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.4);
-  pointer-events: none;
-}
-body.admin-mode .intro-edit { display: flex; }
 
 /* ── COMMON SECTION ── */
 .common-section-wrap {
@@ -602,6 +567,25 @@ body.admin-mode .common-section-label { display: none; }
   top: 45px;
   z-index: 90;
 }
+.tab-bar.no-gap { border-top: none; }
+.tab-bar.line-gap { border-top: 1px solid var(--ink); }
+.tab-bar.dot-gap { border-top: 1px dashed rgba(0,0,0,0.2); }
+.tab-gap-btn {
+  display: none;
+  flex: none;
+  align-self: center;
+  margin: 0 6px 0 2px;
+  padding: 4px 8px;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 9px;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  white-space: nowrap;
+}
+body.admin-mode .tab-gap-btn { display: inline-block; }
 .tab-btn {
   flex: 1;
   padding: 12px 2px;
@@ -803,7 +787,7 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
         <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
         <button class="burger-menu-item admin-only" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
         <button class="burger-menu-item admin-only" id="downloadHtmlBtn" onclick="handleDownloadClick()">公開用保存</button>
-        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v2.1</div>
+        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v3.7</div>
       </div>
     </div>
   </div>
@@ -815,15 +799,9 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
     </div>
   </div>
 
-  <!-- 紹介エリア -->
-  <div class="intro-section" id="introSection">
-    <div class="intro-content" id="introContent">
-      <span class="slot-label">紹介エリア（管理モードで設定）</span>
-    </div>
-    <div class="intro-edit" id="introEdit" onclick="openIntroPanel()">
-      <span>HTMLを設定</span>
-    </div>
-    <input type="file" id="introFile" accept="text/html,.html" style="display:none;" onchange="onIntroFile(this)">
+  <!-- タブ上部・独立カードエリア -->
+  <div class="top-section-wrap" id="topSectionWrap">
+    <div id="tabContent-top"></div>
   </div>
 
   <!-- タブバー -->
@@ -832,6 +810,7 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
     <button class="tab-btn" data-tab="dougu" onclick="switchTab('dougu')">Vehicles&amp;Gear</button>
     <button class="tab-btn" data-tab="haikei" onclick="switchTab('haikei')">Locations</button>
     <button class="tab-btn" data-tab="poster" onclick="switchTab('poster')">Posters</button>
+    <button class="tab-gap-btn" id="tabGapBtn" onclick="toggleTabGap()">隙間あり</button>
   </div>
 
   <div id="tabContent-chara" class="tab-content"></div>
@@ -948,7 +927,7 @@ function injectAutoResize(html) {
 <scr` + `ipt>
 (function(){
   function reportHeight(){
-    var h = document.body.offsetHeight;
+    var h = document.documentElement.scrollHeight;
     parent.postMessage({ type: 'asobiva-resize', height: h }, '*');
   }
   window.addEventListener('message', function(e){
@@ -976,10 +955,6 @@ window.addEventListener('message', e => {
         f.style.height = e.data.height + 'px';
       }
     });
-    const introIframe = document.querySelector('#introContent iframe');
-    if (introIframe && introIframe.contentWindow === e.source) {
-      introIframe.style.height = e.data.height + 'px';
-    }
   }
 });
 
@@ -1025,8 +1000,6 @@ async function init() {
       if (row?.base64) { banners[1] = row.base64; applyBanner(1, row.base64); }
     } catch {}
 
-    // intro HTML
-    await loadIntro();
     setLoadingBar(60);
 
     // cards
@@ -1060,54 +1033,12 @@ async function init() {
     renderNavLinks();
     loadFooterText();
     loadFooterGap();
+    loadTabGap();
   }, 200);
 }
 
 function setLoadingBar(pct) {
   document.getElementById('loadingBar').style.width = pct + '%';
-}
-
-// ── Intro HTML ────────────────────────────────
-let introHTML = null;
-
-async function loadIntro() {
-  try {
-    const row = await dbOp('banners', 'readonly', s => s.get(99)); // slot 99 = intro
-    if (row?.html) { introHTML = row.html; applyIntro(row.html); }
-  } catch {}
-}
-
-function applyIntro(html) {
-  const content = document.getElementById('introContent');
-  content.querySelector('.slot-label')?.remove();
-  content.querySelector('iframe')?.remove();
-  const iframe = document.createElement('iframe');
-  iframe.srcdoc = injectAutoResize(html);
-  iframe.sandbox = 'allow-scripts allow-popups allow-forms allow-same-origin';
-  iframe.scrolling = 'no';
-  iframe.style.overflow = 'hidden';
-  iframe.style.height = '50px';
-  iframe.addEventListener('load', () => {
-    try {
-      const h = iframe.contentDocument?.documentElement?.scrollHeight;
-      if (h && h > 0) iframe.style.height = h + 'px';
-    } catch {}
-    iframe.contentWindow.postMessage({ type: 'asobiva-init' }, '*');
-  });
-  content.appendChild(iframe);
-}
-
-function openIntroPanel() {
-  document.getElementById('introFile').click();
-}
-
-async function onIntroFile(input) {
-  const f = input.files[0];
-  if (!f) return;
-  const html = await fileToText(f);
-  await dbOp('banners', 'readwrite', s => s.put({ slot: 99, html }));
-  introHTML = html;
-  applyIntro(html);
 }
 
 // ── Banners ───────────────────────────────────
@@ -1135,10 +1066,18 @@ function applyBanner(slot, base64) {
 }
 
 // ── Render ────────────────────────────────────
-const TABS = ['chara', 'dougu', 'haikei', 'poster', 'common'];
+const TABS = ['top', 'chara', 'dougu', 'haikei', 'poster', 'common'];
 
 function render() {
   TABS.forEach(tab => renderTab(tab));
+
+  // タブ上部エリアの表示制御
+  const topCards = cards.filter(c => (c.tab || 'chara') === 'top');
+  const topWrap = document.getElementById('topSectionWrap');
+  if (topWrap) {
+    const showTop = topCards.length > 0 || adminMode;
+    topWrap.style.display = showTop ? '' : 'none';
+  }
 
   // 独立カードエリアの表示制御
   const commonCards = cards.filter(c => (c.tab || 'chara') === 'common');
@@ -1168,7 +1107,7 @@ function renderTab(tab) {
 
   filtered.forEach((c, idx) => {
     const sec = document.createElement('div');
-    sec.className = 'card-section' + (c.gap === false ? ' no-gap' : '');
+    sec.className = 'card-section' + (c.gap === false || c.gap === 'nogap' ? ' no-gap' : c.gap === 'line' ? ' line-gap' : c.gap === 'dot' ? ' dot-gap' : '');
 
     let wrap, replaceAccept, supportsReplace = true;
 
@@ -1248,8 +1187,8 @@ function renderTab(tab) {
       iframe.sandbox = 'allow-scripts allow-popups allow-forms allow-same-origin';
       iframe.addEventListener('load', function() {
         try {
-          const h = iframe.contentDocument.documentElement.scrollHeight || iframe.contentDocument.body.scrollHeight;
-          if (h > 0) iframe.style.height = h + 'px';
+          const h = iframe.contentDocument?.body?.scrollHeight || iframe.contentDocument?.documentElement?.scrollHeight;
+          if (h && h > 0) iframe.style.height = h + 'px';
         } catch(e) {}
         iframe.contentWindow.postMessage({ type: 'asobiva-init' }, '*');
       });
@@ -1306,7 +1245,8 @@ function renderTab(tab) {
 
     const gapBtn = document.createElement('button');
     gapBtn.className = 'card-gap-btn';
-    gapBtn.textContent = c.gap === false ? '隙間なし' : '隙間あり';
+    const gapLabels = { true: '隙間あり', false: '隙間なし', nogap: '隙間なし', line: 'ライン', dot: '点線' };
+    gapBtn.textContent = gapLabels[c.gap] ?? '隙間あり';
     gapBtn.addEventListener('click', e => {
       e.preventDefault(); e.stopPropagation();
       toggleGap(c.id);
@@ -1447,6 +1387,36 @@ function moveNavItem(i, dir) {
 }
 
 
+// ── Tab-bar gap toggle ─────────────────────────
+async function loadTabGap() {
+  try {
+    const row = await dbOp('banners', 'readonly', s => s.get(96));
+    const gap = row?.tabGap || 'gap';
+    const bar = document.getElementById('tabBar');
+    const btn = document.getElementById('tabGapBtn');
+    if (bar) {
+      bar.classList.remove('no-gap','line-gap','dot-gap');
+      if (gap === 'nogap') bar.classList.add('no-gap');
+      else if (gap === 'line') bar.classList.add('line-gap');
+      else if (gap === 'dot') bar.classList.add('dot-gap');
+    }
+    if (btn) btn.textContent = gap === 'gap' ? '隙間あり' : gap === 'line' ? 'ライン' : gap === 'dot' ? '点線' : '隙間なし';
+  } catch {}
+}
+
+async function toggleTabGap() {
+  const bar = document.getElementById('tabBar');
+  const btn = document.getElementById('tabGapBtn');
+  const cur = bar.classList.contains('no-gap') ? 'nogap' : bar.classList.contains('line-gap') ? 'line' : bar.classList.contains('dot-gap') ? 'dot' : 'gap';
+  const next = cur === 'gap' ? 'line' : cur === 'line' ? 'dot' : cur === 'dot' ? 'nogap' : 'gap';
+  bar.classList.remove('no-gap','line-gap','dot-gap');
+  if (next === 'nogap') bar.classList.add('no-gap');
+  else if (next === 'line') bar.classList.add('line-gap');
+  else if (next === 'dot') bar.classList.add('dot-gap');
+  btn.textContent = next === 'gap' ? '隙間あり' : next === 'line' ? 'ライン' : next === 'dot' ? '点線' : '隙間なし';
+  await dbOp('banners', 'readwrite', s => s.put({ slot: 96, tabGap: next }));
+}
+
 // ── Footer gap toggle ─────────────────────────
 async function loadFooterGap() {
   try {
@@ -1522,12 +1492,19 @@ function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.tab === tab);
   });
-  // commonは常に表示を維持し、タブ切り替えの対象外
-  TABS.filter(t => t !== 'common').forEach(t => {
+  // top・commonは常に表示を維持し、タブ切り替えの対象外
+  TABS.filter(t => t !== 'common' && t !== 'top').forEach(t => {
     const el = document.getElementById('tabContent-' + t);
     if (el) el.style.display = t === tab ? '' : 'none';
   });
+  // タブ表示後にiframeの高さを再計算
+  requestAnimationFrame(() => {
+    document.querySelectorAll('#tabContent-' + tab + ' .html-card iframe').forEach(f => {
+      try { f.contentWindow.postMessage({ type: 'asobiva-init' }, '*'); } catch(e) {}
+    });
+  });
 }
+
 
 // ── Gap toggle ────────────────────────────────
 async function toggleGap(id) {
@@ -1760,15 +1737,6 @@ async function downloadHTML() {
     headerHTML = `    <div class="banner-slot"><span class="slot-label">HEADER</span></div>\n`;
   }
 
-  // intro HTML（iframeで埋め込み）
-  let introHTML = '';
-  try {
-    const row = await dbOp('banners', 'readonly', s => s.get(99));
-    if (row?.html) {
-      const escaped = row.html.replace(/"/g, '&quot;');
-      introHTML = `  <div class="intro-section"><div class="intro-content"><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="width:100%;height:60px;border:none;display:block;" scrolling="no" onload="try{var h=this.contentDocument.documentElement.scrollHeight||this.contentDocument.body.scrollHeight;if(h>0)this.style.height=h+'px';}catch(e){}"></iframe></div></div>\n`;
-    }
-  } catch {}
 
   // カード1枚を出力するヘルパー
   async function buildCardHTML(c) {
@@ -1787,7 +1755,7 @@ async function downloadHTML() {
       return `  <div class="card-section${gapClass}"><div class="carousel-card" data-index="0"><img src="${imgs[0]}" alt="">${imgs.length > 1 ? `<div class="carousel-footer"><button class="carousel-nav" onclick="(function(el){var idx=(parseInt(el.closest('.carousel-card').dataset.index,10)-1+${imgs.length})%${imgs.length};el.closest('.carousel-card').dataset.index=String(idx);el.closest('.carousel-card').querySelector('img').src=${JSON.stringify(imgs)}[idx];el.closest('.carousel-card').querySelector('span').textContent=(idx+1)+' / ${imgs.length}';})(this)">&#8249;</button><span>1 / ${imgs.length}</span><button class="carousel-nav" onclick="(function(el){var idx=(parseInt(el.closest('.carousel-card').dataset.index,10)+1)%${imgs.length};el.closest('.carousel-card').dataset.index=String(idx);el.closest('.carousel-card').querySelector('img').src=${JSON.stringify(imgs)}[idx];el.closest('.carousel-card').querySelector('span').textContent=(idx+1)+' / ${imgs.length}';})(this)">&#8250;</button></div>` : ''}</div></div>\n`;
     } else {
       const escaped = injectAutoResize(c.html).replace(/"/g, '&quot;');
-      return `  <div class="card-section${gapClass}"><div class="html-card"><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:60px" scrolling="no" onload="try{var h=this.contentDocument.documentElement.scrollHeight||this.contentDocument.body.scrollHeight;if(h>0)this.style.height=h+'px';}catch(e){}"></iframe></div></div>\n`;
+      return `  <div class="card-section${gapClass}"><div class="html-card"><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:60px" scrolling="no" onload="try{var h=this.contentDocument.body.offsetHeight;if(h>0)this.style.height=h+'px';}catch(e){}" ></iframe></div></div>\n`;
     }
   }
 
@@ -1813,6 +1781,15 @@ async function downloadHTML() {
     tabContents += `  <div id="tabContent-${id}" class="tab-content"${i > 0 ? ' style="display:none;"' : ''}>\n${inner}  </div>\n`;
   }
 
+  // topカード（タブ上部）
+  const topCards = cards.filter(c => (c.tab || 'chara') === 'top');
+  let topHTML = '';
+  if (topCards.length > 0) {
+    topHTML = '  <div class="common-wrap">\n';
+    for (const c of topCards) topHTML += await buildCardHTML(c);
+    topHTML += '  </div>\n';
+  }
+
   // commonカード
   const commonCards = cards.filter(c => (c.tab || 'chara') === 'common');
   let commonHTML = '';
@@ -1829,9 +1806,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .wrap { max-width: 480px; margin: 0 auto; background: var(--bg); min-height: 100vh; }
 .site-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:var(--white); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; }
 .back-link { font-size:12px; font-weight:500; letter-spacing:0.04em; color:var(--ink-soft); text-decoration:none; }
-.intro-section { position:relative; background:var(--white); border-bottom:1px solid var(--border); }
-.intro-content { width:100%; padding:16px; }
-.intro-content iframe { display:block; width:100%; border:none; background:var(--white); min-height:60px; overflow:hidden; }
 .burger-btn { background:none; border:none; cursor:pointer; padding:4px; display:flex; flex-direction:column; gap:5px; align-items:flex-end; }
 .burger-btn span { display:block; height:1.5px; background:var(--ink); border-radius:1px; }
 .burger-btn span:nth-child(1) { width:20px; }
@@ -1845,6 +1819,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .banner-slot img { width:100%; height:auto; display:block; }
 .slot-label { font-size:10px; letter-spacing:0.12em; color:#ccc; }
 .tab-bar { display:flex; background:var(--white); border-bottom:1px solid var(--border); border-top:10px solid var(--bg); position:sticky; top:45px; z-index:90; }
+.tab-bar.no-gap { border-top:none; }
+.tab-bar.line-gap { border-top:1px solid var(--ink); }
+.tab-bar.dot-gap { border-top:1px dashed rgba(0,0,0,0.2); }
 .tab-btn { flex:1; padding:12px 2px; background:none; border:none; border-bottom:2px solid transparent; font-size:10px; font-weight:500; letter-spacing:0.02em; color:var(--ink-soft); cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .tab-btn.active { color:var(--ink); border-bottom-color:var(--ink); font-weight:700; }
 .tab-content { background:var(--bg); }
@@ -1874,6 +1851,8 @@ footer { padding:16px; text-align:center; font-size:10px; letter-spacing:0.1em; 
   const footerText = document.getElementById('footerText')?.textContent || 'ASOBIVA — i.roiro';
   const footerNoGap = document.getElementById('footerSection')?.classList.contains('no-gap');
   const footerGapClass = footerNoGap ? ' no-gap' : '';
+  const tabBarEl = document.getElementById('tabBar');
+  const tabGapClass = tabBarEl?.classList.contains('no-gap') ? ' no-gap' : tabBarEl?.classList.contains('line-gap') ? ' line-gap' : tabBarEl?.classList.contains('dot-gap') ? ' dot-gap' : '';
 
   let navItems = [];
   try { navItems = JSON.parse(localStorage.getItem('asobiva_nav_v1')) || []; } catch {}
@@ -1900,7 +1879,7 @@ footer { padding:16px; text-align:center; font-size:10px; letter-spacing:0.1em; 
   </div>
   <div style="display:flex;flex-direction:column;background:var(--white);">
 ${headerHTML}  </div>
-${introHTML}  <div class="tab-bar">${tabBtns}</div>
+${topHTML}  <div class="tab-bar${tabGapClass}">${tabBtns}</div>
 ${tabContents}${commonHTML}  <div class="footer-section${footerGapClass}">
     <footer>${footerText}</footer>
   </div>
