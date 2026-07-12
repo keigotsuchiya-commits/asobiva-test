@@ -123,15 +123,6 @@
 <div class="panel">
 
   <div class="group">
-    <h2>保存済みHTMLを読み込む</h2>
-    <div class="imgbtns">
-      <button id="loadHtmlBtn" type="button">HTMLファイルを選択</button>
-    </div>
-    <input type="file" id="loadHtmlInput" accept=".html,text/html">
-    <div class="hint">前に「HTMLで保存」したファイル、または既存ページに貼り付けたコードをコピーして保存したファイルを読み込むと、続きを編集できます。</div>
-  </div>
-
-  <div class="group">
     <h2>保存済みHTMLを読み込んで編集</h2>
     <div class="imgbtns">
       <button id="loadHtmlBtn" type="button">ファイルを選択</button>
@@ -522,6 +513,12 @@ function loadFromSavedHtml(text) {
         let content = m[2] === '&nbsp;' ? '' : unescapeHtml(markupFromHtml(m[2]));
         return (centered ? '::' : '') + content;
       }).join('\n');
+    } else {
+      // backward compatibility: older files stored body as a single <p>...</p>
+      const oldPMatch = searchArea.match(/<p[^>]*>([\s\S]*?)<\/p>/);
+      if (oldPMatch) {
+        bodyText.value = unescapeHtml(markupFromHtml(oldPMatch[1]));
+      }
     }
   }
   // signature
