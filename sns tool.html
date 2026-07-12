@@ -207,11 +207,26 @@ h1 { font-size: 16px; font-weight: 700; letter-spacing: 0.06em; margin-bottom: 6
     </div>
   </div>
 
+  <!-- 背景色 -->
+  <div class="size-row">
+    <div class="size-label">背景色</div>
+    <div class="size-btns">
+      <button class="size-btn active" id="bgOffBtn" onclick="setBg(false)">なし</button>
+      <button class="size-btn" id="bgOnBtn" onclick="setBg(true)">あり</button>
+    </div>
+    <div id="bgColorRow" style="display:none; margin-top:10px; align-items:center; gap:10px;">
+      <input type="color" id="bgColorInput" value="#f4f4f2" onchange="setBgColor(this.value)" oninput="setBgColor(this.value)" style="width:44px;height:36px;border:1px solid #e0e0e0;border-radius:6px;padding:2px;">
+      <span style="font-size:12px;color:#888;">アイコン行の背景色</span>
+    </div>
+  </div>
+
   <!-- プレビュー -->
   <div class="preview-wrap">
     <div class="preview-title">PREVIEW</div>
-    <div class="preview-icons" id="previewIcons">
-      <span style="font-size:12px;color:#ccc;">ONにしたSNSがここに表示されます</span>
+    <div id="previewBgStrip" style="border-radius:8px; padding:8px 0; transition:background 0.15s;">
+      <div class="preview-icons" id="previewIcons">
+        <span style="font-size:12px;color:#ccc;">ONにしたSNSがここに表示されます</span>
+      </div>
     </div>
   </div>
 
@@ -250,6 +265,22 @@ const SNS = {
 
 const state = { x: false, instagram: false, note: false, youtube: false, booth: false, amazon: false };
 let iconSize = 32;
+let bgOn = false;
+let bgColor = '#f4f4f2';
+
+function setBg(on) {
+  bgOn = on;
+  document.getElementById('bgOffBtn').classList.toggle('active', !on);
+  document.getElementById('bgOnBtn').classList.toggle('active', on);
+  document.getElementById('bgColorRow').style.display = on ? 'flex' : 'none';
+  updatePreview();
+}
+
+function setBgColor(color) {
+  bgColor = color;
+  document.getElementById('bgColorInput').value = color;
+  updatePreview();
+}
 
 function toggleSNS(id) {
   state[id] = !state[id];
@@ -272,6 +303,8 @@ function setSize(s) {
 }
 
 function updatePreview() {
+  const strip = document.getElementById('previewBgStrip');
+  strip.style.background = bgOn ? bgColor : 'transparent';
   const container = document.getElementById('previewIcons');
   const active = Object.keys(state).filter(k => state[k]);
   if (active.length === 0) {
@@ -307,7 +340,6 @@ function generate() {
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 html, body { margin: 0; padding: 0; background: #fff; }
 .sns-row {
@@ -316,6 +348,7 @@ html, body { margin: 0; padding: 0; background: #fff; }
   align-items: center;
   gap: ${Math.round(iconSize * 0.75)}px;
   padding: ${Math.round(iconSize * 0.5)}px 0;
+  ${bgOn ? `background: ${bgColor};` : ''}
 }
 svg { width: 100%; height: 100%; display: block; }
 a:hover { opacity: 0.6; }
