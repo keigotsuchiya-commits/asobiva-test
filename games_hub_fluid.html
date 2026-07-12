@@ -832,7 +832,7 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
         <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
         <button class="burger-menu-item admin-only" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
         <button class="burger-menu-item admin-only" id="downloadHtmlBtn" onclick="handleDownloadClick()">公開用保存</button>
-        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v2.5</div>
+        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v2.6</div>
       </div>
     </div>
   </div>
@@ -924,7 +924,13 @@ function openDB() {
         if (!d.objectStoreNames.contains('banners'))
           d.createObjectStore('banners', { keyPath: 'slot' });
       };
-      req.onsuccess = e => { db = e.target.result; res(); };
+      req.onsuccess = e => {
+        db = e.target.result;
+        // 長時間放置などで接続が切れた場合、次回のdbOpで再接続させる
+        db.onclose = () => { db = null; };
+        db.onversionchange = () => { try { db.close(); } catch {} db = null; };
+        res();
+      };
       req.onerror = () => { db = null; res(); };
     } catch (err) {
       db = null;
@@ -933,15 +939,32 @@ function openDB() {
   });
 }
 
-function dbOp(store, mode, fn) {
+async function dbOp(store, mode, fn) {
   if (!db) {
-    return Promise.resolve(mode === 'readonly' && store === 'cards' ? [] : undefined);
+    await openDB();
   }
-  return new Promise((res, rej) => {
-    const req = fn(db.transaction(store, mode).objectStore(store));
-    req.onsuccess = e => res(e.target.result);
-    req.onerror = e => rej(e);
-  });
+  if (!db) {
+    return mode === 'readonly' && store === 'cards' ? [] : undefined;
+  }
+  try {
+    return await new Promise((res, rej) => {
+      const req = fn(db.transaction(store, mode).objectStore(store));
+      req.onsuccess = e => res(e.target.result);
+      req.onerror = e => rej(e);
+    });
+  } catch (err) {
+    // 接続が切れていた場合、再接続して1回だけリトライ
+    db = null;
+    await openDB();
+    if (!db) {
+      return mode === 'readonly' && store === 'cards' ? [] : undefined;
+    }
+    return new Promise((res, rej) => {
+      const req = fn(db.transaction(store, mode).objectStore(store));
+      req.onsuccess = e => res(e.target.result);
+      req.onerror = e => rej(e);
+    });
+  }
 }
 
 // ── ファイル → Base64 / テキスト変換 ──────────
