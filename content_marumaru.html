@@ -1111,11 +1111,8 @@ function render() {
       }
       supportsReplace = false;
     } else {
-      wrap = document.createElement('a');
+      wrap = document.createElement('div');
       wrap.className = 'html-card';
-      wrap.href = adminMode ? '#' : (c.link || '#');
-      if (!adminMode && c.link) wrap.target = '_blank';
-      wrap.rel = 'noopener';
 
       const label = document.createElement('div');
       label.className = 'html-card-label';
@@ -1136,6 +1133,14 @@ function render() {
 
       wrap.appendChild(label);
       wrap.appendChild(iframe);
+      if (!adminMode && c.link) {
+        const linkOverlay = document.createElement('a');
+        linkOverlay.href = c.link;
+        linkOverlay.target = '_blank';
+        linkOverlay.rel = 'noopener';
+        linkOverlay.style.cssText = 'position:absolute;inset:0;z-index:4;';
+        wrap.appendChild(linkOverlay);
+      }
       replaceAccept = 'image/*,text/html,.html';
     }
 
@@ -1690,9 +1695,8 @@ async function downloadHTML() {
         cardsHTML += `  <div class="card-section${gapClass}"><div class="carousel-card" data-images="${imgsJson}" data-index="0" onclick="cyclerCarousel(this)"><img src="${compressedImgs[0]}" alt="">${compressedImgs.length > 1 ? `<div class="carousel-dots">${dots}</div><div class="carousel-count">1 / ${compressedImgs.length}</div>` : ''}</div></div>\n`;
       } else {
         const escaped = injectAutoResize(c.html).replace(/"/g, '&quot;');
-        const htmlTag = c.link ? 'a' : 'div';
-        const htmlAttrs = c.link ? ` href="${c.link}" target="_blank" rel="noopener"` : '';
-        cardsHTML += `  <div class="card-section${gapClass}"><${htmlTag} class="html-card"${htmlAttrs}><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:60px" scrolling="no" onload="try{var h=this.contentDocument.documentElement.scrollHeight||this.contentDocument.body.scrollHeight;if(h>0)this.style.height=h+'px';}catch(e){}"></iframe></${htmlTag}></div>\n`;
+        const linkOverlay = c.link ? `<a href="${c.link}" target="_blank" rel="noopener" style="position:absolute;inset:0;z-index:4;"></a>` : '';
+        cardsHTML += `  <div class="card-section${gapClass}"><div class="html-card"><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:60px" scrolling="no" onload="try{var h=this.contentDocument.documentElement.scrollHeight||this.contentDocument.body.scrollHeight;if(h>0)this.style.height=h+'px';}catch(e){}"></iframe>${linkOverlay}</div></div>\n`;
       }
     }
   }

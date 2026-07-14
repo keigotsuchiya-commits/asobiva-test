@@ -1205,11 +1205,8 @@ function renderTab(tab) {
       }
       supportsReplace = false;
     } else {
-      wrap = document.createElement('a');
+      wrap = document.createElement('div');
       wrap.className = 'html-card';
-      wrap.href = adminMode ? '#' : (c.link || '#');
-      if (!adminMode && c.link) wrap.target = '_blank';
-      wrap.rel = 'noopener';
 
       const label = document.createElement('div');
       label.className = 'html-card-label';
@@ -1231,6 +1228,14 @@ function renderTab(tab) {
 
       wrap.appendChild(label);
       wrap.appendChild(iframe);
+      if (!adminMode && c.link) {
+        const linkOverlay = document.createElement('a');
+        linkOverlay.href = c.link;
+        linkOverlay.target = '_blank';
+        linkOverlay.rel = 'noopener';
+        linkOverlay.style.cssText = 'position:absolute;inset:0;z-index:4;';
+        wrap.appendChild(linkOverlay);
+      }
       replaceAccept = 'image/*,text/html,.html';
     }
 
@@ -1832,9 +1837,8 @@ async function downloadHTML() {
       return `  <div class="card-section${gapClass}"><div class="carousel-card" data-index="0"><img src="${imgs[0]}" alt="">${imgs.length > 1 ? `<div class="carousel-footer"><button class="carousel-nav" onclick="(function(el){var idx=(parseInt(el.closest('.carousel-card').dataset.index,10)-1+${imgs.length})%${imgs.length};el.closest('.carousel-card').dataset.index=String(idx);el.closest('.carousel-card').querySelector('img').src=${JSON.stringify(imgs)}[idx];el.closest('.carousel-card').querySelector('span').textContent=(idx+1)+' / ${imgs.length}';})(this)">&#8249;</button><span>1 / ${imgs.length}</span><button class="carousel-nav" onclick="(function(el){var idx=(parseInt(el.closest('.carousel-card').dataset.index,10)+1)%${imgs.length};el.closest('.carousel-card').dataset.index=String(idx);el.closest('.carousel-card').querySelector('img').src=${JSON.stringify(imgs)}[idx];el.closest('.carousel-card').querySelector('span').textContent=(idx+1)+' / ${imgs.length}';})(this)">&#8250;</button></div>` : ''}</div></div>\n`;
     } else {
       const escaped = injectAutoResize(c.html).replace(/"/g, '&quot;');
-      const htmlTag = c.link ? 'a' : 'div';
-      const htmlAttrs = c.link ? ` href="${c.link}" target="_blank" rel="noopener"` : '';
-      return `  <div class="card-section${gapClass}"><${htmlTag} class="html-card"${htmlAttrs}><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:60px" scrolling="no" onload="try{var h=this.contentDocument.body.offsetHeight;if(h>0)this.style.height=h+'px';}catch(e){}" ></iframe></${htmlTag}></div>\n`;
+      const linkOverlay = c.link ? `<a href="${c.link}" target="_blank" rel="noopener" style="position:absolute;inset:0;z-index:4;"></a>` : '';
+      return `  <div class="card-section${gapClass}"><div class="html-card"><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:60px" scrolling="no" onload="try{var h=this.contentDocument.body.offsetHeight;if(h>0)this.style.height=h+'px';}catch(e){}" ></iframe>${linkOverlay}</div></div>\n`;
     }
   }
 
@@ -1910,7 +1914,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .card-section.line-gap { background:var(--white); padding-top:0; border-top:1px solid var(--ink); }
 .card { width:100%; display:block; text-decoration:none; background:var(--white); overflow:hidden; }
 .card img { width:100%; height:auto; display:block; }
-.html-card { display:block; width:100%; background:var(--white); overflow:hidden; text-decoration:none; }
+.html-card { display:block; width:100%; position:relative; background:var(--white); overflow:hidden; text-decoration:none; }
 .html-card iframe { display:block; width:100%; height:60px; border:none; background:var(--white); overflow:hidden; }
 .carousel-card { width:100%; position:relative; background:var(--white); cursor:pointer; }
 .carousel-card img { width:100%; height:auto; display:block; }
