@@ -324,10 +324,12 @@ body.admin-mode .card:hover img { transform: none; }
 
 /* ── HTML CARD ── */
 .html-card {
+  display: block;
   width: 100%;
   position: relative;
   background: var(--white);
   overflow: hidden;
+  text-decoration: none;
 }
 .html-card iframe {
   display: block;
@@ -459,6 +461,27 @@ body.admin-mode .card-replace { display: flex; }
 
 .card-replace-input { display: none; }
 
+/* ── LINK EDIT BUTTON ── */
+.card-link-btn {
+  display: none;
+  position: absolute;
+  top: 10px; right: 90px;
+  width: 30px; height: 30px;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  font-size: 13px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  transition: background 0.15s;
+}
+.card-link-btn:hover { background: #2266cc; }
+.card-link-btn.has-link { background: rgba(34,102,204,0.85); }
+body.admin-mode .card-link-btn { display: flex; }
+
 /* ── ADD BUTTON ── */
 .add-section {
   background: var(--bg);
@@ -538,7 +561,7 @@ footer {
   text-align: center;
   font-size: 10px;
   letter-spacing: 0.1em;
-  color: var(--ink-soft);
+  color: var(--ink);
   background: var(--white);
 }
 
@@ -842,6 +865,16 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
   <label class="field-label">フッターテキスト</label>
   <input class="field-input" id="footerTextInput" type="text" placeholder="例: © 2025 i.roiro">
   <button class="btn-add" onclick="saveFooterText()">保存する</button>
+</div>
+
+<!-- リンク編集パネル -->
+<div class="overlay" id="linkEditOverlay" onclick="closeLinkEditor()"></div>
+<div class="panel" id="linkEditPanel">
+  <div class="panel-handle"></div>
+  <div class="panel-title">リンク先を設定</div>
+  <label class="field-label" for="linkEditInput">リンク先URL</label>
+  <input class="field-input" id="linkEditInput" type="url" placeholder="https://note.com/...">
+  <button class="btn-add" onclick="saveLinkEdit()">保存する</button>
 </div>
 <div class="overlay" id="overlay" onclick="closePanel()"></div>
 <div class="panel" id="panel">
@@ -1172,8 +1205,11 @@ function renderTab(tab) {
       }
       supportsReplace = false;
     } else {
-      wrap = document.createElement('div');
+      wrap = document.createElement('a');
       wrap.className = 'html-card';
+      wrap.href = adminMode ? '#' : (c.link || '#');
+      if (!adminMode && c.link) wrap.target = '_blank';
+      wrap.rel = 'noopener';
 
       const label = document.createElement('div');
       label.className = 'html-card-label';
@@ -1221,6 +1257,15 @@ function renderTab(tab) {
       });
     }
 
+    const linkBtn = document.createElement('button');
+    linkBtn.className = 'card-link-btn' + (c.link ? ' has-link' : '');
+    linkBtn.title = 'リンクを設定';
+    linkBtn.textContent = '🔗';
+    linkBtn.addEventListener('click', e => {
+      e.preventDefault(); e.stopPropagation();
+      openLinkEditor(c.id, c.link);
+    });
+
     const delBtn = document.createElement('button');
     delBtn.className = 'card-del';
     delBtn.title = '削除';
@@ -1252,6 +1297,7 @@ function renderTab(tab) {
       toggleGap(c.id);
     });
 
+    if (c.type !== 'carousel') wrap.appendChild(linkBtn);
     if (supportsReplace) {
       wrap.appendChild(replaceBtn);
       wrap.appendChild(replaceInput);
@@ -1475,6 +1521,32 @@ async function saveFooterText() {
   await dbOp('banners', 'readwrite', s => s.put({ slot: 97, footerText: text }));
   document.getElementById('footerText').textContent = text;
   closeFooterEditor();
+}
+
+let linkEditTargetId = null;
+
+function openLinkEditor(id, currentLink) {
+  linkEditTargetId = id;
+  document.getElementById('linkEditInput').value = currentLink || '';
+  document.getElementById('linkEditOverlay').classList.add('open');
+  document.getElementById('linkEditPanel').classList.add('open');
+}
+
+function closeLinkEditor() {
+  document.getElementById('linkEditOverlay').classList.remove('open');
+  document.getElementById('linkEditPanel').classList.remove('open');
+  linkEditTargetId = null;
+}
+
+async function saveLinkEdit() {
+  if (linkEditTargetId === null) return;
+  const link = document.getElementById('linkEditInput').value.trim();
+  const c = cards.find(c => c.id === linkEditTargetId);
+  if (!c) return;
+  c.link = link;
+  await dbOp('cards', 'readwrite', s => s.put({ ...c }));
+  closeLinkEditor();
+  render();
 }
 
 function toggleAdmin() {
@@ -1760,7 +1832,9 @@ async function downloadHTML() {
       return `  <div class="card-section${gapClass}"><div class="carousel-card" data-index="0"><img src="${imgs[0]}" alt="">${imgs.length > 1 ? `<div class="carousel-footer"><button class="carousel-nav" onclick="(function(el){var idx=(parseInt(el.closest('.carousel-card').dataset.index,10)-1+${imgs.length})%${imgs.length};el.closest('.carousel-card').dataset.index=String(idx);el.closest('.carousel-card').querySelector('img').src=${JSON.stringify(imgs)}[idx];el.closest('.carousel-card').querySelector('span').textContent=(idx+1)+' / ${imgs.length}';})(this)">&#8249;</button><span>1 / ${imgs.length}</span><button class="carousel-nav" onclick="(function(el){var idx=(parseInt(el.closest('.carousel-card').dataset.index,10)+1)%${imgs.length};el.closest('.carousel-card').dataset.index=String(idx);el.closest('.carousel-card').querySelector('img').src=${JSON.stringify(imgs)}[idx];el.closest('.carousel-card').querySelector('span').textContent=(idx+1)+' / ${imgs.length}';})(this)">&#8250;</button></div>` : ''}</div></div>\n`;
     } else {
       const escaped = injectAutoResize(c.html).replace(/"/g, '&quot;');
-      return `  <div class="card-section${gapClass}"><div class="html-card"><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:60px" scrolling="no" onload="try{var h=this.contentDocument.body.offsetHeight;if(h>0)this.style.height=h+'px';}catch(e){}" ></iframe></div></div>\n`;
+      const htmlTag = c.link ? 'a' : 'div';
+      const htmlAttrs = c.link ? ` href="${c.link}" target="_blank" rel="noopener"` : '';
+      return `  <div class="card-section${gapClass}"><${htmlTag} class="html-card"${htmlAttrs}><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:60px" scrolling="no" onload="try{var h=this.contentDocument.body.offsetHeight;if(h>0)this.style.height=h+'px';}catch(e){}" ></iframe></${htmlTag}></div>\n`;
     }
   }
 
@@ -1836,7 +1910,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .card-section.line-gap { background:var(--white); padding-top:0; border-top:1px solid var(--ink); }
 .card { width:100%; display:block; text-decoration:none; background:var(--white); overflow:hidden; }
 .card img { width:100%; height:auto; display:block; }
-.html-card { width:100%; background:var(--white); overflow:hidden; }
+.html-card { display:block; width:100%; background:var(--white); overflow:hidden; text-decoration:none; }
 .html-card iframe { display:block; width:100%; height:60px; border:none; background:var(--white); overflow:hidden; }
 .carousel-card { width:100%; position:relative; background:var(--white); cursor:pointer; }
 .carousel-card img { width:100%; height:auto; display:block; }
@@ -1850,12 +1924,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .footer-section.no-gap { padding-top:0; }
 .footer-section.line-gap { padding-top:0; background:var(--white); border-top:1px solid var(--ink); }
 .footer-section.dot-gap { padding-top:0; background:var(--white); border-top:1px dashed rgba(0,0,0,0.2); }
-footer { padding:16px; text-align:center; font-size:10px; letter-spacing:0.1em; color:var(--ink-soft); background:var(--white); }
+footer { padding:16px; text-align:center; font-size:10px; letter-spacing:0.1em; color:var(--ink); background:var(--white); }
 `;
 
   const footerText = document.getElementById('footerText')?.textContent || 'ASOBIVA — i.roiro';
-  const footerNoGap = document.getElementById('footerSection')?.classList.contains('no-gap');
-  const footerGapClass = footerNoGap ? ' no-gap' : '';
+  const footerSectionEl = document.getElementById('footerSection');
+  const footerGapClass = footerSectionEl?.classList.contains('no-gap') ? ' no-gap'
+    : footerSectionEl?.classList.contains('line-gap') ? ' line-gap'
+    : footerSectionEl?.classList.contains('dot-gap') ? ' dot-gap'
+    : '';
   const tabBarEl = document.getElementById('tabBar');
   const tabGapClass = tabBarEl?.classList.contains('no-gap') ? ' no-gap' : tabBarEl?.classList.contains('line-gap') ? ' line-gap' : tabBarEl?.classList.contains('dot-gap') ? ' dot-gap' : '';
 

@@ -282,7 +282,7 @@ body.admin-mode .tab-edit-bar { display: flex; }
 .card img { width: 100%; height: auto; display: block; }
 
 /* ── HTML CARD ── */
-.html-card { width: 100%; position: relative; background: var(--white); overflow: hidden; }
+.html-card { display: block; width: 100%; position: relative; background: var(--white); overflow: hidden; text-decoration: none; }
 .html-card iframe { display: block; width: 100%; height: 60px; border: none; background: var(--white); overflow: hidden; }
 .html-card-label { display: none; padding: 8px 16px; font-size: 10px; letter-spacing: 0.08em; color: var(--ink-soft); background: var(--white); border-bottom: 1px solid var(--border); }
 body.admin-mode .html-card-label { display: block; }
@@ -376,6 +376,25 @@ body.admin-mode .card-move { display: flex; }
 .card-replace:hover { background: #1a6e3c; }
 body.admin-mode .card-replace { display: flex; }
 .card-replace-input { display: none; }
+.card-link-btn {
+  display: none;
+  position: absolute;
+  top: 10px; right: 88px;
+  width: 30px; height: 30px;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  font-size: 13px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  transition: background 0.15s;
+}
+.card-link-btn:hover { background: #2266cc; }
+.card-link-btn.has-link { background: rgba(34,102,204,0.85); }
+body.admin-mode .card-link-btn { display: flex; }
 .card-gap-btn {
   display: none;
   position: absolute;
@@ -482,7 +501,7 @@ body.admin-mode .card-gap-btn { display: flex; }
 .footer-section.no-gap { padding-top: 0; }
 .footer-section.line-gap { padding-top: 0; background: var(--white); border-top: 1px solid var(--ink); }
 .footer-section.dot-gap { padding-top: 0; background: var(--white); border-top: 1px dashed rgba(0,0,0,0.2); }
-footer { padding: 16px; text-align: center; font-size: 10px; letter-spacing: 0.1em; color: var(--ink-soft); background: var(--white); }
+footer { padding: 16px; text-align: center; font-size: 10px; letter-spacing: 0.1em; color: var(--ink); background: var(--white); }
 .footer-edit-btn { display: none; cursor: pointer; background: none; border: none; font-size: 10px; letter-spacing: 0.1em; color: var(--ink-soft); padding: 4px 8px; border-radius: 4px; text-decoration: underline; }
 body.admin-mode .footer-edit-btn { display: inline-block; }
 .footer-gap-btn { display: none; background: none; border: none; font-size: 10px; color: var(--ink-soft); cursor: pointer; text-decoration: underline; letter-spacing: 0.06em; margin-left: 8px; }
@@ -655,6 +674,16 @@ body.admin-mode .footer-gap-btn { display: inline-block; }
   <label class="field-label">フッターテキスト</label>
   <input class="field-input" id="footerTextInput" type="text" placeholder="例: © 2025 i.roiro">
   <button class="btn-add" onclick="saveFooterText()">保存する</button>
+</div>
+
+<!-- リンク編集パネル -->
+<div class="overlay" id="linkEditOverlay" onclick="closeLinkEditor()"></div>
+<div class="panel" id="linkEditPanel">
+  <div class="panel-handle"></div>
+  <div class="panel-title">リンク先を設定</div>
+  <label class="field-label" for="linkEditInput">リンク先URL</label>
+  <input class="field-input" id="linkEditInput" type="url" placeholder="https://note.com/...">
+  <button class="btn-add" onclick="saveLinkEdit()">保存する</button>
 </div>
 
 <!-- ナビ編集パネル -->
@@ -1005,8 +1034,11 @@ function render() {
         supportsReplace = false;
 
       } else if (c.type === 'html') {
-        wrap = document.createElement('div');
+        wrap = document.createElement('a');
         wrap.className = 'html-card';
+        wrap.href = adminMode ? '#' : (c.link || '#');
+        if (!adminMode && c.link) wrap.target = '_blank';
+        wrap.rel = 'noopener';
 
         const label = document.createElement('div');
         label.className = 'html-card-label';
@@ -1042,6 +1074,16 @@ function render() {
       }
 
       // Admin controls
+      const linkBtn = document.createElement('button');
+      linkBtn.className = 'card-link-btn' + (c.link ? ' has-link' : '');
+      linkBtn.title = 'リンクを設定';
+      linkBtn.textContent = '🔗';
+      linkBtn.addEventListener('click', e => {
+        e.preventDefault(); e.stopPropagation();
+        openLinkEditor(c.id, c.link);
+      });
+      if (!['html-carousel','carousel'].includes(c.type)) wrap.appendChild(linkBtn);
+
       const delBtn = document.createElement('button');
       delBtn.className = 'card-del';
       delBtn.textContent = '✕';
@@ -1115,8 +1157,11 @@ function renderCommon() {
     sec.className = 'card-section' + gapClass;
     let wrap;
     if (c.type === 'html') {
-      wrap = document.createElement('div');
+      wrap = document.createElement('a');
       wrap.className = 'html-card';
+      wrap.href = adminMode ? '#' : (c.link || '#');
+      if (!adminMode && c.link) wrap.target = '_blank';
+      wrap.rel = 'noopener';
       const label = document.createElement('div');
       label.className = 'html-card-label';
       label.textContent = c.name || '(無題)';
@@ -1144,6 +1189,17 @@ function renderCommon() {
     } else {
       wrap = document.createElement('div');
       wrap.className = 'card';
+    }
+    if (c.type === 'html' || c.type === 'image') {
+      const linkBtn = document.createElement('button');
+      linkBtn.className = 'card-link-btn' + (c.link ? ' has-link' : '');
+      linkBtn.title = 'リンクを設定';
+      linkBtn.textContent = '🔗';
+      linkBtn.addEventListener('click', e => {
+        e.preventDefault(); e.stopPropagation();
+        openLinkEditor(c.id, c.link);
+      });
+      wrap.appendChild(linkBtn);
     }
     const delBtn = document.createElement('button');
     delBtn.className = 'card-del'; delBtn.textContent = '✕';
@@ -1639,6 +1695,32 @@ async function saveFooterText() {
   document.getElementById('footerText').textContent = text;
   closeFooterEditor();
 }
+
+let linkEditTargetId = null;
+
+function openLinkEditor(id, currentLink) {
+  linkEditTargetId = id;
+  document.getElementById('linkEditInput').value = currentLink || '';
+  document.getElementById('linkEditOverlay').classList.add('open');
+  document.getElementById('linkEditPanel').classList.add('open');
+}
+
+function closeLinkEditor() {
+  document.getElementById('linkEditOverlay').classList.remove('open');
+  document.getElementById('linkEditPanel').classList.remove('open');
+  linkEditTargetId = null;
+}
+
+async function saveLinkEdit() {
+  if (linkEditTargetId === null) return;
+  const link = document.getElementById('linkEditInput').value.trim();
+  const c = cards.find(c => c.id === linkEditTargetId);
+  if (!c) return;
+  c.link = link;
+  await dbOp('cards', 'readwrite', s => s.put({ ...c }));
+  closeLinkEditor();
+  render();
+}
 async function loadFooterGap() {
   try {
     const row = await dbOp('banners', 'readonly', s => s.get(98));
@@ -1783,7 +1865,9 @@ async function downloadHTML() {
       return `  <div class="card-section${gapClass}"><div class="html-card"><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:60px" scrolling="no" onload="try{var h=this.contentDocument.documentElement.scrollHeight||this.contentDocument.body.scrollHeight;if(h>0)this.style.height=h+'px';}catch(e){}"></iframe></div></div>\n`;
     } else {
       const escaped = injectAutoResize(c.html).replace(/"/g, '&quot;');
-      return `  <div class="card-section${gapClass}"><div class="html-card"><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:60px" scrolling="no" onload="try{var h=this.contentDocument.documentElement.scrollHeight||this.contentDocument.body.scrollHeight;if(h>0)this.style.height=h+'px';}catch(e){}"></iframe></div></div>\n`;
+      const htmlTag = c.link ? 'a' : 'div';
+      const htmlAttrs = c.link ? ` href="${c.link}" target="_blank" rel="noopener"` : '';
+      return `  <div class="card-section${gapClass}"><${htmlTag} class="html-card"${htmlAttrs}><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:60px" scrolling="no" onload="try{var h=this.contentDocument.documentElement.scrollHeight||this.contentDocument.body.scrollHeight;if(h>0)this.style.height=h+'px';}catch(e){}"></iframe></${htmlTag}></div>\n`;
     }
   }
 
@@ -1814,7 +1898,10 @@ async function downloadHTML() {
   }
 
   const footerText = document.getElementById('footerText')?.textContent || 'ASOBIVA — i.roiro';
-  const footerNoGap = document.getElementById('footerSection')?.classList.contains('no-gap');
+  const footerSectionEl2 = document.getElementById('footerSection');
+  const footerNoGap = footerSectionEl2?.classList.contains('line-gap') ? ' line-gap'
+    : footerSectionEl2?.classList.contains('dot-gap') ? ' dot-gap'
+    : footerSectionEl2?.classList.contains('no-gap') ? ' no-gap' : '';
   let navItems = [];
   try { navItems = JSON.parse(localStorage.getItem('asobiva_nav_v1')) || []; } catch {}
   const navLinksHTML = navItems.map(item => `<a class="nav-link-item" href="${item.url}">${item.label}</a>`).join('');
@@ -1849,7 +1936,7 @@ body { font-family: -apple-system, sans-serif; background: var(--bg); color: var
 .card-section.line-gap { background:var(--white); padding-top:0; border-top:1px solid var(--ink); }
 .card { width:100%; display:block; text-decoration:none; background:var(--white); overflow:hidden; }
 .card img { width:100%; height:auto; display:block; }
-.html-card { width:100%; background:var(--white); overflow:hidden; }
+.html-card { display:block; width:100%; background:var(--white); overflow:hidden; text-decoration:none; }
 .html-card iframe { display:block; width:100%; height:60px; border:none; background:var(--white); overflow:hidden; }
 .carousel-card { width:100%; background:var(--white); overflow:hidden; }
 .carousel-card img { width:100%; height:auto; display:block; }
@@ -1860,7 +1947,7 @@ body { font-family: -apple-system, sans-serif; background: var(--bg); color: var
 .footer-section.no-gap { padding-top:0; }
 .footer-section.line-gap { padding-top:0; background:var(--white); border-top:1px solid var(--ink); }
 .footer-section.dot-gap { padding-top:0; background:var(--white); border-top:1px dashed rgba(0,0,0,0.2); }
-footer { padding:16px; text-align:center; font-size:10px; letter-spacing:0.1em; color:var(--ink-soft); background:var(--white); }
+footer { padding:16px; text-align:center; font-size:10px; letter-spacing:0.1em; color:var(--ink); background:var(--white); }
 `;
 
   const html = `<!DOCTYPE html>
@@ -1885,7 +1972,7 @@ footer { padding:16px; text-align:center; font-size:10px; letter-spacing:0.1em; 
   <div class="banner-slot">
 ${headerHTML}  </div>
   <div class="main-tab-bar">${mainTabBtns}</div>
-${tabContentsHTML}  <div class="footer-section${footerNoGap ? ' no-gap' : ''}">
+${tabContentsHTML}  <div class="footer-section${footerNoGap}">
     <footer>${footerText}</footer>
   </div>
 </div>

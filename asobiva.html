@@ -287,6 +287,11 @@ body.admin-mode .banner-count { display: block; }
   padding-top: 0;
   border-top: 1px dashed rgba(0,0,0,0.2);
 }
+.card-section.line-gap {
+  background: var(--white);
+  padding-top: 0;
+  border-top: 1px solid var(--ink);
+}
 .card-gap-btn {
   display: none;
   position: absolute;
@@ -328,10 +333,12 @@ body.admin-mode .card:hover img { transform: none; }
 
 /* ── HTML CARD ── */
 .html-card {
+  display: block;
   width: 100%;
   position: relative;
   background: var(--white);
   overflow: hidden;
+  text-decoration: none;
 }
 .html-card iframe {
   display: block;
@@ -518,8 +525,8 @@ footer {
   text-align: center;
   font-size: 10px;
   letter-spacing: 0.1em;
-  color: var(--ink-soft);
-  background: var(--white);
+  color: #000000;
+  background: #ffffff;
 }
 
 /* ── PANEL ── */
@@ -680,7 +687,7 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
       <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
       <button class="burger-menu-item admin-only" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
       <button class="burger-menu-item admin-only" id="downloadHtmlBtn" onclick="handleDownloadClick()">公開用保存</button>
-        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v2.5</div>
+        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v2.9</div>
     </div>
   </div>
   <div class="header-pair">
@@ -868,7 +875,7 @@ async function init() {
         html: c.html,
         name: c.name || '',
         link: c.link || '',
-        gap: c.gap !== false,
+        gap: c.gap === undefined ? true : c.gap,
         order: c.order ?? order++
       };
       const id = await dbOp('cards', 'readwrite', s => s.add(record));
@@ -1006,14 +1013,17 @@ function render() {
 
   cards.forEach((c, idx) => {
     const sec = document.createElement('div');
-    sec.className = 'card-section' + (c.gap === false ? ' no-gap' : '');
+    sec.className = 'card-section' + (c.gap === false ? ' no-gap' : c.gap === 'line' ? ' line-gap' : c.gap === 'dot' ? ' dot-gap' : '');
 
     let wrap, replaceInput, replaceBtn;
 
     if (c.type === 'html') {
       // HTMLカード
-      wrap = document.createElement('div');
+      wrap = document.createElement('a');
       wrap.className = 'html-card';
+      wrap.href = adminMode ? '#' : (c.link || '#');
+      if (!adminMode && c.link) wrap.target = '_blank';
+      wrap.rel = 'noopener';
 
       const label = document.createElement('div');
       label.className = 'html-card-label';
@@ -1135,13 +1145,13 @@ function render() {
 
     const gapBtn = document.createElement('button');
     gapBtn.className = 'card-gap-btn';
-    gapBtn.textContent = c.gap === false ? '隙間なし' : '隙間あり';
+    gapBtn.textContent = c.gap === false ? '隙間なし' : c.gap === 'line' ? 'ライン' : c.gap === 'dot' ? '点線' : '隙間あり';
     gapBtn.addEventListener('click', e => {
       e.preventDefault(); e.stopPropagation();
       toggleGap(c.id);
     });
 
-    if (c.type !== 'html') wrap.appendChild(linkBtn);
+    wrap.appendChild(linkBtn);
     wrap.appendChild(replaceBtn);
     wrap.appendChild(replaceInput);
     wrap.appendChild(delBtn);
@@ -1542,7 +1552,7 @@ function downloadEditHTML() {
   const initScript = `
 <scr` + `ipt>
 // ── 埋め込み初期データ ──
-window.__ASOBIVA_INIT__ = ${JSON.stringify(initData).split('\n').join(' ').split('\r').join(' ').split('\t').join(' ')};
+window.__ASOBIVA_INIT__ = ${JSON.stringify(initData).split('\n').join(' ').split('\r').join(' ').split('\t').join(' ').replace(/<\/script/gi, '<\\/script')};
 </scr` + `ipt>`;
 
   // </head>の直前に初期データを挿入
@@ -1619,7 +1629,9 @@ async function downloadHTML() {
       const gapClass = c.gap === false || c.gap === 'nogap' ? ' no-gap' : c.gap === 'line' ? ' line-gap' : c.gap === 'dot' ? ' dot-gap' : '';
       if (c.type === 'html') {
         const escaped = injectAutoResize(c.html).replace(/"/g, '&quot;');
-        cardsHTML += `  <div class="card-section${gapClass}"><div class="html-card"><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:60px" scrolling="no" onload="try{var h=this.contentDocument.documentElement.scrollHeight||this.contentDocument.body.scrollHeight;if(h>0)this.style.height=h+'px';}catch(e){}"></iframe></div></div>\n`;
+        const htmlTag = c.link ? 'a' : 'div';
+        const htmlAttrs = c.link ? ` href="${c.link}" target="_blank" rel="noopener"` : '';
+        cardsHTML += `  <div class="card-section${gapClass}"><${htmlTag} class="html-card"${htmlAttrs}><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:60px" scrolling="no" onload="try{var h=this.contentDocument.documentElement.scrollHeight||this.contentDocument.body.scrollHeight;if(h>0)this.style.height=h+'px';}catch(e){}"></iframe></${htmlTag}></div>\n`;
       } else {
         const compressedB64 = await compressImage(c.base64);
         const tag = c.link
@@ -1645,7 +1657,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .card-section.dot-gap { background: var(--white); padding-top:0; border-top:1px dashed rgba(0,0,0,0.2); }
 .card { width:100%; display:block; text-decoration:none; background:var(--white); overflow:hidden; }
 .card img { width:100%; height:auto; display:block; }
-.html-card { width:100%; background:var(--white); overflow:hidden; }
+.html-card { display:block; width:100%; background:var(--white); overflow:hidden; text-decoration:none; }
 .html-card iframe { display:block; width:100%; height:60px; border:none; background:var(--white); overflow:hidden; }
 .empty-section { background: var(--bg); padding-top:10px; }
 .empty-state { padding:60px 24px; text-align:center; color:var(--ink-soft); font-size:13px; line-height:2; background:var(--white); }
@@ -1654,7 +1666,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .footer-section.no-gap { padding-top:0; }
 .footer-section.line-gap { padding-top:0; background:var(--white); border-top:1px solid var(--ink); }
 .footer-section.dot-gap { padding-top:0; background:var(--white); border-top:1px dashed rgba(0,0,0,0.2); }
-footer { padding:16px; text-align:center; font-size:10px; letter-spacing:0.1em; color:var(--ink-soft); background:var(--white); }
+footer { padding:16px; text-align:center; font-size:10px; letter-spacing:0.1em; color:#000000; background:#ffffff; }
 .site-header { display:flex; align-items:center; justify-content:flex-end; padding:10px 16px; background:var(--white); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; max-width:480px; margin:0 auto; }
 .burger-btn { background:none; border:none; cursor:pointer; padding:4px; display:flex; flex-direction:column; gap:5px; align-items:flex-end; }
 .burger-btn span { display:block; height:1.5px; background:var(--ink); border-radius:1px; }
@@ -1668,8 +1680,11 @@ footer { padding:16px; text-align:center; font-size:10px; letter-spacing:0.1em; 
 `;
 
   const footerText = document.getElementById('footerText')?.textContent || 'ASOBIVA — i.roiro';
-  const footerNoGap = document.getElementById('footerSection')?.classList.contains('no-gap');
-  const footerGapClass = footerNoGap ? ' no-gap' : '';
+  const footerSectionEl = document.getElementById('footerSection');
+  const footerGapClass = footerSectionEl?.classList.contains('no-gap') ? ' no-gap'
+    : footerSectionEl?.classList.contains('line-gap') ? ' line-gap'
+    : footerSectionEl?.classList.contains('dot-gap') ? ' dot-gap'
+    : '';
 
   // ナビリンク一覧（localStorageから取得して埋め込む）
   let navItems = [];

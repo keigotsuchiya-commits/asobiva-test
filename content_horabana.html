@@ -398,10 +398,12 @@ body.admin-mode .card:hover img { transform: none; }
 
 /* ── HTML CARD ── */
 .html-card {
+  display: block;
   width: 100%;
   position: relative;
   background: var(--white);
   overflow: hidden;
+  text-decoration: none;
 }
 .html-card iframe {
   display: block;
@@ -530,6 +532,27 @@ body.admin-mode .card-replace { display: flex; }
 
 .card-replace-input { display: none; }
 
+/* ── LINK EDIT BUTTON ── */
+.card-link-btn {
+  display: none;
+  position: absolute;
+  top: 10px; right: 90px;
+  width: 30px; height: 30px;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  font-size: 13px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  transition: background 0.15s;
+}
+.card-link-btn:hover { background: #2266cc; }
+.card-link-btn.has-link { background: rgba(34,102,204,0.85); }
+body.admin-mode .card-link-btn { display: flex; }
+
 /* ── ADD BUTTON ── */
 .add-section {
   background: var(--bg);
@@ -609,7 +632,7 @@ footer {
   text-align: center;
   font-size: 10px;
   letter-spacing: 0.1em;
-  color: var(--ink-soft);
+  color: var(--ink);
   background: var(--white);
 }
 
@@ -830,6 +853,16 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
   <label class="field-label">フッターテキスト</label>
   <input class="field-input" id="footerTextInput" type="text" placeholder="例: © 2025 i.roiro">
   <button class="btn-add" onclick="saveFooterText()">保存する</button>
+</div>
+
+<!-- リンク編集パネル -->
+<div class="overlay" id="linkEditOverlay" onclick="closeLinkEditor()"></div>
+<div class="panel" id="linkEditPanel">
+  <div class="panel-handle"></div>
+  <div class="panel-title">リンク先を設定</div>
+  <label class="field-label" for="linkEditInput">リンク先URL</label>
+  <input class="field-input" id="linkEditInput" type="url" placeholder="https://note.com/...">
+  <button class="btn-add" onclick="saveLinkEdit()">保存する</button>
 </div>
 <div class="overlay" id="overlay" onclick="closePanel()"></div>
 <div class="panel" id="panel">
@@ -1187,8 +1220,11 @@ function render() {
       }
       supportsReplace = false;
     } else {
-      wrap = document.createElement('div');
+      wrap = document.createElement('a');
       wrap.className = 'html-card';
+      wrap.href = adminMode ? '#' : (c.link || '#');
+      if (!adminMode && c.link) wrap.target = '_blank';
+      wrap.rel = 'noopener';
 
       const label = document.createElement('div');
       label.className = 'html-card-label';
@@ -1235,6 +1271,15 @@ function render() {
       });
     }
 
+    const linkBtn = document.createElement('button');
+    linkBtn.className = 'card-link-btn' + (c.link ? ' has-link' : '');
+    linkBtn.title = 'リンクを設定';
+    linkBtn.textContent = '🔗';
+    linkBtn.addEventListener('click', e => {
+      e.preventDefault(); e.stopPropagation();
+      openLinkEditor(c.id, c.link);
+    });
+
     const delBtn = document.createElement('button');
     delBtn.className = 'card-del';
     delBtn.title = '削除';
@@ -1265,6 +1310,7 @@ function render() {
       e.preventDefault(); e.stopPropagation();
       toggleGap(c.id);
     });
+    if (c.type !== 'carousel') wrap.appendChild(linkBtn);
     if (supportsReplace) {
       wrap.appendChild(replaceBtn);
       wrap.appendChild(replaceInput);
@@ -1458,6 +1504,32 @@ async function saveFooterText() {
   await dbOp('banners', 'readwrite', s => s.put({ slot: 99, footerText: text }));
   document.getElementById('footerText').textContent = text;
   closeFooterEditor();
+}
+
+let linkEditTargetId = null;
+
+function openLinkEditor(id, currentLink) {
+  linkEditTargetId = id;
+  document.getElementById('linkEditInput').value = currentLink || '';
+  document.getElementById('linkEditOverlay').classList.add('open');
+  document.getElementById('linkEditPanel').classList.add('open');
+}
+
+function closeLinkEditor() {
+  document.getElementById('linkEditOverlay').classList.remove('open');
+  document.getElementById('linkEditPanel').classList.remove('open');
+  linkEditTargetId = null;
+}
+
+async function saveLinkEdit() {
+  if (linkEditTargetId === null) return;
+  const link = document.getElementById('linkEditInput').value.trim();
+  const c = cards.find(c => c.id === linkEditTargetId);
+  if (!c) return;
+  c.link = link;
+  await dbOp('cards', 'readwrite', s => s.put({ ...c }));
+  closeLinkEditor();
+  render();
 }
 
 function toggleAdmin() {
@@ -1723,7 +1795,9 @@ async function downloadHTML() {
         cardsHTML += `  <div class="card-section${gapClass}"><div class="carousel-card" data-images="${imgsJson}" data-index="0" onclick="cyclerCarousel(this)"><img src="${compressedImgs[0]}" alt="">${compressedImgs.length > 1 ? `<div class="carousel-dots">${dots}</div><div class="carousel-count">1 / ${compressedImgs.length}</div>` : ''}</div></div>\n`;
       } else {
         const escaped = injectAutoResize(c.html).replace(/"/g, '&quot;');
-        cardsHTML += `  <div class="card-section${gapClass}"><div class="html-card"><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:60px" scrolling="no" onload="try{var h=this.contentDocument.documentElement.scrollHeight||this.contentDocument.body.scrollHeight;if(h>0)this.style.height=h+'px';}catch(e){}"></iframe></div></div>\n`;
+        const htmlTag = c.link ? 'a' : 'div';
+        const htmlAttrs = c.link ? ` href="${c.link}" target="_blank" rel="noopener"` : '';
+        cardsHTML += `  <div class="card-section${gapClass}"><${htmlTag} class="html-card"${htmlAttrs}><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:60px" scrolling="no" onload="try{var h=this.contentDocument.documentElement.scrollHeight||this.contentDocument.body.scrollHeight;if(h>0)this.style.height=h+'px';}catch(e){}"></iframe></${htmlTag}></div>\n`;
       }
     }
   }
@@ -1745,7 +1819,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .card-section.dot-gap { background: var(--white); padding-top:0; border-top:1px dashed rgba(0,0,0,0.2); }
 .card { width:100%; display:block; text-decoration:none; background:var(--white); overflow:hidden; }
 .card img { width:100%; height:auto; display:block; }
-.html-card { width:100%; position:relative; background:var(--white); overflow:hidden; }
+.html-card { display:block; width:100%; position:relative; background:var(--white); overflow:hidden; text-decoration:none; }
 .html-card iframe { display:block; width:100%; height:480px; border:none; background:var(--white); }
 .carousel-card { width:100%; position:relative; background:var(--white); overflow:hidden; cursor:pointer; }
 .carousel-card img { width:100%; height:auto; display:block; }
@@ -1760,7 +1834,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .footer-section.no-gap { padding-top:0; }
 .footer-section.line-gap { padding-top:0; background:var(--white); border-top:1px solid var(--ink); }
 .footer-section.dot-gap { padding-top:0; background:var(--white); border-top:1px dashed rgba(0,0,0,0.2); }
-.site-header { display:flex; align-items:center; justify-content:flex-end; padding:10px 16px; background:var(--white); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; }
 .burger-btn { background:none; border:none; cursor:pointer; padding:4px; display:flex; flex-direction:column; gap:5px; align-items:flex-end; }
 .burger-btn span { display:block; height:1.5px; background:var(--ink); border-radius:1px; }
 .burger-btn span:nth-child(1) { width:20px; }
@@ -1770,7 +1843,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .burger-menu.open { display:block; }
 .nav-link-item { display:block; width:100%; padding:14px 20px; background:none; border:none; border-bottom:1px solid var(--border); font-size:13px; font-weight:500; color:var(--ink); cursor:pointer; text-align:left; text-decoration:none; }
 .nav-link-item:last-child { border-bottom:none; }
-footer { padding:16px; text-align:center; font-size:10px; letter-spacing:0.1em; color:var(--ink-soft); background:var(--white); }
+footer { padding:16px; text-align:center; font-size:10px; letter-spacing:0.1em; color:var(--ink); background:var(--white); }
 `;
 
 
@@ -1778,8 +1851,11 @@ footer { padding:16px; text-align:center; font-size:10px; letter-spacing:0.1em; 
   try { navItems = JSON.parse(localStorage.getItem('asobiva_nav_v1')) || []; } catch {}
   const navLinksHTML = navItems.map(item => `<a class="nav-link-item" href="${item.url}">${item.label}</a>`).join('');
   const footerText = document.getElementById('footerText')?.textContent || 'ASOBIVA — i.roiro';
-  const footerNoGap = document.getElementById('footerSection')?.classList.contains('no-gap');
-  const footerGapClass = footerNoGap ? ' no-gap' : '';
+  const footerSectionEl = document.getElementById('footerSection');
+  const footerGapClass = footerSectionEl?.classList.contains('no-gap') ? ' no-gap'
+    : footerSectionEl?.classList.contains('line-gap') ? ' line-gap'
+    : footerSectionEl?.classList.contains('dot-gap') ? ' dot-gap'
+    : '';
 
   const html = `<!DOCTYPE html>
 <html lang="ja">
@@ -1792,12 +1868,14 @@ footer { padding:16px; text-align:center; font-size:10px; letter-spacing:0.1em; 
 <body>
 <div class="wrap">
   <div class="site-header">
-    <button class="burger-btn" id="burgerBtnStatic" onclick="document.getElementById('burgerMenuStatic').classList.toggle('open')">
-      <span></span><span></span><span></span>
-    </button>
-    <div class="burger-menu" id="burgerMenuStatic">${navLinksHTML}</div>
+    <a href="asobiva.html" class="back-link">← トップへ戻る</a>
+    <div style="position:relative;">
+      <button class="burger-btn" id="burgerBtnStatic" onclick="document.getElementById('burgerMenuStatic').classList.toggle('open')">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="burger-menu" id="burgerMenuStatic">${navLinksHTML}</div>
+    </div>
   </div>
-  <div class="site-header-back"><a href="asobiva.html" class="back-link">← トップへ戻る</a></div>
   <div class="header-pair">
 ${headerHTML}  </div>
 ${cardsHTML}  <div class="footer-section${footerGapClass}">
