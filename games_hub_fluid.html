@@ -855,7 +855,7 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
         <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
         <button class="burger-menu-item admin-only" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
         <button class="burger-menu-item admin-only" id="downloadHtmlBtn" onclick="handleDownloadClick()">公開用保存</button>
-        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v3.3</div>
+        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v3.4</div>
       </div>
     </div>
   </div>
@@ -1372,13 +1372,13 @@ function render() {
       label.className = 'html-card-label';
       label.textContent = c.url || '(URL未設定)';
 
-      const AD_W = 300, AD_H = 250;
+      let adW = 300, adH = 250; // 実測されるまでの仮値
       const iframe = document.createElement('iframe');
       iframe.src = c.url;
       iframe.loading = 'lazy';
       iframe.scrolling = 'no';
-      iframe.style.width = AD_W + 'px';
-      iframe.style.height = AD_H + 'px';
+      iframe.style.width = adW + 'px';
+      iframe.style.height = adH + 'px';
       iframe.style.border = 'none';
       iframe.style.transformOrigin = 'top left';
       iframe.sandbox = 'allow-scripts allow-popups allow-forms allow-same-origin';
@@ -1387,11 +1387,30 @@ function render() {
       wrap.appendChild(iframe);
 
       function applyScale() {
-        const w = wrap.clientWidth || AD_W;
-        const scale = w / AD_W;
+        const w = wrap.clientWidth || adW;
+        const scale = w / adW;
         iframe.style.transform = 'scale(' + scale + ')';
-        wrap.style.height = Math.round(AD_H * scale) + 'px';
+        wrap.style.height = Math.round(adH * scale) + 'px';
       }
+
+      let innerObserver = null;
+      iframe.addEventListener('load', () => {
+        applyScale();
+        try {
+          const innerBody = iframe.contentWindow.document.body;
+          if (innerObserver) innerObserver.disconnect();
+          innerObserver = new ResizeObserver(() => {
+            const bw = innerBody.scrollWidth, bh = innerBody.scrollHeight;
+            if (bw > 0 && bh > 0 && (bw !== adW || bh !== adH)) {
+              adW = bw; adH = bh;
+              iframe.style.width = adW + 'px';
+              iframe.style.height = adH + 'px';
+            }
+            applyScale();
+          });
+          innerObserver.observe(innerBody);
+        } catch (e) {}
+      });
       requestAnimationFrame(applyScale);
       window.addEventListener('resize', applyScale);
 
@@ -2341,14 +2360,28 @@ function cyclerCarousel(el){
 function fitAdScale(iframe){
   var wrap = iframe.closest('.url-embed-card');
   if (!wrap) return;
+  var adW = 300, adH = 250;
   function apply(){
-    var w = wrap.clientWidth || 300;
-    var scale = w / 300;
+    var w = wrap.clientWidth || adW;
+    var scale = w / adW;
     iframe.style.transform = 'scale(' + scale + ')';
-    wrap.style.height = Math.round(250 * scale) + 'px';
+    wrap.style.height = Math.round(adH * scale) + 'px';
   }
   apply();
   window.addEventListener('resize', apply);
+  try {
+    var innerBody = iframe.contentWindow.document.body;
+    var observer = new ResizeObserver(function(){
+      var bw = innerBody.scrollWidth, bh = innerBody.scrollHeight;
+      if (bw > 0 && bh > 0 && (bw !== adW || bh !== adH)) {
+        adW = bw; adH = bh;
+        iframe.style.width = adW + 'px';
+        iframe.style.height = adH + 'px';
+      }
+      apply();
+    });
+    observer.observe(innerBody);
+  } catch (e) {}
 }
 var CARD_ASPECT_W = 320;
 var CARD_ASPECT_H = 591;
