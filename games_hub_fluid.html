@@ -855,7 +855,7 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
         <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
         <button class="burger-menu-item admin-only" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
         <button class="burger-menu-item admin-only" id="downloadHtmlBtn" onclick="handleDownloadClick()">公開用保存</button>
-        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v3.4</div>
+        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v3.5</div>
       </div>
     </div>
   </div>
@@ -1367,6 +1367,9 @@ function render() {
       wrap.className = 'html-card url-embed-card';
       wrap.style.position = 'relative';
       wrap.style.overflow = 'hidden';
+      wrap.style.display = 'flex';
+      wrap.style.alignItems = 'center';
+      wrap.style.justifyContent = 'center';
 
       const label = document.createElement('div');
       label.className = 'html-card-label';
@@ -1380,7 +1383,8 @@ function render() {
       iframe.style.width = adW + 'px';
       iframe.style.height = adH + 'px';
       iframe.style.border = 'none';
-      iframe.style.transformOrigin = 'top left';
+      iframe.style.flexShrink = '0';
+      iframe.style.transformOrigin = 'center center';
       iframe.sandbox = 'allow-scripts allow-popups allow-forms allow-same-origin';
 
       wrap.appendChild(label);
@@ -2230,7 +2234,7 @@ async function downloadHTML() {
         cardsHTML += `  <div class="card-section${gapClass}"><div class="carousel-card" data-images="${imgsJson}" data-index="0" onclick="cyclerCarousel(this)"><img src="${compressedImgs[0]}" alt="">${compressedImgs.length > 1 ? `<div class="carousel-dots">${dots}</div><div class="carousel-count">1 / ${compressedImgs.length}</div>` : ''}</div></div>\n`;
       } else if (c.type === 'url-embed') {
         const linkOverlay = c.link ? `<a href="${c.link}"${isExternalLink(c.link) ? ' target="_blank" rel="noopener"' : ''} style="position:absolute;inset:0;z-index:4;"></a>` : '';
-        cardsHTML += `  <div class="card-section${gapClass}"><div class="html-card url-embed-card" style="position:relative;overflow:hidden;"><iframe src="${c.url}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" scrolling="no" style="width:300px;height:250px;border:none;transform-origin:top left;" onload="fitAdScale(this)"></iframe>${linkOverlay}</div></div>\n`;
+        cardsHTML += `  <div class="card-section${gapClass}"><div class="html-card url-embed-card" style="position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;"><iframe src="${c.url}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" scrolling="no" style="width:300px;height:250px;border:none;flex-shrink:0;transform-origin:center center;" onload="fitAdScale(this)"></iframe>${linkOverlay}</div></div>\n`;
       } else {
         const escaped = injectAutoResize(c.html).replace(/"/g, '&quot;');
         const linkOverlay = c.link ? `<a href="${c.link}"${isExternalLink(c.link) ? ' target="_blank" rel="noopener"' : ''} style="position:absolute;inset:0;z-index:4;"></a>` : '';
