@@ -857,7 +857,7 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
         <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
         <button class="burger-menu-item admin-only" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
         <button class="burger-menu-item admin-only" id="downloadHtmlBtn" onclick="handleDownloadClick()">公開用保存</button>
-        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v5.8</div>
+        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v5.9</div>
       </div>
     </div>
   </div>
@@ -1108,8 +1108,9 @@ let adminMode = false;
 window.addEventListener('error', (e) => {
   if (!document.body.classList.contains('admin-mode')) return;
   const bar = document.createElement('div');
-  bar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#c00;color:#fff;padding:10px;font-size:12px;white-space:pre-wrap;word-break:break-all;';
-  bar.textContent = 'エラー: ' + e.message + ' (' + (e.filename || '') + ':' + e.lineno + ')';
+  bar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#c00;color:#fff;padding:10px 36px 10px 10px;font-size:12px;white-space:pre-wrap;word-break:break-all;cursor:pointer;';
+  bar.textContent = 'エラー(タップで閉じる): ' + e.message + ' (' + (e.filename || '') + ':' + e.lineno + ')';
+  bar.addEventListener('click', () => bar.remove());
   document.body.appendChild(bar);
 });
 
