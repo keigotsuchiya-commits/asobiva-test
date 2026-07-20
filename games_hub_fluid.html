@@ -857,7 +857,7 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
         <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
         <button class="burger-menu-item admin-only" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
         <button class="burger-menu-item admin-only" id="downloadHtmlBtn" onclick="handleDownloadClick()">公開用保存</button>
-        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v5.5</div>
+        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v5.6</div>
       </div>
     </div>
   </div>
@@ -1387,6 +1387,11 @@ function render() {
       wrap.style.position = 'relative';
       wrap.style.overflow = 'hidden';
 
+      // 内側の箱: v5.4と全く同じ、中央揃え・実測そのままの仕組み(ここは一切変えない)
+      const innerBox = document.createElement('div');
+      innerBox.style.position = 'relative';
+      innerBox.style.width = '100%';
+
       const label = document.createElement('div');
       label.className = 'html-card-label';
       label.textContent = c.url || '(URL未設定)';
@@ -1398,15 +1403,16 @@ function render() {
       iframe.loading = 'lazy';
       iframe.scrolling = 'no';
       iframe.style.position = 'absolute';
-      iframe.style.top = '0';
+      iframe.style.top = '50%';
       iframe.style.left = '50%';
       iframe.style.width = adW + 'px';
       iframe.style.height = adH + 'px';
       iframe.style.border = 'none';
       iframe.sandbox = 'allow-scripts allow-popups allow-forms allow-same-origin';
 
-      wrap.appendChild(label);
-      wrap.appendChild(iframe);
+      innerBox.appendChild(label);
+      innerBox.appendChild(iframe);
+      wrap.appendChild(innerBox);
 
       function applyScale() {
         const w = wrap.clientWidth || adW;
@@ -1414,9 +1420,12 @@ function render() {
         const scale = (w * FILL_RATIO) / adW;
         const gap = w * (1 - FILL_RATIO);
         const shiftX = -gap / 7; // 実測(左:右 = 1.8:1)を均等にするための補正量(左方向)
-        iframe.style.transform = 'translate(calc(-50% + ' + shiftX + 'px), 0) scale(' + scale + ')';
+        iframe.style.transform = 'translate(calc(-50% + ' + shiftX + 'px), -50%) scale(' + scale + ')';
+        const fullH = Math.round(adH * scale);
+        innerBox.style.height = fullH + 'px'; // v5.4と同じ、フルの高さ(ここは変えない)
         const targetH = (c.adH || 250) + 50; // 選んだサイズ + 上の余白の目安(50)
-        wrap.style.height = Math.round(Math.min(adH, targetH) * scale) + 'px';
+        const windowH = Math.round(Math.min(adH, targetH) * scale);
+        wrap.style.height = windowH + 'px'; // 外側の窓だけ、下を覗き穴で隠す
         label.textContent = (c.url || '(URL未設定)') + '　[実測: ' + adW + '×' + adH + (measured ? '(測定済み・' + measureCount + '回)' : '(未測定・初期値のまま)') + ' / 選択: ' + (c.adW||300) + '×' + (c.adH||250) + ']';
       }
 
@@ -2274,7 +2283,7 @@ async function downloadHTML() {
         cardsHTML += `  <div class="card-section${gapClass}"><div class="carousel-card" data-images="${imgsJson}" data-index="0" onclick="cyclerCarousel(this)"><img src="${compressedImgs[0]}" alt="">${compressedImgs.length > 1 ? `<div class="carousel-dots">${dots}</div><div class="carousel-count">1 / ${compressedImgs.length}</div>` : ''}</div></div>\n`;
       } else if (c.type === 'url-embed') {
         const linkOverlay = c.link ? `<a href="${c.link}"${isExternalLink(c.link) ? ' target="_blank" rel="noopener"' : ''} style="position:absolute;inset:0;z-index:4;"></a>` : '';
-        cardsHTML += `  <div class="card-section${gapClass}"><div class="html-card url-embed-card" style="position:relative;overflow:hidden;"><iframe src="${c.url}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" scrolling="no" style="position:absolute;top:0;left:50%;width:300px;height:250px;border:none;" onload="fitAdScale(this, ${c.adH||250})"></iframe>${linkOverlay}</div></div>\n`;
+        cardsHTML += `  <div class="card-section${gapClass}"><div class="html-card url-embed-card" style="position:relative;overflow:hidden;"><div class="url-embed-inner" style="position:relative;width:100%;"><iframe src="${c.url}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" scrolling="no" style="position:absolute;top:50%;left:50%;width:300px;height:250px;border:none;" onload="fitAdScale(this, ${c.adH||250})"></iframe></div>${linkOverlay}</div></div>\n`;
       } else {
         const escaped = injectAutoResize(c.html).replace(/"/g, '&quot;');
         const linkOverlay = c.link ? `<a href="${c.link}"${isExternalLink(c.link) ? ' target="_blank" rel="noopener"' : ''} style="position:absolute;inset:0;z-index:4;"></a>` : '';
@@ -2404,6 +2413,7 @@ function cyclerCarousel(el){
 function fitAdScale(iframe, targetH){
   var wrap = iframe.closest('.url-embed-card');
   if (!wrap) return;
+  var innerBox = iframe.closest('.url-embed-inner');
   targetH = (targetH || 250) + 50; // 選んだサイズ + 上の余白の目安(50)
   var adW = 300, adH = 250;
   var FILL_RATIO = 0.92; // わざと少し小さめにして、四辺に均等な余白を作る
@@ -2412,8 +2422,10 @@ function fitAdScale(iframe, targetH){
     var scale = (w * FILL_RATIO) / adW;
     var gap = w * (1 - FILL_RATIO);
     var shiftX = -gap / 7; // 実測(左:右 = 1.8:1)を均等にするための補正量(左方向)
-    iframe.style.transform = 'translate(calc(-50% + ' + shiftX + 'px), 0) scale(' + scale + ')';
-    wrap.style.height = Math.round(Math.min(adH, targetH) * scale) + 'px';
+    iframe.style.transform = 'translate(calc(-50% + ' + shiftX + 'px), -50%) scale(' + scale + ')';
+    var fullH = Math.round(adH * scale);
+    if (innerBox) innerBox.style.height = fullH + 'px'; // v5.4と同じ、フルの高さ(変えない)
+    wrap.style.height = Math.round(Math.min(adH, targetH) * scale) + 'px'; // 外側の窓だけ切り取る
   }
   apply();
   var wrapObserver = new ResizeObserver(apply);
