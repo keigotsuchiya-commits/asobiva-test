@@ -855,7 +855,7 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
         <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
         <button class="burger-menu-item admin-only" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
         <button class="burger-menu-item admin-only" id="downloadHtmlBtn" onclick="handleDownloadClick()">公開用保存</button>
-        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v4.9</div>
+        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v5.0</div>
       </div>
     </div>
   </div>
@@ -1381,7 +1381,7 @@ function render() {
       label.className = 'html-card-label';
       label.textContent = c.url || '(URL未設定)';
 
-      let adW = 300, adH = 250; // 実測されるまでの仮値
+      let adW = 300, adH = 250;
       const iframe = document.createElement('iframe');
       iframe.src = c.url;
       iframe.loading = 'lazy';
@@ -1399,8 +1399,11 @@ function render() {
 
       function applyScale() {
         const w = wrap.clientWidth || adW;
-        const scale = w / adW;
-        iframe.style.transform = 'translate(-50%, -50%) scale(' + scale + ')';
+        const FILL_RATIO = 0.92; // わざと少し小さめにして、四辺に均等な余白を作る
+        const scale = (w * FILL_RATIO) / adW;
+        const gap = w * (1 - FILL_RATIO);
+        const shiftX = -gap / 7; // 実測(左:右 = 1.8:1)を均等にするための補正量(左方向)
+        iframe.style.transform = 'translate(calc(-50% + ' + shiftX + 'px), -50%) scale(' + scale + ')';
         wrap.style.height = Math.round(adH * scale) + 'px';
         label.textContent = (c.url || '(URL未設定)') + '　[実測: ' + adW + '×' + adH + ' / 選択: ' + (c.adW||300) + '×' + (c.adH||250) + ']';
       }
@@ -2379,10 +2382,13 @@ function fitAdScale(iframe){
   var wrap = iframe.closest('.url-embed-card');
   if (!wrap) return;
   var adW = 300, adH = 250;
+  var FILL_RATIO = 0.92; // わざと少し小さめにして、四辺に均等な余白を作る
   function apply(){
     var w = wrap.clientWidth || adW;
-    var scale = w / adW;
-    iframe.style.transform = 'translate(-50%, -50%) scale(' + scale + ')';
+    var scale = (w * FILL_RATIO) / adW;
+    var gap = w * (1 - FILL_RATIO);
+    var shiftX = -gap / 7; // 実測(左:右 = 1.8:1)を均等にするための補正量(左方向)
+    iframe.style.transform = 'translate(calc(-50% + ' + shiftX + 'px), -50%) scale(' + scale + ')';
     wrap.style.height = Math.round(adH * scale) + 'px';
   }
   apply();
@@ -2390,7 +2396,7 @@ function fitAdScale(iframe){
   wrapObserver.observe(wrap);
   try {
     var innerBody = iframe.contentWindow.document.body;
-    var innerObserver = new ResizeObserver(function(){
+    var observer = new ResizeObserver(function(){
       var bw = innerBody.scrollWidth, bh = innerBody.scrollHeight;
       if (bw > 0 && bh > 0 && (bw !== adW || bh !== adH)) {
         adW = bw; adH = bh;
@@ -2399,7 +2405,7 @@ function fitAdScale(iframe){
       }
       apply();
     });
-    innerObserver.observe(innerBody);
+    observer.observe(innerBody);
   } catch (e) {}
 }
 var CARD_ASPECT_W = 320;
