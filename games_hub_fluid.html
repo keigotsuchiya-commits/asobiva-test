@@ -857,7 +857,7 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
         <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
         <button class="burger-menu-item admin-only" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
         <button class="burger-menu-item admin-only" id="downloadHtmlBtn" onclick="handleDownloadClick()">公開用保存</button>
-        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v5.3</div>
+        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v5.4</div>
       </div>
     </div>
   </div>
@@ -1392,6 +1392,7 @@ function render() {
       label.textContent = c.url || '(URL未設定)';
 
       let adW = 300, adH = 250;
+      let measured = false, measureCount = 0;
       const iframe = document.createElement('iframe');
       iframe.src = c.url;
       iframe.loading = 'lazy';
@@ -1414,9 +1415,8 @@ function render() {
         const gap = w * (1 - FILL_RATIO);
         const shiftX = -gap / 7; // 実測(左:右 = 1.8:1)を均等にするための補正量(左方向)
         iframe.style.transform = 'translate(calc(-50% + ' + shiftX + 'px), -50%) scale(' + scale + ')';
-        const targetH = c.adH || 250;
-        wrap.style.height = Math.round(Math.min(adH, targetH) * scale) + 'px'; // 実測と選んだサイズ、小さい方
-        label.textContent = (c.url || '(URL未設定)') + '　[実測: ' + adW + '×' + adH + ' / 選択: ' + (c.adW||300) + '×' + (c.adH||250) + ']';
+        wrap.style.height = Math.round(adH * scale) + 'px';
+        label.textContent = (c.url || '(URL未設定)') + '　[実測: ' + adW + '×' + adH + (measured ? '(測定済み・' + measureCount + '回)' : '(未測定・初期値のまま)') + ' / 選択: ' + (c.adW||300) + '×' + (c.adH||250) + ']';
       }
 
       let innerObserver = null;
@@ -1427,10 +1427,14 @@ function render() {
           if (innerObserver) innerObserver.disconnect();
           innerObserver = new ResizeObserver(() => {
             const bw = innerBody.scrollWidth, bh = innerBody.scrollHeight;
-            if (bw > 0 && bh > 0 && (bw !== adW || bh !== adH)) {
-              adW = bw; adH = bh;
-              iframe.style.width = adW + 'px';
-              iframe.style.height = adH + 'px';
+            if (bw > 0 && bh > 0) {
+              measured = true;
+              measureCount++;
+              if (bw !== adW || bh !== adH) {
+                adW = bw; adH = bh;
+                iframe.style.width = adW + 'px';
+                iframe.style.height = adH + 'px';
+              }
             }
             applyScale();
           });
@@ -2408,7 +2412,7 @@ function fitAdScale(iframe, targetH){
     var gap = w * (1 - FILL_RATIO);
     var shiftX = -gap / 7; // 実測(左:右 = 1.8:1)を均等にするための補正量(左方向)
     iframe.style.transform = 'translate(calc(-50% + ' + shiftX + 'px), -50%) scale(' + scale + ')';
-    wrap.style.height = Math.round(Math.min(adH, targetH) * scale) + 'px'; // 実測と選んだサイズ、小さい方
+    wrap.style.height = Math.round(adH * scale) + 'px';
   }
   apply();
   var wrapObserver = new ResizeObserver(apply);
