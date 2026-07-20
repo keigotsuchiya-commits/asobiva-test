@@ -855,7 +855,7 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
         <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
         <button class="burger-menu-item admin-only" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
         <button class="burger-menu-item admin-only" id="downloadHtmlBtn" onclick="handleDownloadClick()">公開用保存</button>
-        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v4.6</div>
+        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v4.7</div>
       </div>
     </div>
   </div>
@@ -1402,7 +1402,7 @@ function render() {
         const w = wrap.clientWidth || adW;
         const scale = w / adW; // 実測した広告の幅を、カード幅に合わせて拡大
         iframe.style.transform = 'translate(-50%, -50%) scale(' + scale + ')';
-        wrap.style.height = Math.round(targetH * scale) + 'px'; // 窓の高さは「選んだサイズ」基準
+        wrap.style.height = Math.round(Math.min(adH, targetH) * scale) + 'px'; // 実測と選んだサイズ、小さい方を使う
       }
 
       let innerObserver = null;
@@ -2384,7 +2384,7 @@ function fitAdScale(iframe, targetH){
     var w = wrap.clientWidth || adW;
     var scale = w / adW;
     iframe.style.transform = 'translate(-50%, -50%) scale(' + scale + ')';
-    wrap.style.height = Math.round(targetH * scale) + 'px';
+    wrap.style.height = Math.round(Math.min(adH, targetH) * scale) + 'px';
   }
   apply();
   var wrapObserver = new ResizeObserver(apply);
