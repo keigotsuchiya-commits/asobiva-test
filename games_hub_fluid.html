@@ -855,7 +855,7 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
         <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
         <button class="burger-menu-item admin-only" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
         <button class="burger-menu-item admin-only" id="downloadHtmlBtn" onclick="handleDownloadClick()">公開用保存</button>
-        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v4.4</div>
+        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v4.6</div>
       </div>
     </div>
   </div>
@@ -931,6 +931,12 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
   <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
     <label class="field-label" for="embedUrlInput">または、URLを直接指定（広告タグなど）</label>
     <input class="field-input" id="embedUrlInput" type="url" placeholder="https://.../ad.html">
+    <label class="field-label" for="embedSizeSelect">広告のサイズ</label>
+    <select class="field-input" id="embedSizeSelect">
+      <option value="300x250">300 × 250</option>
+      <option value="320x100">320 × 100</option>
+      <option value="320x50">320 × 50</option>
+    </select>
     <button class="btn-add" onclick="addUrlCard()">URLでカードを追加</button>
   </div>
 </div>
@@ -1147,6 +1153,8 @@ async function init() {
       musicUrl: r.musicUrl || '',
       artist: r.artist || '',
       url: r.url || '',
+      adW: r.adW || 300,
+      adH: r.adH || 250,
     }));
     setLoadingBar(100);
   } catch (err) {
@@ -1373,7 +1381,8 @@ function render() {
       label.className = 'html-card-label';
       label.textContent = c.url || '(URL未設定)';
 
-      let adW = 300, adH = 250;
+      const targetH = c.adH || 250; // 「窓」の高さ(選んだサイズ)。この高さ分しか見せない
+      let adW = 300, adH = 250; // 実測されるまでの仮値
       const iframe = document.createElement('iframe');
       iframe.src = c.url;
       iframe.loading = 'lazy';
@@ -1391,12 +1400,9 @@ function render() {
 
       function applyScale() {
         const w = wrap.clientWidth || adW;
-        const FILL_RATIO = 0.92; // わざと少し小さめにして、四辺に均等な余白を作る
-        const scale = (w * FILL_RATIO) / adW;
-        const gap = w * (1 - FILL_RATIO);
-        const shiftX = -gap / 7; // 実測(左:右 = 1.8:1)を均等にするための補正量(左方向)
-        iframe.style.transform = 'translate(calc(-50% + ' + shiftX + 'px), -50%) scale(' + scale + ')';
-        wrap.style.height = Math.round(adH * scale) + 'px';
+        const scale = w / adW; // 実測した広告の幅を、カード幅に合わせて拡大
+        iframe.style.transform = 'translate(-50%, -50%) scale(' + scale + ')';
+        wrap.style.height = Math.round(targetH * scale) + 'px'; // 窓の高さは「選んだサイズ」基準
       }
 
       let innerObserver = null;
@@ -1900,8 +1906,10 @@ async function addUrlCard() {
   const url = document.getElementById('embedUrlInput').value.trim();
   if (!url) return;
   const link = document.getElementById('linkUrl').value.trim();
-  const id = await dbOp('cards', 'readwrite', s => s.add({ type: 'url-embed', url, link }));
-  cards.push({ id, type: 'url-embed', url, link });
+  const sizeVal = document.getElementById('embedSizeSelect').value; // 例: "300x250"
+  const [adW, adH] = sizeVal.split('x').map(Number);
+  const id = await dbOp('cards', 'readwrite', s => s.add({ type: 'url-embed', url, link, adW, adH }));
+  cards.push({ id, type: 'url-embed', url, link, adW, adH });
   document.getElementById('embedUrlInput').value = '';
   closePanel();
   render();
@@ -2130,7 +2138,7 @@ async function toggleGap(id) {
   else c.gap = true;
   await dbOp('cards', 'readwrite', s => s.put({
     id: c.id, type: c.type, html: c.html, base64: c.base64,
-    images: c.images, name: c.name, link: c.link, url: c.url, gap: c.gap
+    images: c.images, name: c.name, link: c.link, url: c.url, adW: c.adW, adH: c.adH, gap: c.gap
   }));
   render();
 }
@@ -2240,7 +2248,7 @@ async function downloadHTML() {
         cardsHTML += `  <div class="card-section${gapClass}"><div class="carousel-card" data-images="${imgsJson}" data-index="0" onclick="cyclerCarousel(this)"><img src="${compressedImgs[0]}" alt="">${compressedImgs.length > 1 ? `<div class="carousel-dots">${dots}</div><div class="carousel-count">1 / ${compressedImgs.length}</div>` : ''}</div></div>\n`;
       } else if (c.type === 'url-embed') {
         const linkOverlay = c.link ? `<a href="${c.link}"${isExternalLink(c.link) ? ' target="_blank" rel="noopener"' : ''} style="position:absolute;inset:0;z-index:4;"></a>` : '';
-        cardsHTML += `  <div class="card-section${gapClass}"><div class="html-card url-embed-card" style="position:relative;overflow:hidden;"><iframe src="${c.url}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" scrolling="no" style="position:absolute;top:50%;left:50%;width:300px;height:250px;border:none;" onload="fitAdScale(this)"></iframe>${linkOverlay}</div></div>\n`;
+        cardsHTML += `  <div class="card-section${gapClass}"><div class="html-card url-embed-card" style="position:relative;overflow:hidden;"><iframe src="${c.url}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" scrolling="no" style="position:absolute;top:50%;left:50%;width:300px;height:250px;border:none;" onload="fitAdScale(this, ${c.adH||250})"></iframe>${linkOverlay}</div></div>\n`;
       } else {
         const escaped = injectAutoResize(c.html).replace(/"/g, '&quot;');
         const linkOverlay = c.link ? `<a href="${c.link}"${isExternalLink(c.link) ? ' target="_blank" rel="noopener"' : ''} style="position:absolute;inset:0;z-index:4;"></a>` : '';
@@ -2367,25 +2375,23 @@ function cyclerCarousel(el){
   var count = el.querySelector('.carousel-count');
   if (count) count.textContent = (idx + 1) + ' / ' + images.length;
 }
-function fitAdScale(iframe){
+function fitAdScale(iframe, targetH){
   var wrap = iframe.closest('.url-embed-card');
   if (!wrap) return;
+  targetH = targetH || 250;
   var adW = 300, adH = 250;
-  var FILL_RATIO = 0.92; // わざと少し小さめにして、四辺に均等な余白を作る
   function apply(){
     var w = wrap.clientWidth || adW;
-    var scale = (w * FILL_RATIO) / adW;
-    var gap = w * (1 - FILL_RATIO);
-    var shiftX = -gap / 7; // 実測(左:右 = 1.8:1)を均等にするための補正量(左方向)
-    iframe.style.transform = 'translate(calc(-50% + ' + shiftX + 'px), -50%) scale(' + scale + ')';
-    wrap.style.height = Math.round(adH * scale) + 'px';
+    var scale = w / adW;
+    iframe.style.transform = 'translate(-50%, -50%) scale(' + scale + ')';
+    wrap.style.height = Math.round(targetH * scale) + 'px';
   }
   apply();
   var wrapObserver = new ResizeObserver(apply);
   wrapObserver.observe(wrap);
   try {
     var innerBody = iframe.contentWindow.document.body;
-    var observer = new ResizeObserver(function(){
+    var innerObserver = new ResizeObserver(function(){
       var bw = innerBody.scrollWidth, bh = innerBody.scrollHeight;
       if (bw > 0 && bh > 0 && (bw !== adW || bh !== adH)) {
         adW = bw; adH = bh;
@@ -2394,7 +2400,7 @@ function fitAdScale(iframe){
       }
       apply();
     });
-    observer.observe(innerBody);
+    innerObserver.observe(innerBody);
   } catch (e) {}
 }
 var CARD_ASPECT_W = 320;
