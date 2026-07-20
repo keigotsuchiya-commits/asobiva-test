@@ -857,7 +857,7 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
         <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
         <button class="burger-menu-item admin-only" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
         <button class="burger-menu-item admin-only" id="downloadHtmlBtn" onclick="handleDownloadClick()">公開用保存</button>
-        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v5.7</div>
+        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v5.8</div>
       </div>
     </div>
   </div>
@@ -1426,7 +1426,7 @@ function render() {
         const targetH = (c.adH || 250) + 15; // 選んだサイズ + 上の余白の目安(15)
         const windowH = Math.round(Math.min(adH, targetH) * scale);
         wrap.style.height = windowH + 'px'; // 外側の窓だけ、下を覗き穴で隠す
-        label.textContent = (c.url || '(URL未設定)') + '　[実測: ' + adW + '×' + adH + (measured ? '(測定済み・' + measureCount + '回)' : '(未測定・初期値のまま)') + ' / 選択: ' + (c.adW||300) + '×' + (c.adH||250) + ']';
+        label.textContent = c.url || '(URL未設定)';
       }
 
       let innerObserver = null;
@@ -1453,7 +1453,7 @@ function render() {
       });
       requestAnimationFrame(applyScale);
       const wrapObserver = new ResizeObserver(applyScale);
-      wrapObserver.observe(wrap);
+      wrapObserver.observe(sec);
 
       if (!adminMode && c.link) {
         const linkOverlay = document.createElement('a');
@@ -2269,6 +2269,15 @@ async function downloadHTML() {
       if (c.type === 'game') {
         const escaped = c.html.replace(/"/g, '&quot;');
         cardsHTML += `  <div class="card-section${gapClass}"><div class="game-card"><div class="game-card-frame-wrap"><iframe srcdoc="${escaped}" sandbox="allow-scripts allow-same-origin" width="${CARD_ASPECT_W}" height="${CARD_ASPECT_H}"></iframe><div class="game-card-tap" onclick="openFullscreenGameStatic(this)" data-html="${escaped}"></div></div></div></div>\n`;
+      } else if (c.type === 'game-carousel') {
+        const escapedHtmls = c.htmls.map(h => h.replace(/"/g, '&quot;'));
+        const names = c.names || [];
+        const itemsJson = JSON.stringify(c.htmls.map((h, i) => ({ html: h, name: names[i] || '' }))).replace(/"/g, '&quot;');
+        const countLabel = c.htmls.length > 1 ? `　1 / ${c.htmls.length}` : '';
+        const navBtns = c.htmls.length > 1
+          ? `<button class="game-carousel-nav" onclick="event.stopPropagation();gcMove(this,-1)">‹</button><span class="game-carousel-title">${names[0] || ''}${countLabel}</span><button class="game-carousel-nav" onclick="event.stopPropagation();gcMove(this,1)">›</button>`
+          : `<span class="game-carousel-title">${names[0] || ''}</span>`;
+        cardsHTML += `  <div class="card-section${gapClass}"><div class="game-carousel-card" data-items="${itemsJson}" data-index="0"><div class="game-card-frame-wrap"><iframe srcdoc="${escapedHtmls[0]}" sandbox="allow-scripts allow-same-origin" width="${CARD_ASPECT_W}" height="${CARD_ASPECT_H}"></iframe><div class="game-card-tap" onclick="openFullscreenGameStatic(this)" data-html="${escapedHtmls[0]}"></div></div><div class="game-carousel-footer">${navBtns}</div></div></div>\n`;
       } else if (c.type === 'image') {
         const compressedB64 = await compressImage(c.base64);
         const tag = c.link
@@ -2315,6 +2324,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .game-card-frame-wrap { width:100%; background:#ffffff; position:relative; overflow:hidden; line-height:0; }
 .game-card-frame-wrap iframe { display:block; border:none; pointer-events:none; }
 .game-card-tap { position:absolute; inset:0; z-index:3; cursor:pointer; }
+.game-carousel-card { width:100%; background:var(--white); overflow:hidden; position:relative; }
+.game-carousel-footer { display:flex; align-items:center; justify-content:space-between; padding:6px 12px; background:var(--white); border-top:1px solid var(--border); font-size:11px; letter-spacing:0.08em; color:var(--ink-soft); }
+.game-carousel-footer .game-carousel-title { font-size:11px; font-weight:500; color:var(--ink); letter-spacing:0.04em; flex:1; text-align:center; }
+.game-carousel-nav { background:none; color:var(--ink); border:none; width:32px; height:32px; font-size:20px; cursor:pointer; display:flex; align-items:center; justify-content:center; opacity:0.5; }
+.game-carousel-nav:hover { opacity:1; }
 .carousel-card { width:100%; position:relative; background:var(--white); overflow:hidden; cursor:pointer; }
 .carousel-card img { width:100%; height:auto; display:block; }
 .carousel-dots { position:absolute; bottom:10px; left:0; right:0; display:flex; justify-content:center; gap:6px; pointer-events:none; }
@@ -2429,7 +2443,7 @@ function fitAdScale(iframe, targetH){
   }
   apply();
   var wrapObserver = new ResizeObserver(apply);
-  wrapObserver.observe(wrap);
+  wrapObserver.observe(wrap.parentElement || wrap);
   try {
     var innerBody = iframe.contentWindow.document.body;
     var observer = new ResizeObserver(function(){
@@ -2497,6 +2511,19 @@ function sizeFullscreenIframeStatic(frameWrap, iframe){
   if (_fullscreenResizeHandlerStatic) window.removeEventListener('resize', _fullscreenResizeHandlerStatic);
   _fullscreenResizeHandlerStatic = apply;
   window.addEventListener('resize', apply);
+}
+function gcMove(btn, dir){
+  var el = btn.closest('.game-carousel-card');
+  var items = JSON.parse(el.dataset.items);
+  var idx = (parseInt(el.dataset.index, 10) + dir + items.length) % items.length;
+  el.dataset.index = String(idx);
+  var item = items[idx];
+  var iframe = el.querySelector('iframe');
+  iframe.srcdoc = item.html;
+  var tap = el.querySelector('.game-card-tap');
+  tap.setAttribute('data-html', item.html);
+  var title = el.querySelector('.game-carousel-title');
+  title.textContent = item.name + (items.length > 1 ? '\u3000' + (idx + 1) + ' / ' + items.length : '');
 }
 function openFullscreenGameStatic(tapEl){
   var html = tapEl.getAttribute('data-html');
