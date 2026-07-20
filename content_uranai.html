@@ -339,12 +339,10 @@ body.admin-mode .card:hover img { transform: none; }
 
 /* ── HTML CARD ── */
 .html-card {
-  display: block;
   width: 100%;
   position: relative;
   background: var(--white);
   overflow: hidden;
-  text-decoration: none;
 }
 .html-card iframe {
   display: block;
@@ -355,6 +353,8 @@ body.admin-mode .card:hover img { transform: none; }
 }
 .html-card-label {
   display: none;
+  position: relative;
+  z-index: 5;
   padding: 8px 16px;
   font-size: 10px;
   letter-spacing: 0.08em;
@@ -473,27 +473,6 @@ body.admin-mode .card-replace { display: flex; }
 
 .card-replace-input { display: none; }
 
-/* ── LINK EDIT BUTTON ── */
-.card-link-btn {
-  display: none;
-  position: absolute;
-  top: 10px; right: 90px;
-  width: 30px; height: 30px;
-  background: rgba(0,0,0,0.5);
-  color: #fff;
-  border: none;
-  border-radius: 50%;
-  font-size: 13px;
-  cursor: pointer;
-  align-items: center;
-  justify-content: center;
-  z-index: 5;
-  transition: background 0.15s;
-}
-.card-link-btn:hover { background: #2266cc; }
-.card-link-btn.has-link { background: rgba(34,102,204,0.85); }
-body.admin-mode .card-link-btn { display: flex; }
-
 /* ── ADD BUTTON ── */
 .add-section {
   background: var(--bg);
@@ -573,7 +552,7 @@ footer {
   text-align: center;
   font-size: 10px;
   letter-spacing: 0.1em;
-  color: var(--ink);
+  color: var(--ink-soft);
   background: var(--white);
 }
 
@@ -793,16 +772,6 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
   <input class="field-input" id="footerTextInput" type="text" placeholder="例: © 2025 i.roiro">
   <button class="btn-add" onclick="saveFooterText()">保存する</button>
 </div>
-
-<!-- リンク編集パネル -->
-<div class="overlay" id="linkEditOverlay" onclick="closeLinkEditor()"></div>
-<div class="panel" id="linkEditPanel">
-  <div class="panel-handle"></div>
-  <div class="panel-title">リンク先を設定</div>
-  <label class="field-label" for="linkEditInput">リンク先URL</label>
-  <input class="field-input" id="linkEditInput" type="url" placeholder="https://note.com/...">
-  <button class="btn-add" onclick="saveLinkEdit()">保存する</button>
-</div>
 <div class="overlay" id="overlay" onclick="closePanel()"></div>
 <div class="panel" id="panel">
   <div class="panel-handle"></div>
@@ -822,6 +791,17 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
   <label class="field-label" for="linkUrl">リンク先URL（任意）</label>
   <input class="field-input" id="linkUrl" type="url" placeholder="https://note.com/...">
   <button class="btn-add" id="addBtn" onclick="addCards()" disabled>追加する</button>
+  <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+    <label class="field-label" for="embedUrlInput">または、URLを直接指定（広告タグなど）</label>
+    <input class="field-input" id="embedUrlInput" type="url" placeholder="https://.../ad.html">
+    <label class="field-label" for="embedSizeSelect">広告のサイズ</label>
+    <select class="field-input" id="embedSizeSelect">
+      <option value="300x250">300 × 250</option>
+      <option value="320x100">320 × 100</option>
+      <option value="320x50">320 × 50</option>
+    </select>
+    <button class="btn-add" onclick="addUrlCard()">URLでカードを追加</button>
+  </div>
 </div>
 
 <script>
@@ -978,6 +958,9 @@ async function init() {
       thumbB64: r.thumbB64 || null,
       musicUrl: r.musicUrl || '',
       artist: r.artist || '',
+      url: r.url || '',
+      adW: r.adW || 300,
+      adH: r.adH || 250,
     }));
     setLoadingBar(100);
   } catch (err) {
@@ -1089,6 +1072,82 @@ function render() {
         });
       }
       supportsReplace = false;
+    } else if (c.type === 'url-embed') {
+      wrap = document.createElement('div');
+      wrap.className = 'html-card url-embed-card';
+      wrap.style.position = 'relative';
+      wrap.style.overflow = 'hidden';
+
+      // 内側の箱: 中央揃え・実測ベースの拡大はここだけで完結させる
+      const innerBox = document.createElement('div');
+      innerBox.style.position = 'relative';
+      innerBox.style.width = '100%';
+
+      const label = document.createElement('div');
+      label.className = 'html-card-label';
+      label.textContent = c.url || '(URL未設定)';
+
+      let adW = 300, adH = 250;
+      const iframe = document.createElement('iframe');
+      iframe.src = c.url;
+      iframe.loading = 'lazy';
+      iframe.scrolling = 'no';
+      iframe.style.position = 'absolute';
+      iframe.style.top = '50%';
+      iframe.style.left = '50%';
+      iframe.style.width = adW + 'px';
+      iframe.style.height = adH + 'px';
+      iframe.style.border = 'none';
+      iframe.sandbox = 'allow-scripts allow-popups allow-forms allow-same-origin';
+
+      innerBox.appendChild(label);
+      innerBox.appendChild(iframe);
+      wrap.appendChild(innerBox);
+
+      function applyScale() {
+        const w = wrap.clientWidth || adW;
+        const FILL_RATIO = 0.92; // わざと少し小さめにして、四辺に均等な余白を作る
+        const scale = (w * FILL_RATIO) / adW;
+        const gap = w * (1 - FILL_RATIO);
+        const shiftX = -gap / 7; // 実測(左:右 = 1.8:1)を均等にするための補正量(左方向)
+        iframe.style.transform = 'translate(calc(-50% + ' + shiftX + 'px), -50%) scale(' + scale + ')';
+        const fullH = Math.round(adH * scale);
+        innerBox.style.height = fullH + 'px';
+        const targetH = (c.adH || 250) + 15; // 選んだサイズ + 上の余白の目安(15)
+        wrap.style.height = Math.round(Math.min(adH, targetH) * scale) + 'px';
+      }
+
+      let innerObserver = null;
+      iframe.addEventListener('load', () => {
+        applyScale();
+        try {
+          const innerBody = iframe.contentWindow.document.body;
+          if (innerObserver) innerObserver.disconnect();
+          innerObserver = new ResizeObserver(() => {
+            const bw = innerBody.scrollWidth, bh = innerBody.scrollHeight;
+            if (bw > 0 && bh > 0 && (bw !== adW || bh !== adH)) {
+              adW = bw; adH = bh;
+              iframe.style.width = adW + 'px';
+              iframe.style.height = adH + 'px';
+            }
+            applyScale();
+          });
+          innerObserver.observe(innerBody);
+        } catch (e) {}
+      });
+      requestAnimationFrame(applyScale);
+      const wrapObserver = new ResizeObserver(applyScale);
+      wrapObserver.observe(sec);
+
+      if (!adminMode && c.link) {
+        const linkOverlay = document.createElement('a');
+        linkOverlay.href = c.link;
+        linkOverlay.target = '_blank';
+        linkOverlay.rel = 'noopener';
+        linkOverlay.style.cssText = 'position:absolute;inset:0;z-index:4;';
+        wrap.appendChild(linkOverlay);
+      }
+      supportsReplace = false;
     } else {
       wrap = document.createElement('div');
       wrap.className = 'html-card';
@@ -1112,14 +1171,6 @@ function render() {
 
       wrap.appendChild(label);
       wrap.appendChild(iframe);
-      if (!adminMode && c.link) {
-        const linkOverlay = document.createElement('a');
-        linkOverlay.href = c.link;
-        linkOverlay.target = '_blank';
-        linkOverlay.rel = 'noopener';
-        linkOverlay.style.cssText = 'position:absolute;inset:0;z-index:4;';
-        wrap.appendChild(linkOverlay);
-      }
       replaceAccept = 'image/*,text/html,.html';
     }
 
@@ -1145,15 +1196,6 @@ function render() {
         replaceInput.click();
       });
     }
-
-    const linkBtn = document.createElement('button');
-    linkBtn.className = 'card-link-btn' + (c.link ? ' has-link' : '');
-    linkBtn.title = 'リンクを設定';
-    linkBtn.textContent = '🔗';
-    linkBtn.addEventListener('click', e => {
-      e.preventDefault(); e.stopPropagation();
-      openLinkEditor(c.id, c.link);
-    });
 
     const delBtn = document.createElement('button');
     delBtn.className = 'card-del';
@@ -1185,7 +1227,6 @@ function render() {
       toggleGap(c.id);
     });
 
-    if (c.type !== 'carousel') wrap.appendChild(linkBtn);
     if (supportsReplace) {
       wrap.appendChild(replaceBtn);
       wrap.appendChild(replaceInput);
@@ -1381,32 +1422,6 @@ async function saveFooterText() {
   closeFooterEditor();
 }
 
-let linkEditTargetId = null;
-
-function openLinkEditor(id, currentLink) {
-  linkEditTargetId = id;
-  document.getElementById('linkEditInput').value = currentLink || '';
-  document.getElementById('linkEditOverlay').classList.add('open');
-  document.getElementById('linkEditPanel').classList.add('open');
-}
-
-function closeLinkEditor() {
-  document.getElementById('linkEditOverlay').classList.remove('open');
-  document.getElementById('linkEditPanel').classList.remove('open');
-  linkEditTargetId = null;
-}
-
-async function saveLinkEdit() {
-  if (linkEditTargetId === null) return;
-  const link = document.getElementById('linkEditInput').value.trim();
-  const c = cards.find(c => c.id === linkEditTargetId);
-  if (!c) return;
-  c.link = link;
-  await dbOp('cards', 'readwrite', s => s.put({ ...c }));
-  closeLinkEditor();
-  render();
-}
-
 function toggleAdmin() {
   adminMode = !adminMode;
   document.body.classList.toggle('admin-mode', adminMode);
@@ -1530,6 +1545,19 @@ async function addCards() {
   render();
 }
 
+async function addUrlCard() {
+  const url = document.getElementById('embedUrlInput').value.trim();
+  if (!url) return;
+  const link = document.getElementById('linkUrl').value.trim();
+  const sizeVal = document.getElementById('embedSizeSelect').value; // 例: "300x250"
+  const [adW, adH] = sizeVal.split('x').map(Number);
+  const id = await dbOp('cards', 'readwrite', s => s.add({ type: 'url-embed', url, link, adW, adH, gap: true }));
+  cards.push({ id, type: 'url-embed', url, link, adW, adH, gap: true });
+  document.getElementById('embedUrlInput').value = '';
+  closePanel();
+  render();
+}
+
 // ── Replace ───────────────────────────────────
 async function replaceCard(id, file) {
   const link = cards.find(c => c.id === id)?.link || '';
@@ -1558,7 +1586,8 @@ async function toggleGap(id) {
   else c.gap = true;
   await dbOp('cards', 'readwrite', s => s.put({
     id: c.id, type: c.type, html: c.html, base64: c.base64,
-    images: c.images, name: c.name, link: c.link, gap: c.gap
+    images: c.images, name: c.name, link: c.link, gap: c.gap,
+    url: c.url, adW: c.adW, adH: c.adH
   }));
   render();
 }
@@ -1666,10 +1695,12 @@ async function downloadHTML() {
         const dots = compressedImgs.map((_, idx) => `<span class="${idx===0?'active':''}"></span>`).join('');
         const imgsJson = JSON.stringify(compressedImgs).replace(/"/g, '&quot;');
         cardsHTML += `  <div class="card-section${gapClass}"><div class="carousel-card" data-images="${imgsJson}" data-index="0" onclick="cyclerCarousel(this)"><img src="${compressedImgs[0]}" alt="">${compressedImgs.length > 1 ? `<div class="carousel-dots">${dots}</div><div class="carousel-count">1 / ${compressedImgs.length}</div>` : ''}</div></div>\n`;
+      } else if (c.type === 'url-embed') {
+        const linkOverlay = c.link ? `<a href="${c.link}" target="_blank" rel="noopener" style="position:absolute;inset:0;z-index:4;"></a>` : '';
+        cardsHTML += `  <div class="card-section${gapClass}"><div class="html-card url-embed-card" style="position:relative;overflow:hidden;"><div class="url-embed-inner" style="position:relative;width:100%;"><iframe src="${c.url}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" scrolling="no" style="position:absolute;top:50%;left:50%;width:300px;height:250px;border:none;" onload="fitAdScale(this, ${c.adH||250})"></iframe></div>${linkOverlay}</div></div>\n`;
       } else {
         const escaped = injectAutoResize(c.html).replace(/"/g, '&quot;');
-        const linkOverlay = c.link ? `<a href="${c.link}" target="_blank" rel="noopener" style="position:absolute;inset:0;z-index:4;"></a>` : '';
-        cardsHTML += `  <div class="card-section${gapClass}"><div class="html-card"><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:60px" scrolling="no" onload="try{var h=this.contentDocument.documentElement.scrollHeight||this.contentDocument.body.scrollHeight;if(h>0)this.style.height=h+'px';}catch(e){}"></iframe>${linkOverlay}</div></div>\n`;
+        cardsHTML += `  <div class="card-section${gapClass}"><div class="html-card"><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:60px" scrolling="no" onload="try{var h=this.contentDocument.documentElement.scrollHeight||this.contentDocument.body.scrollHeight;if(h>0)this.style.height=h+'px';}catch(e){}"></iframe></div></div>\n`;
       }
     }
   }
@@ -1691,7 +1722,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .card-section.dot-gap { background: var(--white); padding-top:0; border-top:1px dashed rgba(0,0,0,0.2); }
 .card { width:100%; display:block; text-decoration:none; background:var(--white); overflow:hidden; }
 .card img { width:100%; height:auto; display:block; }
-.html-card { display:block; width:100%; position:relative; background:var(--white); overflow:hidden; text-decoration:none; }
+.html-card { width:100%; position:relative; background:var(--white); overflow:hidden; }
 .html-card iframe { display:block; width:100%; height:480px; border:none; background:var(--white); }
 .carousel-card { width:100%; position:relative; background:var(--white); overflow:hidden; cursor:pointer; }
 .carousel-card img { width:100%; height:auto; display:block; }
@@ -1706,6 +1737,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .footer-section.no-gap { padding-top:0; }
 .footer-section.line-gap { padding-top:0; background:var(--white); border-top:1px solid var(--ink); }
 .footer-section.dot-gap { padding-top:0; background:var(--white); border-top:1px dashed rgba(0,0,0,0.2); }
+.site-header { display:flex; align-items:center; justify-content:flex-end; padding:10px 16px; background:var(--white); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; }
 .burger-btn { background:none; border:none; cursor:pointer; padding:4px; display:flex; flex-direction:column; gap:5px; align-items:flex-end; }
 .burger-btn span { display:block; height:1.5px; background:var(--ink); border-radius:1px; }
 .burger-btn span:nth-child(1) { width:20px; }
@@ -1715,7 +1747,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .burger-menu.open { display:block; }
 .nav-link-item { display:block; width:100%; padding:14px 20px; background:none; border:none; border-bottom:1px solid var(--border); font-size:13px; font-weight:500; color:var(--ink); cursor:pointer; text-align:left; text-decoration:none; }
 .nav-link-item:last-child { border-bottom:none; }
-footer { padding:16px; text-align:center; font-size:10px; letter-spacing:0.1em; color:var(--ink); background:var(--white); }
+footer { padding:16px; text-align:center; font-size:10px; letter-spacing:0.1em; color:var(--ink-soft); background:var(--white); }
 `;
 
 
@@ -1723,11 +1755,8 @@ footer { padding:16px; text-align:center; font-size:10px; letter-spacing:0.1em; 
   try { navItems = JSON.parse(localStorage.getItem('asobiva_nav_v1')) || []; } catch {}
   const navLinksHTML = navItems.map(item => `<a class="nav-link-item" href="${item.url}">${item.label}</a>`).join('');
   const footerText = document.getElementById('footerText')?.textContent || 'ASOBIVA — i.roiro';
-  const footerSectionEl = document.getElementById('footerSection');
-  const footerGapClass = footerSectionEl?.classList.contains('no-gap') ? ' no-gap'
-    : footerSectionEl?.classList.contains('line-gap') ? ' line-gap'
-    : footerSectionEl?.classList.contains('dot-gap') ? ' dot-gap'
-    : '';
+  const footerNoGap = document.getElementById('footerSection')?.classList.contains('no-gap');
+  const footerGapClass = footerNoGap ? ' no-gap' : '';
 
   const html = `<!DOCTYPE html>
 <html lang="ja">
@@ -1740,14 +1769,12 @@ footer { padding:16px; text-align:center; font-size:10px; letter-spacing:0.1em; 
 <body>
 <div class="wrap">
   <div class="site-header">
-    <a href="asobiva.html" class="back-link">← トップへ戻る</a>
-    <div style="position:relative;">
-      <button class="burger-btn" id="burgerBtnStatic" onclick="document.getElementById('burgerMenuStatic').classList.toggle('open')">
-        <span></span><span></span><span></span>
-      </button>
-      <div class="burger-menu" id="burgerMenuStatic">${navLinksHTML}</div>
-    </div>
+    <button class="burger-btn" id="burgerBtnStatic" onclick="document.getElementById('burgerMenuStatic').classList.toggle('open')">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="burger-menu" id="burgerMenuStatic">${navLinksHTML}</div>
   </div>
+  <div class="site-header-back"><a href="asobiva.html" class="back-link">← トップへ戻る</a></div>
   <div class="header-pair">
 ${headerHTML}  </div>
 ${cardsHTML}  <div class="footer-section${footerGapClass}">
@@ -1771,6 +1798,40 @@ function cyclerCarousel(el){
   dots.forEach(function(d, i){ d.classList.toggle('active', i === idx); });
   var count = el.querySelector('.carousel-count');
   if (count) count.textContent = (idx + 1) + ' / ' + images.length;
+}
+function fitAdScale(iframe, targetH){
+  var wrap = iframe.closest('.url-embed-card');
+  if (!wrap) return;
+  var innerBox = iframe.closest('.url-embed-inner');
+  targetH = (targetH || 250) + 15; // 選んだサイズ + 上の余白の目安(15)
+  var adW = 300, adH = 250;
+  var FILL_RATIO = 0.92; // わざと少し小さめにして、四辺に均等な余白を作る
+  function apply(){
+    var w = wrap.clientWidth || adW;
+    var scale = (w * FILL_RATIO) / adW;
+    var gap = w * (1 - FILL_RATIO);
+    var shiftX = -gap / 7; // 実測(左:右 = 1.8:1)を均等にするための補正量(左方向)
+    iframe.style.transform = 'translate(calc(-50% + ' + shiftX + 'px), -50%) scale(' + scale + ')';
+    var fullH = Math.round(adH * scale);
+    if (innerBox) innerBox.style.height = fullH + 'px';
+    wrap.style.height = Math.round(Math.min(adH, targetH) * scale) + 'px';
+  }
+  apply();
+  var wrapObserver = new ResizeObserver(apply);
+  wrapObserver.observe(wrap.parentElement || wrap);
+  try {
+    var innerBody = iframe.contentWindow.document.body;
+    var innerObserver = new ResizeObserver(function(){
+      var bw = innerBody.scrollWidth, bh = innerBody.scrollHeight;
+      if (bw > 0 && bh > 0 && (bw !== adW || bh !== adH)) {
+        adW = bw; adH = bh;
+        iframe.style.width = adW + 'px';
+        iframe.style.height = adH + 'px';
+      }
+      apply();
+    });
+    innerObserver.observe(innerBody);
+  } catch (e) {}
 }
 </scr` + `ipt>
 <scr` + `ipt>
