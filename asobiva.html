@@ -333,12 +333,10 @@ body.admin-mode .card:hover img { transform: none; }
 
 /* ── HTML CARD ── */
 .html-card {
-  display: block;
   width: 100%;
   position: relative;
   background: var(--white);
   overflow: hidden;
-  text-decoration: none;
 }
 .html-card iframe {
   display: block;
@@ -350,6 +348,8 @@ body.admin-mode .card:hover img { transform: none; }
 }
 .html-card-label {
   display: none;
+  position: relative;
+  z-index: 5;
   padding: 8px 16px;
   font-size: 10px;
   letter-spacing: 0.08em;
@@ -525,8 +525,8 @@ footer {
   text-align: center;
   font-size: 10px;
   letter-spacing: 0.1em;
-  color: #000000;
-  background: #ffffff;
+  color: #111111;
+  background: #d6d6d6;
 }
 
 /* ── PANEL ── */
@@ -743,6 +743,17 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
   <label class="field-label" for="linkUrl">リンク先URL（任意）</label>
   <input class="field-input" id="linkUrl" type="url" placeholder="https://note.com/...">
   <button class="btn-add" id="addBtn" onclick="addCards()" disabled>追加する</button>
+  <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+    <label class="field-label" for="embedUrlInput">または、URLを直接指定（広告タグなど）</label>
+    <input class="field-input" id="embedUrlInput" type="url" placeholder="https://.../ad.html">
+    <label class="field-label" for="embedSizeSelect">広告のサイズ</label>
+    <select class="field-input" id="embedSizeSelect">
+      <option value="300x250">300 × 250</option>
+      <option value="320x100">320 × 100</option>
+      <option value="320x50">320 × 50</option>
+    </select>
+    <button class="btn-add" onclick="addUrlCard()">URLでカードを追加</button>
+  </div>
 </div>
 
 <!-- ナビエディタパネル -->
@@ -904,7 +915,7 @@ async function init() {
     }
     setLoadingBar(60);
     const rows = await dbOp('cards', 'readonly', s => s.getAll());
-    cards = rows.map(r => ({ id: r.id, type: r.type || 'image', base64: r.base64, html: r.html, name: r.name || '', link: r.link || '', order: (r.order ?? r.id), gap: r.gap !== false }));
+    cards = rows.map(r => ({ id: r.id, type: r.type || 'image', base64: r.base64, html: r.html, name: r.name || '', link: r.link || '', order: (r.order ?? r.id), gap: r.gap !== false, url: r.url || '', adW: r.adW || 300, adH: r.adH || 250 }));
     cards.sort((a, b) => a.order - b.order);
   }
 
@@ -1042,14 +1053,6 @@ function render() {
 
       wrap.appendChild(label);
       wrap.appendChild(iframe);
-      if (!adminMode && c.link) {
-        const linkOverlay = document.createElement('a');
-        linkOverlay.href = c.link;
-        linkOverlay.target = '_blank';
-        linkOverlay.rel = 'noopener';
-        linkOverlay.style.cssText = 'position:absolute;inset:0;z-index:4;';
-        wrap.appendChild(linkOverlay);
-      }
 
       replaceInput = document.createElement('input');
       replaceInput.type = 'file';
@@ -1070,6 +1073,80 @@ function render() {
         replaceInput.click();
       });
 
+    } else if (c.type === 'url-embed') {
+      wrap = document.createElement('div');
+      wrap.className = 'html-card url-embed-card';
+      wrap.style.position = 'relative';
+      wrap.style.overflow = 'hidden';
+
+      const innerBox = document.createElement('div');
+      innerBox.style.position = 'relative';
+      innerBox.style.width = '100%';
+
+      const label = document.createElement('div');
+      label.className = 'html-card-label';
+      label.textContent = c.url || '(URL未設定)';
+
+      let adW = 300, adH = 250;
+      const iframe = document.createElement('iframe');
+      iframe.src = c.url;
+      iframe.loading = 'lazy';
+      iframe.scrolling = 'no';
+      iframe.style.position = 'absolute';
+      iframe.style.top = '50%';
+      iframe.style.left = '50%';
+      iframe.style.width = adW + 'px';
+      iframe.style.height = adH + 'px';
+      iframe.style.border = 'none';
+      iframe.sandbox = 'allow-scripts allow-popups allow-forms allow-same-origin';
+
+      innerBox.appendChild(label);
+      innerBox.appendChild(iframe);
+      wrap.appendChild(innerBox);
+
+      function applyScale() {
+        const w = wrap.clientWidth || adW;
+        const FILL_RATIO = 0.92;
+        const scale = (w * FILL_RATIO) / adW;
+        const gap = w * (1 - FILL_RATIO);
+        const shiftX = -gap / 7;
+        iframe.style.transform = 'translate(calc(-50% + ' + shiftX + 'px), -50%) scale(' + scale + ')';
+        const fullH = Math.round(adH * scale);
+        innerBox.style.height = fullH + 'px';
+        const targetH = (c.adH || 250) + 15;
+        wrap.style.height = Math.round(Math.min(adH, targetH) * scale) + 'px';
+      }
+
+      let innerObserver = null;
+      iframe.addEventListener('load', () => {
+        applyScale();
+        try {
+          const innerBody = iframe.contentWindow.document.body;
+          if (innerObserver) innerObserver.disconnect();
+          innerObserver = new ResizeObserver(() => {
+            const bw = innerBody.scrollWidth, bh = innerBody.scrollHeight;
+            if (bw > 0 && bh > 0 && (bw !== adW || bh !== adH)) {
+              adW = bw; adH = bh;
+              iframe.style.width = adW + 'px';
+              iframe.style.height = adH + 'px';
+            }
+            applyScale();
+          });
+          innerObserver.observe(innerBody);
+        } catch (e) {}
+      });
+      requestAnimationFrame(applyScale);
+      const wrapObserver = new ResizeObserver(applyScale);
+      wrapObserver.observe(sec);
+
+      if (!adminMode && c.link) {
+        const linkOverlay = document.createElement('a');
+        linkOverlay.href = c.link;
+        linkOverlay.target = '_blank';
+        linkOverlay.rel = 'noopener';
+        linkOverlay.style.cssText = 'position:absolute;inset:0;z-index:4;';
+        wrap.appendChild(linkOverlay);
+      }
     } else {
       // 画像カード
       wrap = document.createElement('a');
@@ -1156,7 +1233,7 @@ function render() {
       toggleGap(c.id);
     });
 
-    wrap.appendChild(linkBtn);
+    if (c.type !== 'html') wrap.appendChild(linkBtn);
     wrap.appendChild(replaceBtn);
     wrap.appendChild(replaceInput);
     wrap.appendChild(delBtn);
@@ -1450,6 +1527,20 @@ async function addCards() {
   render();
 }
 
+async function addUrlCard() {
+  const url = document.getElementById('embedUrlInput').value.trim();
+  if (!url) return;
+  const link = document.getElementById('linkUrl').value.trim();
+  const sizeVal = document.getElementById('embedSizeSelect').value;
+  const [adW, adH] = sizeVal.split('x').map(Number);
+  const order = cards.length ? Math.max(...cards.map(c => c.order)) + 1 : 1;
+  const id = await dbOp('cards', 'readwrite', s => s.add({ type: 'url-embed', url, link, adW, adH, order, gap: true }));
+  cards.push({ id, type: 'url-embed', url, link, adW, adH, order, gap: true });
+  document.getElementById('embedUrlInput').value = '';
+  closePanel();
+  render();
+}
+
 // ── Gap toggle ────────────────────────────────
 async function toggleGap(id) {
   const c = cards.find(c => c.id === id);
@@ -1460,6 +1551,8 @@ async function toggleGap(id) {
   else c.gap = true;
   const record = c.type === 'html'
     ? { id: c.id, type: 'html', html: c.html, name: c.name, link: c.link, order: c.order, gap: c.gap }
+    : c.type === 'url-embed'
+    ? { id: c.id, type: 'url-embed', url: c.url, link: c.link, adW: c.adW, adH: c.adH, order: c.order, gap: c.gap }
     : { id: c.id, type: 'image', base64: c.base64, link: c.link, order: c.order, gap: c.gap };
   await dbOp('cards', 'readwrite', s => s.put(record));
   render();
@@ -1634,8 +1727,10 @@ async function downloadHTML() {
       const gapClass = c.gap === false || c.gap === 'nogap' ? ' no-gap' : c.gap === 'line' ? ' line-gap' : c.gap === 'dot' ? ' dot-gap' : '';
       if (c.type === 'html') {
         const escaped = injectAutoResize(c.html).replace(/"/g, '&quot;');
+        cardsHTML += `  <div class="card-section${gapClass}"><div class="html-card"><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:60px" scrolling="no" onload="try{var h=this.contentDocument.documentElement.scrollHeight||this.contentDocument.body.scrollHeight;if(h>0)this.style.height=h+'px';}catch(e){}"></iframe></div></div>\n`;
+      } else if (c.type === 'url-embed') {
         const linkOverlay = c.link ? `<a href="${c.link}" target="_blank" rel="noopener" style="position:absolute;inset:0;z-index:4;"></a>` : '';
-        cardsHTML += `  <div class="card-section${gapClass}"><div class="html-card"><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:60px" scrolling="no" onload="try{var h=this.contentDocument.documentElement.scrollHeight||this.contentDocument.body.scrollHeight;if(h>0)this.style.height=h+'px';}catch(e){}"></iframe>${linkOverlay}</div></div>\n`;
+        cardsHTML += `  <div class="card-section${gapClass}"><div class="html-card url-embed-card" style="position:relative;overflow:hidden;"><div class="url-embed-inner" style="position:relative;width:100%;"><iframe src="${c.url}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" scrolling="no" style="position:absolute;top:50%;left:50%;width:300px;height:250px;border:none;" onload="fitAdScale(this, ${c.adH||250})"></iframe></div>${linkOverlay}</div></div>\n`;
       } else {
         const compressedB64 = await compressImage(c.base64);
         const tag = c.link
@@ -1661,7 +1756,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .card-section.dot-gap { background: var(--white); padding-top:0; border-top:1px dashed rgba(0,0,0,0.2); }
 .card { width:100%; display:block; text-decoration:none; background:var(--white); overflow:hidden; }
 .card img { width:100%; height:auto; display:block; }
-.html-card { display:block; width:100%; position:relative; background:var(--white); overflow:hidden; text-decoration:none; }
+.html-card { width:100%; background:var(--white); overflow:hidden; }
 .html-card iframe { display:block; width:100%; height:60px; border:none; background:var(--white); overflow:hidden; }
 .empty-section { background: var(--bg); padding-top:10px; }
 .empty-state { padding:60px 24px; text-align:center; color:var(--ink-soft); font-size:13px; line-height:2; background:var(--white); }
@@ -1670,7 +1765,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: v
 .footer-section.no-gap { padding-top:0; }
 .footer-section.line-gap { padding-top:0; background:var(--white); border-top:1px solid var(--ink); }
 .footer-section.dot-gap { padding-top:0; background:var(--white); border-top:1px dashed rgba(0,0,0,0.2); }
-footer { padding:16px; text-align:center; font-size:10px; letter-spacing:0.1em; color:#000000; background:#ffffff; }
+footer { padding:16px; text-align:center; font-size:10px; letter-spacing:0.1em; color:#111111; background:#d6d6d6; }
 .site-header { display:flex; align-items:center; justify-content:flex-end; padding:10px 16px; background:var(--white); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; max-width:480px; margin:0 auto; }
 .burger-btn { background:none; border:none; cursor:pointer; padding:4px; display:flex; flex-direction:column; gap:5px; align-items:flex-end; }
 .burger-btn span { display:block; height:1.5px; background:var(--ink); border-radius:1px; }
@@ -1684,11 +1779,8 @@ footer { padding:16px; text-align:center; font-size:10px; letter-spacing:0.1em; 
 `;
 
   const footerText = document.getElementById('footerText')?.textContent || 'ASOBIVA — i.roiro';
-  const footerSectionEl = document.getElementById('footerSection');
-  const footerGapClass = footerSectionEl?.classList.contains('no-gap') ? ' no-gap'
-    : footerSectionEl?.classList.contains('line-gap') ? ' line-gap'
-    : footerSectionEl?.classList.contains('dot-gap') ? ' dot-gap'
-    : '';
+  const footerNoGap = document.getElementById('footerSection')?.classList.contains('no-gap');
+  const footerGapClass = footerNoGap ? ' no-gap' : '';
 
   // ナビリンク一覧（localStorageから取得して埋め込む）
   let navItems = [];
@@ -1723,6 +1815,40 @@ document.addEventListener('click', function(e){
   var btn = document.getElementById('burgerBtn');
   if (menu && !menu.contains(e.target) && !btn.contains(e.target)) menu.classList.remove('open');
 });
+function fitAdScale(iframe, targetH){
+  var wrap = iframe.closest('.url-embed-card');
+  if (!wrap) return;
+  var innerBox = iframe.closest('.url-embed-inner');
+  targetH = (targetH || 250) + 15;
+  var adW = 300, adH = 250;
+  var FILL_RATIO = 0.92;
+  function apply(){
+    var w = wrap.clientWidth || adW;
+    var scale = (w * FILL_RATIO) / adW;
+    var gap = w * (1 - FILL_RATIO);
+    var shiftX = -gap / 7;
+    iframe.style.transform = 'translate(calc(-50% + ' + shiftX + 'px), -50%) scale(' + scale + ')';
+    var fullH = Math.round(adH * scale);
+    if (innerBox) innerBox.style.height = fullH + 'px';
+    wrap.style.height = Math.round(Math.min(adH, targetH) * scale) + 'px';
+  }
+  apply();
+  var wrapObserver = new ResizeObserver(apply);
+  wrapObserver.observe(wrap.parentElement || wrap);
+  try {
+    var innerBody = iframe.contentWindow.document.body;
+    var innerObserver = new ResizeObserver(function(){
+      var bw = innerBody.scrollWidth, bh = innerBody.scrollHeight;
+      if (bw > 0 && bh > 0 && (bw !== adW || bh !== adH)) {
+        adW = bw; adH = bh;
+        iframe.style.width = adW + 'px';
+        iframe.style.height = adH + 'px';
+      }
+      apply();
+    });
+    innerObserver.observe(innerBody);
+  } catch (e) {}
+}
 </scr` + `ipt>
 </body>
 </html>
