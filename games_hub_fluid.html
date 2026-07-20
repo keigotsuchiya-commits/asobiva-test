@@ -855,7 +855,7 @@ body.admin-mode .footer-edit-btn { display: inline-block; }
         <button class="burger-menu-item admin-only" onclick="openNavEditor(); closeBurgerMenu()">メニューを編集</button>
         <button class="burger-menu-item admin-only" onclick="downloadEditHTML(); closeBurgerMenu()">編集用保存</button>
         <button class="burger-menu-item admin-only" id="downloadHtmlBtn" onclick="handleDownloadClick()">公開用保存</button>
-        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v5.0</div>
+        <div class="burger-menu-item admin-only" style="font-size:10px;color:#aaa;text-align:right;padding:8px 20px;cursor:default;border:none;">v5.1</div>
       </div>
     </div>
   </div>
@@ -1103,6 +1103,14 @@ let pendingFiles = [];
 let adminMode = false;
 
 // ── Init ──────────────────────────────────────
+window.addEventListener('error', (e) => {
+  if (!document.body.classList.contains('admin-mode')) return;
+  const bar = document.createElement('div');
+  bar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#c00;color:#fff;padding:10px;font-size:12px;white-space:pre-wrap;word-break:break-all;';
+  bar.textContent = 'エラー: ' + e.message + ' (' + (e.filename || '') + ':' + e.lineno + ')';
+  document.body.appendChild(bar);
+});
+
 async function init() {
   try {
     setLoadingBar(10);
@@ -1559,6 +1567,13 @@ function render() {
     container.appendChild(sec);
    } catch (err) {
     console.error('カード描画でエラーが発生しましたが、他のカードには影響しません:', c, err);
+    if (adminMode) {
+      const errSec = document.createElement('div');
+      errSec.className = 'card-section';
+      errSec.style.cssText = 'background:#fee;border:2px solid #c00;padding:12px;font-size:12px;color:#900;white-space:pre-wrap;word-break:break-all;';
+      errSec.textContent = 'カード描画エラー(type: ' + c.type + '): ' + (err && err.message ? err.message : String(err));
+      container.appendChild(errSec);
+    }
    }
   });
 
