@@ -853,6 +853,15 @@ function fileToBase64(file) {
 
 // ── State ─────────────────────────────────────
 let cards = [];       // [{ id, base64, link }]
+
+function isExternalLink(url) {
+  if (!url) return false;
+  if (!/^https?:\/\//i.test(url)) return false;
+  try {
+    const host = new URL(url).hostname;
+    return !host.endsWith('i-roiro.com');
+  } catch (e) { return true; }
+}
 let banners = { 1: [], 2: [] }; // base64配列
 let pendingFiles = [];
 let adminMode = false;
@@ -1142,7 +1151,7 @@ function render() {
       if (!adminMode && c.link) {
         const linkOverlay = document.createElement('a');
         linkOverlay.href = c.link;
-        linkOverlay.target = '_blank';
+        if (isExternalLink(c.link)) linkOverlay.target = '_blank';
         linkOverlay.rel = 'noopener';
         linkOverlay.style.cssText = 'position:absolute;inset:0;z-index:4;';
         wrap.appendChild(linkOverlay);
@@ -1152,7 +1161,7 @@ function render() {
       wrap = document.createElement('a');
       wrap.className = 'card';
       wrap.href = adminMode ? '#' : (c.link || '#');
-      if (!adminMode && c.link) wrap.target = '_blank';
+      if (!adminMode && c.link && isExternalLink(c.link)) wrap.target = '_blank';
       wrap.rel = 'noopener';
 
       const img = document.createElement('img');
@@ -1233,7 +1242,7 @@ function render() {
       toggleGap(c.id);
     });
 
-    if (c.type !== 'html') wrap.appendChild(linkBtn);
+    wrap.appendChild(linkBtn);
     wrap.appendChild(replaceBtn);
     wrap.appendChild(replaceInput);
     wrap.appendChild(delBtn);
@@ -1727,14 +1736,15 @@ async function downloadHTML() {
       const gapClass = c.gap === false || c.gap === 'nogap' ? ' no-gap' : c.gap === 'line' ? ' line-gap' : c.gap === 'dot' ? ' dot-gap' : '';
       if (c.type === 'html') {
         const escaped = injectAutoResize(c.html).replace(/"/g, '&quot;');
-        cardsHTML += `  <div class="card-section${gapClass}"><div class="html-card"><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:60px" scrolling="no" onload="try{var h=this.contentDocument.documentElement.scrollHeight||this.contentDocument.body.scrollHeight;if(h>0)this.style.height=h+'px';}catch(e){}"></iframe></div></div>\n`;
+        const linkOverlay = c.link ? `<a href="${c.link}"${isExternalLink(c.link) ? ' target="_blank"' : ''} rel="noopener" style="position:absolute;inset:0;z-index:4;"></a>` : '';
+        cardsHTML += `  <div class="card-section${gapClass}"><div class="html-card" style="position:relative;"><iframe srcdoc="${escaped}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" style="height:60px" scrolling="no" onload="try{var h=this.contentDocument.documentElement.scrollHeight||this.contentDocument.body.scrollHeight;if(h>0)this.style.height=h+'px';}catch(e){}"></iframe>${linkOverlay}</div></div>\n`;
       } else if (c.type === 'url-embed') {
         const linkOverlay = c.link ? `<a href="${c.link}" target="_blank" rel="noopener" style="position:absolute;inset:0;z-index:4;"></a>` : '';
         cardsHTML += `  <div class="card-section${gapClass}"><div class="html-card url-embed-card" style="position:relative;overflow:hidden;"><div class="url-embed-inner" style="position:relative;width:100%;"><iframe src="${c.url}" loading="lazy" sandbox="allow-scripts allow-popups allow-forms allow-same-origin" scrolling="no" style="position:absolute;top:50%;left:50%;width:300px;height:250px;border:none;" onload="fitAdScale(this, ${c.adH||250})"></iframe></div>${linkOverlay}</div></div>\n`;
       } else {
         const compressedB64 = await compressImage(c.base64);
         const tag = c.link
-          ? `<a class="card" href="${c.link}" target="_blank" rel="noopener"><img src="${compressedB64}" alt=""></a>`
+          ? `<a class="card" href="${c.link}"${isExternalLink(c.link) ? ' target="_blank"' : ''} rel="noopener"><img src="${compressedB64}" alt=""></a>`
           : `<div class="card"><img src="${compressedB64}" alt=""></div>`;
         cardsHTML += `  <div class="card-section${gapClass}">${tag}</div>\n`;
       }
